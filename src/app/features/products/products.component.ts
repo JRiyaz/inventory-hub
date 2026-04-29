@@ -32,24 +32,42 @@ interface Product {
             Manage and monitor your industrial inventory levels.
           </p>
         </div>
-        <button
-          class="w-full md:w-auto px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition-all shadow-lg shadow-primary/20 uppercase tracking-widest flex items-center justify-center gap-2"
+        <div
+          class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto"
         >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          <div
+            class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm w-full sm:w-auto"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            ></path>
-          </svg>
-          Add New Product
-        </button>
+            <div class="px-4 py-2 text-center">
+              <p
+                class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+              >
+                Total Stock
+              </p>
+              <p class="text-lg font-black text-primary">
+                {{ products().length }}
+              </p>
+            </div>
+          </div>
+          <button
+            class="w-full sm:w-auto px-6 py-3.5 bg-primary text-white rounded-2xl font-black text-[11px] hover:bg-primary-hover transition-all shadow-xl shadow-primary/20 uppercase tracking-[0.15em] flex items-center justify-center gap-3 group"
+          >
+            <svg
+              class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="3"
+                d="M12 4v16m8-8H4"
+              ></path>
+            </svg>
+            Add New Product
+          </button>
+        </div>
       </div>
 
       <!-- Filters & Controls Bar -->
