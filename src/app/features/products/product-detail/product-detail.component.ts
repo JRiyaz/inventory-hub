@@ -2,6 +2,7 @@ import { Component, signal, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { AuthStateService } from "ui-shared";
 
 interface Product {
   id: number;
@@ -84,10 +85,26 @@ interface Product {
             <div class="flex justify-between items-start mb-8">
               <div>
                 <span
+                  *ngIf="!isEditing()"
                   class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary/20 mb-3 block w-fit"
                 >
                   {{ product()?.category }}
                 </span>
+                <div
+                  *ngIf="isEditing()"
+                  class="floating-input-group w-full sm:w-64 mb-6"
+                >
+                  <select
+                    [(ngModel)]="editBuffer.category"
+                    class="floating-input py-2"
+                    id="edit-cat"
+                  >
+                    <option value="Industrial">Industrial</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Raw Materials">Raw Materials</option>
+                  </select>
+                  <label class="floating-label" for="edit-cat">Category</label>
+                </div>
                 <h1
                   *ngIf="!isEditing()"
                   class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none"
@@ -111,6 +128,7 @@ interface Product {
                 </div>
               </div>
               <button
+                *ngIf="auth.isAdmin()"
                 (click)="toggleEdit()"
                 class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors"
               >
@@ -211,6 +229,22 @@ interface Product {
                       >Stock Level</label
                     >
                   </div>
+                </div>
+              </div>
+
+              <!-- Image URL Editing -->
+              <div *ngIf="isEditing()" class="pt-2">
+                <div class="floating-input-group">
+                  <input
+                    type="text"
+                    [(ngModel)]="editBuffer.image"
+                    class="floating-input"
+                    id="edit-image"
+                    placeholder=" "
+                  />
+                  <label class="floating-label" for="edit-image"
+                    >Product Image URL</label
+                  >
                 </div>
               </div>
 
@@ -325,6 +359,7 @@ export class ProductDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    public auth: AuthStateService,
   ) {}
 
   ngOnInit() {

@@ -2,6 +2,7 @@ import { Component, signal, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { AuthStateService } from "ui-shared";
 
 interface Order {
   id: string;
@@ -105,6 +106,7 @@ interface Order {
             </div>
 
             <button
+              *ngIf="auth.isAdmin()"
               (click)="toggleEdit()"
               class="px-6 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-primary transition-all"
             >
@@ -119,10 +121,26 @@ interface Order {
             <div class="lg:col-span-2 space-y-10">
               <!-- Customer Section -->
               <section>
-                <label
-                  class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 block"
-                  >Customer Information</label
-                >
+                <div class="flex justify-between items-center mb-4">
+                  <label
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-400 block"
+                    >Customer Information</label
+                  >
+                  <div
+                    *ngIf="isEditing()"
+                    class="floating-input-group w-32 mb-0"
+                  >
+                    <input
+                      type="date"
+                      [(ngModel)]="editBuffer.date"
+                      class="floating-input py-1 text-xs"
+                      id="edit-date"
+                    />
+                    <label class="floating-label" for="edit-date"
+                      >Order Date</label
+                    >
+                  </div>
+                </div>
                 <div
                   *ngIf="!isEditing()"
                   class="p-6 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-100 dark:border-white/[0.04]"
@@ -142,17 +160,35 @@ interface Order {
                     Priority Account
                   </span>
                 </div>
-                <div *ngIf="isEditing()" class="floating-input-group">
-                  <input
-                    type="text"
-                    [(ngModel)]="editBuffer.customer"
-                    class="floating-input"
-                    id="edit-customer"
-                    placeholder=" "
-                  />
-                  <label class="floating-label" for="edit-customer"
-                    >Customer Name</label
+                <div *ngIf="isEditing()" class="space-y-6">
+                  <div class="floating-input-group">
+                    <input
+                      type="text"
+                      [(ngModel)]="editBuffer.customer"
+                      class="floating-input"
+                      id="edit-customer"
+                      placeholder=" "
+                    />
+                    <label class="floating-label" for="edit-customer"
+                      >Customer Name</label
+                    >
+                  </div>
+
+                  <div
+                    class="flex items-center gap-3 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl"
                   >
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="editBuffer.priority"
+                      id="edit-priority"
+                      class="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+                    />
+                    <label
+                      for="edit-priority"
+                      class="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer uppercase tracking-widest"
+                      >Mark as Priority Account</label
+                    >
+                  </div>
                 </div>
               </section>
 
@@ -178,17 +214,47 @@ interface Order {
                     <tbody
                       class="divide-y divide-slate-50 dark:divide-white/[0.04]"
                     >
-                      <tr *ngFor="let item of order()?.items" class="text-sm">
+                      <tr
+                        *ngFor="
+                          let item of isEditing()
+                            ? editBuffer.items
+                            : order()?.items;
+                          let i = index
+                        "
+                        class="text-sm"
+                      >
                         <td
                           class="px-6 py-4 font-bold text-slate-900 dark:text-white"
                         >
-                          {{ item.name }}
+                          <span *ngIf="!isEditing()">{{ item.name }}</span>
+                          <input
+                            *ngIf="isEditing()"
+                            type="text"
+                            [(ngModel)]="editBuffer.items[i].name"
+                            class="w-full bg-transparent border-b border-primary/20 focus:border-primary outline-none py-1"
+                          />
                         </td>
                         <td class="px-6 py-4 text-center text-slate-500">
-                          {{ item.qty }}
+                          <span *ngIf="!isEditing()">{{ item.qty }}</span>
+                          <input
+                            *ngIf="isEditing()"
+                            type="number"
+                            [(ngModel)]="editBuffer.items[i].qty"
+                            class="w-16 bg-transparent border-b border-primary/20 focus:border-primary outline-none py-1 text-center"
+                          />
                         </td>
-                        <td class="px-6 py-4 text-right font-mono font-bold">
-                          {{ item.price | currency }}
+                        <td
+                          class="px-6 py-4 text-right font-mono font-bold text-slate-900 dark:text-white"
+                        >
+                          <span *ngIf="!isEditing()">{{
+                            item.price | currency
+                          }}</span>
+                          <input
+                            *ngIf="isEditing()"
+                            type="number"
+                            [(ngModel)]="editBuffer.items[i].price"
+                            class="w-24 bg-transparent border-b border-primary/20 focus:border-primary outline-none py-1 text-right"
+                          />
                         </td>
                       </tr>
                     </tbody>
@@ -210,9 +276,17 @@ interface Order {
                 <div class="space-y-4 mb-8">
                   <div class="flex justify-between text-sm">
                     <span class="text-slate-500">Subtotal</span>
-                    <span class="font-bold text-slate-900 dark:text-white">{{
-                      order()?.amount | currency
-                    }}</span>
+                    <span class="font-bold text-slate-900 dark:text-white">
+                      <span *ngIf="!isEditing()">{{
+                        order()?.amount | currency
+                      }}</span>
+                      <input
+                        *ngIf="isEditing()"
+                        type="number"
+                        [(ngModel)]="editBuffer.amount"
+                        class="w-24 bg-transparent border-b border-primary/20 focus:border-primary outline-none py-0.5 text-right font-bold"
+                      />
+                    </span>
                   </div>
                   <div class="flex justify-between text-sm">
                     <span class="text-slate-500">Processing Fee</span>
@@ -228,9 +302,14 @@ interface Order {
                       class="text-[10px] font-black uppercase text-slate-400"
                       >Total Amount</span
                     >
-                    <span class="text-2xl font-black text-primary">{{
-                      order()?.amount | currency
-                    }}</span>
+                    <span class="text-2xl font-black text-primary">
+                      <span *ngIf="!isEditing()">{{
+                        order()?.amount | currency
+                      }}</span>
+                      <span *ngIf="isEditing()">{{
+                        editBuffer.amount | currency
+                      }}</span>
+                    </span>
                   </div>
                 </div>
 
@@ -414,6 +493,7 @@ export class OrderDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    public auth: AuthStateService,
   ) {}
 
   ngOnInit() {
