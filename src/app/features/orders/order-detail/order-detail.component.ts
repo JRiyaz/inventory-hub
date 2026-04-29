@@ -2,7 +2,12 @@ import { Component, signal, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import { AuthStateService } from "ui-shared";
+import {
+  AuthStateService,
+  CustomDatePickerComponent,
+  CustomDropdownComponent,
+  DropdownOption,
+} from "ui-shared";
 
 interface Order {
   id: string;
@@ -17,7 +22,13 @@ interface Order {
 @Component({
   selector: "app-order-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    CustomDatePickerComponent,
+    CustomDropdownComponent,
+  ],
   template: `
     <div class="p-4 sm:p-8 max-w-5xl mx-auto animate-fade-in">
       <!-- Breadcrumbs -->
@@ -126,19 +137,11 @@ interface Order {
                     class="text-[10px] font-black uppercase tracking-widest text-slate-400 block"
                     >Customer Information</label
                   >
-                  <div
-                    *ngIf="isEditing()"
-                    class="floating-input-group w-32 mb-0"
-                  >
-                    <input
-                      type="date"
-                      [(ngModel)]="editBuffer.date"
-                      class="floating-input py-1 text-xs"
-                      id="edit-date"
-                    />
-                    <label class="floating-label" for="edit-date"
-                      >Order Date</label
-                    >
+                  <div *ngIf="isEditing()" class="w-48 mb-0">
+                    <lib-custom-datepicker
+                      [value]="editBuffer.date"
+                      (dateChange)="editBuffer.date = $event"
+                    ></lib-custom-datepicker>
                   </div>
                 </div>
                 <div
@@ -320,70 +323,11 @@ interface Order {
                       >Change Status</label
                     >
 
-                    <!-- Custom Dropdown -->
-                    <div class="relative">
-                      <button
-                        (click)="statusDropdownOpen.set(!statusDropdownOpen())"
-                        class="w-full flex items-center justify-between bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl py-3 px-4 text-sm font-bold text-slate-900 dark:text-white transition-all hover:border-primary focus:border-primary"
-                      >
-                        <span class="flex items-center gap-2">
-                          <span
-                            [ngClass]="{
-                              'bg-amber-500': editBuffer.status === 'Pending',
-                              'bg-primary': editBuffer.status === 'Processing',
-                              'bg-green-500': editBuffer.status === 'Completed',
-                              'bg-rose-500': editBuffer.status === 'Cancelled',
-                            }"
-                            class="w-2 h-2 rounded-full"
-                          ></span>
-                          {{ editBuffer.status }}
-                        </span>
-                        <svg
-                          class="w-4 h-4 text-slate-400 transition-transform duration-300"
-                          [class.rotate-180]="statusDropdownOpen()"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M19 9l-7 7-7-7"
-                          ></path>
-                        </svg>
-                      </button>
-
-                      <!-- Dropdown Menu -->
-                      <div
-                        *ngIf="statusDropdownOpen()"
-                        class="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
-                      >
-                        <div
-                          *ngFor="
-                            let s of [
-                              'Pending',
-                              'Processing',
-                              'Completed',
-                              'Cancelled',
-                            ]
-                          "
-                          (click)="updateStatus(s)"
-                          class="px-4 py-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary cursor-pointer transition-all flex items-center gap-3"
-                        >
-                          <span
-                            [ngClass]="{
-                              'bg-amber-500': s === 'Pending',
-                              'bg-primary': s === 'Processing',
-                              'bg-green-500': s === 'Completed',
-                              'bg-rose-500': s === 'Cancelled',
-                            }"
-                            class="w-2 h-2 rounded-full"
-                          ></span>
-                          {{ s }}
-                        </div>
-                      </div>
-                    </div>
+                    <lib-custom-dropdown
+                      [options]="statusOptions"
+                      [value]="editBuffer.status"
+                      (valueChange)="editBuffer.status = $event"
+                    ></lib-custom-dropdown>
                   </div>
 
                   <button
@@ -450,8 +394,13 @@ interface Order {
 export class OrderDetailComponent implements OnInit {
   order = signal<Order | null>(null);
   isEditing = signal(false);
-  statusDropdownOpen = signal(false);
   editBuffer: any = {};
+  statusOptions: DropdownOption[] = [
+    { value: "Pending", label: "Pending", color: "#f59e0b" },
+    { value: "Processing", label: "Processing", color: "#6d74ff" },
+    { value: "Completed", label: "Completed", color: "#10b981" },
+    { value: "Cancelled", label: "Cancelled", color: "#f43f5e" },
+  ];
 
   // Mock database
   private orders: Order[] = [
@@ -511,11 +460,6 @@ export class OrderDetailComponent implements OnInit {
       this.editBuffer = { ...this.order() };
     }
     this.isEditing.set(!this.isEditing());
-  }
-
-  updateStatus(status: any) {
-    this.editBuffer.status = status;
-    this.statusDropdownOpen.set(false);
   }
 
   saveChanges() {

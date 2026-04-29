@@ -2,7 +2,11 @@ import { Component, signal, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import { AuthStateService } from "ui-shared";
+import {
+  AuthStateService,
+  CustomDropdownComponent,
+  DropdownOption,
+} from "ui-shared";
 
 interface Product {
   id: number;
@@ -17,7 +21,7 @@ interface Product {
 @Component({
   selector: "app-product-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, CustomDropdownComponent],
   template: `
     <div class="p-4 sm:p-8 max-w-5xl mx-auto animate-fade-in">
       <!-- Breadcrumbs -->
@@ -90,20 +94,17 @@ interface Product {
                 >
                   {{ product()?.category }}
                 </span>
-                <div
-                  *ngIf="isEditing()"
-                  class="floating-input-group w-full sm:w-64 mb-6"
-                >
-                  <select
-                    [(ngModel)]="editBuffer.category"
-                    class="floating-input py-2"
-                    id="edit-cat"
+                <div *ngIf="isEditing()" class="w-full sm:w-64 mb-6">
+                  <label
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block"
+                    >Category</label
                   >
-                    <option value="Industrial">Industrial</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Raw Materials">Raw Materials</option>
-                  </select>
-                  <label class="floating-label" for="edit-cat">Category</label>
+                  <lib-custom-dropdown
+                    [options]="categoryOptions"
+                    [value]="editBuffer.category"
+                    (valueChange)="editBuffer.category = $event"
+                  >
+                  </lib-custom-dropdown>
                 </div>
                 <h1
                   *ngIf="!isEditing()"
@@ -271,6 +272,12 @@ export class ProductDetailComponent implements OnInit {
   product = signal<Product | null>(null);
   isEditing = signal(false);
   editBuffer: any = {};
+
+  categoryOptions: DropdownOption[] = [
+    { value: "Industrial", label: "Industrial" },
+    { value: "Electronics", label: "Electronics" },
+    { value: "Raw Materials", label: "Raw Materials" },
+  ];
 
   // Mock database
   private products: Product[] = [
