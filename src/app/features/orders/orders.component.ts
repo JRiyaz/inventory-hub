@@ -1,6 +1,7 @@
 import { Component, signal, computed } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { RouterModule } from "@angular/router";
 
 interface Order {
   id: string;
@@ -14,7 +15,7 @@ interface Order {
 @Component({
   selector: "app-orders",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="p-4 sm:p-8 max-w-7xl mx-auto">
       <!-- Header Section -->
@@ -186,18 +187,17 @@ interface Order {
               >
                 <th
                   (click)="toggleSort('id')"
-                  class="px-6 py-5 cursor-pointer group"
+                  class="px-6 py-4 cursor-pointer group"
                 >
                   <div class="flex items-center gap-2">
                     <span
-                      class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 group-hover:text-primary transition-colors"
+                      class="text-[10px] font-black uppercase tracking-[0.15em] text-primary group-hover:underline"
                       >Order ID</span
                     >
                     <svg
-                      class="w-3 h-3 text-slate-300 group-hover:text-primary transition-all"
-                      [class.rotate-180]="
-                        sortField() === 'id' && sortOrder() === 'desc'
-                      "
+                      *ngIf="sortField() === 'id'"
+                      class="w-3 h-3 text-primary transition-transform duration-300"
+                      [class.rotate-180]="sortOrder() === 'desc'"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -213,7 +213,7 @@ interface Order {
                 </th>
                 <th
                   (click)="toggleSort('customer')"
-                  class="px-6 py-5 cursor-pointer group"
+                  class="px-6 py-4 cursor-pointer group"
                 >
                   <div class="flex items-center gap-2">
                     <span
@@ -240,7 +240,7 @@ interface Order {
                 </th>
                 <th
                   (click)="toggleSort('status')"
-                  class="px-6 py-5 cursor-pointer group"
+                  class="px-6 py-4 cursor-pointer group text-left"
                 >
                   <div class="flex items-center gap-2">
                     <span
@@ -267,9 +267,9 @@ interface Order {
                 </th>
                 <th
                   (click)="toggleSort('amount')"
-                  class="px-6 py-5 cursor-pointer group"
+                  class="px-6 py-4 text-right cursor-pointer group"
                 >
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center justify-end gap-2">
                     <span
                       class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 group-hover:text-primary transition-colors"
                       >Amount</span
@@ -292,42 +292,36 @@ interface Order {
                     </svg>
                   </div>
                 </th>
-                <th
-                  class="px-6 py-5 text-right text-[10px] font-black uppercase tracking-[0.15em] text-slate-500"
-                >
-                  Action
-                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04]">
               <tr
                 *ngFor="let order of paginatedOrders()"
-                class="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-all group"
+                class="border-b border-slate-50 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-all group"
               >
                 <td class="px-6 py-4">
-                  <span
-                    class="text-sm font-mono font-bold text-primary group-hover:tracking-wider transition-all"
-                    >#{{ order.id }}</span
+                  <a
+                    [routerLink]="['/inventory/orders', order.id]"
+                    class="text-sm font-black text-primary hover:underline cursor-pointer"
                   >
+                    #{{ order.id }}
+                  </a>
                 </td>
                 <td class="px-6 py-4">
                   <div class="flex flex-col">
                     <span
-                      class="text-sm font-bold text-slate-900 dark:text-white"
-                      >{{ order.customer }}</span
+                      class="text-sm font-bold text-slate-700 dark:text-slate-300"
                     >
+                      {{ order.customer }}
+                    </span>
                     <span
                       *ngIf="order.priority"
-                      class="text-[9px] text-amber-500 font-black uppercase tracking-[0.1em] flex items-center gap-1"
+                      class="text-[9px] text-amber-500 font-black uppercase tracking-widest mt-0.5"
+                      >Priority Account</span
                     >
-                      <span
-                        class="w-1 h-1 bg-amber-500 rounded-full animate-pulse"
-                      ></span>
-                      Priority Client
-                    </span>
                   </div>
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-6 py-4 text-left">
                   <span
                     [ngClass]="{
                       'bg-amber-500/10 text-amber-500 border-amber-500/20':
@@ -339,23 +333,17 @@ interface Order {
                       'bg-rose-500/10 text-rose-500 border-rose-500/20':
                         order.status === 'Cancelled',
                     }"
-                    class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border"
+                    class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border"
                   >
                     {{ order.status }}
                   </span>
                 </td>
-                <td class="px-6 py-4">
+                <td class="px-6 py-4 text-right">
                   <span
                     class="text-sm font-black text-slate-900 dark:text-white"
-                    >{{ order.amount | currency }}</span
                   >
-                </td>
-                <td class="px-6 py-4 text-right">
-                  <button
-                    class="px-4 py-1.5 rounded-lg text-[10px] font-bold text-primary uppercase border border-primary/10 hover:bg-primary hover:text-white transition-all"
-                  >
-                    View
-                  </button>
+                    {{ order.amount | currency }}
+                  </span>
                 </td>
               </tr>
             </tbody>

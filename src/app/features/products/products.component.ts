@@ -1,6 +1,7 @@
 import { Component, signal, computed } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { RouterModule } from "@angular/router";
 
 interface Product {
   id: number;
@@ -15,7 +16,7 @@ interface Product {
 @Component({
   selector: "app-products",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="p-4 sm:p-8 max-w-7xl mx-auto">
       <!-- Header Section -->
@@ -232,7 +233,8 @@ interface Product {
       >
         <div
           *ngFor="let product of paginatedProducts()"
-          class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-5 hover:border-primary/50 transition-all group shadow-sm hover:shadow-xl hover:shadow-primary/5"
+          [routerLink]="['/inventory/products', product.id]"
+          class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-5 hover:border-primary/50 transition-all group shadow-sm hover:shadow-xl hover:shadow-primary/5 cursor-pointer"
         >
           <div
             class="w-full aspect-square bg-slate-50 dark:bg-white/5 rounded-xl mb-4 overflow-hidden relative"
