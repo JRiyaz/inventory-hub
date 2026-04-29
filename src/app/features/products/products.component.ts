@@ -213,7 +213,7 @@ interface Product {
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in"
       >
         <div
-          *ngFor="let product of filteredProducts()"
+          *ngFor="let product of paginatedProducts()"
           class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-5 hover:border-primary/50 transition-all group shadow-sm hover:shadow-xl hover:shadow-primary/5"
         >
           <div
@@ -278,7 +278,7 @@ interface Product {
       <!-- List View -->
       <div *ngIf="viewType() === 'list'" class="space-y-4 animate-fade-in">
         <div
-          *ngFor="let product of filteredProducts()"
+          *ngFor="let product of paginatedProducts()"
           class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 flex items-center gap-6 hover:border-primary/50 transition-all shadow-sm"
         >
           <div
@@ -326,9 +326,131 @@ interface Product {
         </div>
       </div>
 
+      <!-- Pagination Bar -->
+      <div
+        *ngIf="allFilteredProducts().length > 0"
+        class="mt-10 px-6 py-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08] rounded-2xl flex flex-col lg:flex-row items-center justify-between gap-6 shadow-sm"
+      >
+        <div class="flex flex-wrap items-center gap-6">
+          <!-- Count Display -->
+          <div class="flex items-center gap-3">
+            <span
+              class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+              >Showing</span
+            >
+            <div
+              class="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm"
+            >
+              <span class="text-xs font-black text-primary">{{
+                paginatedProducts().length
+              }}</span>
+              <span
+                class="text-[9px] font-bold text-slate-400 uppercase tracking-tight"
+                >of</span
+              >
+              <span class="text-xs font-black text-slate-900 dark:text-white">{{
+                allFilteredProducts().length
+              }}</span>
+            </div>
+            <span
+              class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+              >Matches</span
+            >
+            <span
+              *ngIf="searchQuery() || selectedCategory() !== 'All'"
+              class="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-md border border-primary/20 animate-fade-in"
+              >Filtered</span
+            >
+          </div>
+
+          <!-- Page Size Selector -->
+          <div
+            class="flex items-center gap-3 border-l border-slate-200 dark:border-white/10 pl-6"
+          >
+            <span
+              class="text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap"
+              >Show per page</span
+            >
+            <div
+              class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10"
+            >
+              <button
+                *ngFor="let size of [8, 16, 32]"
+                (click)="setPageSize(size)"
+                [class.bg-white]="pageSize() === size"
+                [class.dark:bg-white/10]="pageSize() === size"
+                [class.shadow-sm]="pageSize() === size"
+                [class.text-primary]="pageSize() === size"
+                [class.text-slate-400]="pageSize() !== size"
+                class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all hover:text-primary"
+              >
+                {{ size }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button
+            [disabled]="currentPage() === 1"
+            (click)="setPage(currentPage() - 1)"
+            class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all shadow-sm"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              ></path>
+            </svg>
+          </button>
+
+          <div class="flex items-center gap-1 mx-2">
+            <button
+              *ngFor="let page of pagesArray()"
+              (click)="setPage(page)"
+              [class.bg-primary]="currentPage() === page"
+              [class.text-white]="currentPage() === page"
+              [class.border-primary]="currentPage() === page"
+              [class.border-slate-200]="currentPage() !== page"
+              [class.dark:border-white/10]="currentPage() !== page"
+              class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary shadow-sm"
+            >
+              {{ page }}
+            </button>
+          </div>
+
+          <button
+            [disabled]="currentPage() === totalPages()"
+            (click)="setPage(currentPage() + 1)"
+            class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all shadow-sm"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <!-- Empty State -->
       <div
-        *ngIf="filteredProducts().length === 0"
+        *ngIf="allFilteredProducts().length === 0"
         class="flex flex-col items-center justify-center py-20 text-center"
       >
         <div
@@ -370,6 +492,10 @@ export class ProductsComponent {
   searchQuery = signal("");
   selectedCategory = signal("All");
   categoryMenuOpen = signal(false);
+
+  // Pagination Signals
+  currentPage = signal(1);
+  pageSize = signal(8);
 
   categories = ["All", "Electronics", "Industrial", "Raw Materials"];
 
@@ -453,9 +579,49 @@ export class ProductsComponent {
         "Ultra-durable transmission system for mining and heavy lifting.",
       image: "",
     },
+    {
+      id: 9,
+      name: "Hydraulic Pump H-100",
+      category: "Industrial",
+      price: 850,
+      stock: 22,
+      description:
+        "High-pressure hydraulic pumping system for industrial machinery.",
+      image: "",
+    },
+    {
+      id: 10,
+      name: "Laser Scanner Pro",
+      category: "Electronics",
+      price: 1500,
+      stock: 35,
+      description:
+        "High-precision 3D laser scanning tool for inventory verification.",
+      image: "",
+    },
+    {
+      id: 11,
+      name: "Copper Wiring Spool",
+      category: "Raw Materials",
+      price: 45,
+      stock: 1500,
+      description:
+        "Standard industrial grade copper wiring for electrical systems.",
+      image: "",
+    },
+    {
+      id: 12,
+      name: "Digital Multi-Meter",
+      category: "Electronics",
+      price: 120,
+      stock: 85,
+      description:
+        "Versatile electronic testing equipment for voltage and resistance.",
+      image: "",
+    },
   ]);
 
-  filteredProducts = computed(() => {
+  allFilteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const cat = this.selectedCategory();
 
@@ -468,13 +634,40 @@ export class ProductsComponent {
     });
   });
 
+  paginatedProducts = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.allFilteredProducts().slice(start, end);
+  });
+
+  totalPages = computed(() =>
+    Math.ceil(this.allFilteredProducts().length / this.pageSize()),
+  );
+
+  pagesArray = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, i) => i + 1),
+  );
+
   selectCategory(cat: string) {
     this.selectedCategory.set(cat);
     this.categoryMenuOpen.set(false);
+    this.currentPage.set(1);
+  }
+
+  setPage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  setPageSize(size: number) {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
   }
 
   resetFilters() {
     this.searchQuery.set("");
     this.selectedCategory.set("All");
+    this.currentPage.set(1);
   }
 }

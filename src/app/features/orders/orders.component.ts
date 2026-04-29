@@ -277,7 +277,7 @@ interface Order {
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04]">
               <tr
-                *ngFor="let order of filteredAndSortedOrders()"
+                *ngFor="let order of paginatedOrders()"
                 class="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-all group"
               >
                 <td class="px-6 py-4">
@@ -338,9 +338,135 @@ interface Order {
           </table>
         </div>
 
+        <!-- Pagination Bar -->
+        <div
+          *ngIf="allFilteredOrders().length > 0"
+          class="px-6 py-5 bg-slate-50/50 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-6"
+        >
+          <div class="flex flex-wrap items-center gap-6">
+            <!-- Count Display -->
+            <div class="flex items-center gap-3">
+              <span
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >Showing</span
+              >
+              <div
+                class="flex items-center gap-1.5 bg-white dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm"
+              >
+                <span class="text-xs font-black text-primary">{{
+                  paginatedOrders().length
+                }}</span>
+                <span
+                  class="text-[9px] font-bold text-slate-400 uppercase tracking-tight"
+                  >of</span
+                >
+                <span
+                  class="text-xs font-black text-slate-900 dark:text-white"
+                  >{{ allFilteredOrders().length }}</span
+                >
+              </div>
+              <span
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >Matches</span
+              >
+              <span
+                *ngIf="searchQuery() || selectedStatus() !== 'All Statuses'"
+                class="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-md border border-primary/20 animate-fade-in"
+                >Filtered</span
+              >
+            </div>
+
+            <!-- Page Size Selector -->
+            <div
+              class="flex items-center gap-3 border-l border-slate-200 dark:border-white/10 pl-6"
+            >
+              <span
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap"
+                >Show per page</span
+              >
+              <div
+                class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10"
+              >
+                <button
+                  *ngFor="let size of [5, 10, 20]"
+                  (click)="setPageSize(size)"
+                  [class.bg-white]="pageSize() === size"
+                  [class.dark:bg-white/10]="pageSize() === size"
+                  [class.shadow-sm]="pageSize() === size"
+                  [class.text-primary]="pageSize() === size"
+                  [class.text-slate-400]="pageSize() !== size"
+                  class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all hover:text-primary"
+                >
+                  {{ size }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <!-- Prev Button -->
+            <button
+              [disabled]="currentPage() === 1"
+              (click)="setPage(currentPage() - 1)"
+              class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all shadow-sm"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 19l-7-7 7-7"
+                ></path>
+              </svg>
+            </button>
+
+            <!-- Page Numbers -->
+            <div class="flex items-center gap-1 mx-2">
+              <button
+                *ngFor="let page of pagesArray()"
+                (click)="setPage(page)"
+                [class.bg-primary]="currentPage() === page"
+                [class.text-white]="currentPage() === page"
+                [class.border-primary]="currentPage() === page"
+                [class.border-slate-200]="currentPage() !== page"
+                [class.dark:border-white/10]="currentPage() !== page"
+                class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary shadow-sm"
+              >
+                {{ page }}
+              </button>
+            </div>
+
+            <!-- Next Button -->
+            <button
+              [disabled]="currentPage() === totalPages()"
+              (click)="setPage(currentPage() + 1)"
+              class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all shadow-sm"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <!-- Empty State -->
         <div
-          *ngIf="filteredAndSortedOrders().length === 0"
+          *ngIf="allFilteredOrders().length === 0"
           class="flex flex-col items-center justify-center py-20 text-center"
         >
           <div
@@ -378,6 +504,10 @@ export class OrdersComponent {
   statusMenuOpen = signal(false);
   sortField = signal<keyof Order>("id");
   sortOrder = signal<"asc" | "desc">("asc");
+
+  // Pagination Signals
+  currentPage = signal(1);
+  pageSize = signal(5);
 
   statuses = [
     "All Statuses",
@@ -436,19 +566,50 @@ export class OrdersComponent {
       date: "2024-03-30",
       priority: true,
     },
+    {
+      id: "ORD-2347",
+      customer: "Cyberdyne Corp",
+      status: "Completed",
+      amount: 75000,
+      date: "2024-03-31",
+      priority: true,
+    },
+    {
+      id: "ORD-2348",
+      customer: "Wayne Ent.",
+      status: "Processing",
+      amount: 120000,
+      date: "2024-04-01",
+      priority: true,
+    },
+    {
+      id: "ORD-2349",
+      customer: "Stark Ind.",
+      status: "Pending",
+      amount: 500000,
+      date: "2024-04-02",
+      priority: true,
+    },
+    {
+      id: "ORD-2350",
+      customer: "OsCorp",
+      status: "Cancelled",
+      amount: 25000,
+      date: "2024-04-03",
+      priority: false,
+    },
   ]);
 
   pendingCount = computed(
     () => this.orders().filter((o) => o.status === "Pending").length,
   );
 
-  filteredAndSortedOrders = computed(() => {
+  allFilteredOrders = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const status = this.selectedStatus();
     const field = this.sortField();
     const order = this.sortOrder();
 
-    // First, filter
     let result = this.orders().filter((o) => {
       const matchesSearch =
         o.id.toLowerCase().includes(query) ||
@@ -457,25 +618,37 @@ export class OrdersComponent {
       return matchesSearch && matchesStatus;
     });
 
-    // Then, sort
     return result.sort((a, b) => {
       let valA = a[field];
       let valB = b[field];
-
       if (typeof valA === "string") {
         valA = valA.toLowerCase();
         valB = (valB as string).toLowerCase();
       }
-
       if (valA < valB) return order === "asc" ? -1 : 1;
       if (valA > valB) return order === "asc" ? 1 : -1;
       return 0;
     });
   });
 
+  paginatedOrders = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.allFilteredOrders().slice(start, end);
+  });
+
+  totalPages = computed(() =>
+    Math.ceil(this.allFilteredOrders().length / this.pageSize()),
+  );
+
+  pagesArray = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, i) => i + 1),
+  );
+
   selectStatus(status: string) {
     this.selectedStatus.set(status);
     this.statusMenuOpen.set(false);
+    this.currentPage.set(1);
   }
 
   toggleSort(field: keyof Order) {
@@ -485,6 +658,18 @@ export class OrdersComponent {
       this.sortField.set(field);
       this.sortOrder.set("asc");
     }
+    this.currentPage.set(1);
+  }
+
+  setPage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  setPageSize(size: number) {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
   }
 
   resetFilters() {
@@ -492,5 +677,6 @@ export class OrdersComponent {
     this.selectedStatus.set("All Statuses");
     this.sortField.set("id");
     this.sortOrder.set("asc");
+    this.currentPage.set(1);
   }
 }
