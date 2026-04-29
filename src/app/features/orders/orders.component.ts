@@ -1,7 +1,8 @@
-import { Component, signal, computed } from "@angular/core";
+import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
+import { SearchService } from "ui-shared";
 
 interface Order {
   id: string;
@@ -510,7 +511,8 @@ interface Order {
   `,
   styles: [],
 })
-export class OrdersComponent {
+export class OrdersComponent implements OnInit {
+  private searchService = inject(SearchService);
   searchQuery = signal("");
   selectedStatus = signal("All Statuses");
   statusMenuOpen = signal(false);
@@ -611,6 +613,21 @@ export class OrdersComponent {
       priority: false,
     },
   ]);
+
+  ngOnInit(): void {
+    this.registerSearchItems();
+  }
+
+  private registerSearchItems(): void {
+    const items = this.orders().map((o) => ({
+      id: `order-${o.id}`,
+      title: `${o.id} - ${o.customer}`,
+      path: `/inventory/orders/${o.id}`,
+      category: "Order",
+      keywords: [o.status, o.customer],
+    }));
+    this.searchService.register(items);
+  }
 
   pendingCount = computed(
     () => this.orders().filter((o) => o.status === "Pending").length,

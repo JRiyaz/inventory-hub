@@ -1,7 +1,8 @@
-import { Component, signal, computed } from "@angular/core";
+import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
+import { SearchService } from "ui-shared";
 
 interface Product {
   id: number;
@@ -507,7 +508,8 @@ interface Product {
   `,
   styles: [],
 })
-export class ProductsComponent {
+export class ProductsComponent implements OnInit {
+  private searchService = inject(SearchService);
   viewType = signal<"grid" | "list">("grid");
   searchQuery = signal("");
   selectedCategory = signal("All");
@@ -640,6 +642,21 @@ export class ProductsComponent {
       image: "",
     },
   ]);
+
+  ngOnInit(): void {
+    this.registerSearchItems();
+  }
+
+  private registerSearchItems(): void {
+    const items = this.products().map((p) => ({
+      id: `prod-${p.id}`,
+      title: p.name,
+      path: `/inventory/products/${p.id}`,
+      category: "Product",
+      keywords: [p.category, p.description],
+    }));
+    this.searchService.register(items);
+  }
 
   allFilteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
