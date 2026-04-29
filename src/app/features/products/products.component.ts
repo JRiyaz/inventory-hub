@@ -363,38 +363,7 @@ interface Product {
       </div>
     </div>
   `,
-  styles: [
-    `
-      .animate-fade-in {
-        animation: fadeIn 0.4s ease-out forwards;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .animate-dropdown-in {
-        animation: dropdownIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-      }
-      @keyframes dropdownIn {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-          scale: 0.95;
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-          scale: 1;
-        }
-      }
-    `,
-  ],
+  styles: [],
 })
 export class ProductsComponent {
   viewType = signal<"grid" | "list">("grid");
