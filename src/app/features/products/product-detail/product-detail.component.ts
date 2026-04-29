@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from "@angular/core";
+import { Component, signal, OnInit, inject, computed } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
@@ -7,16 +7,11 @@ import {
   CustomDropdownComponent,
   DropdownOption,
 } from "ui-shared";
-
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  stock: number;
-  image: string;
-}
+import {
+  InventoryDataService,
+  Product,
+  Order,
+} from "../../../core/services/inventory-data.service";
 
 @Component({
   selector: "app-product-detail",
@@ -267,102 +262,122 @@ interface Product {
           </div>
         </div>
       </div>
+
+      <!-- Related Orders Section (Lazy/Dynamic) -->
+      <div class="mt-12 animate-fade-in">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2
+              class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
+            >
+              Order History
+            </h2>
+            <p
+              class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1"
+            >
+              Orders containing this product
+            </p>
+          </div>
+          <button
+            (click)="showOrders.set(!showOrders())"
+            class="px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-primary transition-all border border-slate-200 dark:border-white/10"
+          >
+            {{ showOrders() ? "Hide Orders" : "Show Orders" }} ({{
+              relatedOrders().length
+            }})
+          </button>
+        </div>
+
+        <div *ngIf="showOrders()" class="space-y-4 animate-dropdown-in">
+          <div
+            *ngIf="relatedOrders().length === 0"
+            class="p-12 text-center bg-slate-50 dark:bg-white/[0.02] rounded-3xl border border-dashed border-slate-200 dark:border-white/10"
+          >
+            <p class="text-sm text-slate-400 font-medium">
+              No orders found for this product.
+            </p>
+          </div>
+
+          <div
+            *ngFor="let order of relatedOrders()"
+            [routerLink]="['/inventory/orders', order.id]"
+            class="group bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between shadow-sm hover:shadow-xl hover:shadow-primary/5"
+          >
+            <div class="flex items-center gap-6">
+              <div
+                class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <div class="flex items-center gap-3 mb-1">
+                  <span
+                    class="text-sm font-black text-slate-900 dark:text-white"
+                    >#{{ order.id }}</span
+                  >
+                  <span
+                    [ngClass]="{
+                      'bg-amber-500/10 text-amber-500':
+                        order.status === 'Pending',
+                      'bg-primary/10 text-primary':
+                        order.status === 'Processing',
+                      'bg-green-500/10 text-green-500':
+                        order.status === 'Completed',
+                    }"
+                    class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-current/20"
+                  >
+                    {{ order.status }}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 font-medium">
+                  {{ order.customer }}
+                </p>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-black text-primary mb-1">
+                {{ getQuantityInOrder(order.id) }} Units
+              </div>
+              <p
+                class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+              >
+                {{ order.date }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   `,
 })
 export class ProductDetailComponent implements OnInit {
+  private dataService = inject(InventoryDataService);
   product = signal<Product | null>(null);
   isEditing = signal(false);
+  showOrders = signal(false);
   editBuffer: any = {};
+
+  relatedOrders = computed(() => {
+    const p = this.product();
+    return p ? this.dataService.getOrdersForProduct(p.id) : [];
+  });
 
   categoryOptions: DropdownOption[] = [
     { value: "Industrial", label: "Industrial" },
     { value: "Electronics", label: "Electronics" },
     { value: "Raw Materials", label: "Raw Materials" },
-  ];
-
-  // Mock database
-  private products: Product[] = [
-    {
-      id: 1,
-      name: "Precision Logic Controller",
-      category: "Industrial",
-      price: 1240,
-      stock: 45,
-      description:
-        "High-speed automated processing unit with dual redundancy support for mission-critical industrial applications. Features advanced thermal management and modular I/O expandability.",
-      image: "",
-    },
-    {
-      id: 2,
-      name: "Thermal Flux Sensor",
-      category: "Electronics",
-      price: 450,
-      stock: 120,
-      description:
-        "Advanced temperature monitoring with ±0.1°C precision accuracy. Ideal for semiconductor manufacturing and high-precision chemical processing environments.",
-      image: "",
-    },
-    {
-      id: 3,
-      name: "Reinforced Steel Alloy",
-      category: "Raw Materials",
-      price: 89,
-      stock: 2500,
-      description:
-        "High-tensile strength industrial grade steel for structural components. Certified for extreme load-bearing environments and corrosive maritime conditions.",
-      image: "",
-    },
-    {
-      id: 4,
-      name: "Quantum Circuit Breaker",
-      category: "Electronics",
-      price: 2100,
-      stock: 12,
-      description:
-        "Next-gen energy protection system with instant isolation capabilities. Utilizes solid-state switching for near-zero latency interruption of power surges.",
-      image: "",
-    },
-    {
-      id: 5,
-      name: "Pneumatic Actuator X5",
-      category: "Industrial",
-      price: 670,
-      stock: 88,
-      description:
-        "Heavy-duty air pressure driven mechanical movement system. Provides high torque output with minimal maintenance requirements for robotic assembly lines.",
-      image: "",
-    },
-    {
-      id: 6,
-      name: "Industrial Grade Coolant",
-      category: "Raw Materials",
-      price: 150,
-      stock: 430,
-      description:
-        "Non-corrosive heat dissipation fluid for high-temperature machinery. Chemically stable across a wide operating range from -40°C to +220°C.",
-      image: "",
-    },
-    {
-      id: 7,
-      name: "Logic Gate Array V2",
-      category: "Electronics",
-      price: 320,
-      stock: 15,
-      description:
-        "Programmable logic controller for complex sequence automation. Supports multiple fieldbus protocols including EtherCAT, PROFINET, and Modbus TCP.",
-      image: "",
-    },
-    {
-      id: 8,
-      name: "Heavy Duty Gear Box",
-      category: "Industrial",
-      price: 4500,
-      stock: 5,
-      description:
-        "Ultra-durable transmission system for mining and heavy lifting. Engineered for high-torque applications with a 10-year service life under continuous operation.",
-      image: "",
-    },
   ];
 
   constructor(
@@ -373,13 +388,17 @@ export class ProductDetailComponent implements OnInit {
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get("id"));
-    const found = this.products.find((p) => p.id === id);
+    const found = this.dataService.products().find((p) => p.id === id);
     if (found) {
       this.product.set(found);
     } else {
-      // Redirect back if not found
       this.router.navigate(["/inventory/products"]);
     }
+  }
+
+  getQuantityInOrder(orderId: string): number {
+    const p = this.product();
+    return p ? this.dataService.getProductQuantityInOrder(p.id, orderId) : 0;
   }
 
   toggleEdit() {

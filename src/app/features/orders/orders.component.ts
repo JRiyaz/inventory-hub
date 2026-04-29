@@ -4,14 +4,10 @@ import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { SearchService } from "ui-shared";
 
-interface Order {
-  id: string;
-  customer: string;
-  status: "Pending" | "Processing" | "Completed" | "Cancelled";
-  amount: number;
-  date: string;
-  priority: boolean;
-}
+import {
+  InventoryDataService,
+  Order,
+} from "../../core/services/inventory-data.service";
 
 @Component({
   selector: "app-orders",
@@ -512,6 +508,7 @@ interface Order {
   styles: [],
 })
 export class OrdersComponent implements OnInit {
+  private dataService = inject(InventoryDataService);
   private searchService = inject(SearchService);
   searchQuery = signal("");
   selectedStatus = signal("All Statuses");
@@ -531,88 +528,7 @@ export class OrdersComponent implements OnInit {
     "Cancelled",
   ];
 
-  orders = signal<Order[]>([
-    {
-      id: "ORD-2341",
-      customer: "TechNexus Industries",
-      status: "Processing",
-      amount: 45200,
-      date: "2024-03-28",
-      priority: true,
-    },
-    {
-      id: "ORD-2342",
-      customer: "Global Logistics Co",
-      status: "Pending",
-      amount: 12450,
-      date: "2024-03-27",
-      priority: false,
-    },
-    {
-      id: "ORD-2343",
-      customer: "Quantum Systems",
-      status: "Completed",
-      amount: 89000,
-      date: "2024-03-25",
-      priority: true,
-    },
-    {
-      id: "ORD-2344",
-      customer: "Alpha Manufacturing",
-      status: "Processing",
-      amount: 5600,
-      date: "2024-03-29",
-      priority: false,
-    },
-    {
-      id: "ORD-2345",
-      customer: "Steel Forge Group",
-      status: "Cancelled",
-      amount: 15700,
-      date: "2024-03-24",
-      priority: false,
-    },
-    {
-      id: "ORD-2346",
-      customer: "Bio-Dynamics Ltd",
-      status: "Pending",
-      amount: 32100,
-      date: "2024-03-30",
-      priority: true,
-    },
-    {
-      id: "ORD-2347",
-      customer: "Cyberdyne Corp",
-      status: "Completed",
-      amount: 75000,
-      date: "2024-03-31",
-      priority: true,
-    },
-    {
-      id: "ORD-2348",
-      customer: "Wayne Ent.",
-      status: "Processing",
-      amount: 120000,
-      date: "2024-04-01",
-      priority: true,
-    },
-    {
-      id: "ORD-2349",
-      customer: "Stark Ind.",
-      status: "Pending",
-      amount: 500000,
-      date: "2024-04-02",
-      priority: true,
-    },
-    {
-      id: "ORD-2350",
-      customer: "OsCorp",
-      status: "Cancelled",
-      amount: 25000,
-      date: "2024-04-03",
-      priority: false,
-    },
-  ]);
+  orders = this.dataService.orders;
 
   ngOnInit(): void {
     this.registerSearchItems();

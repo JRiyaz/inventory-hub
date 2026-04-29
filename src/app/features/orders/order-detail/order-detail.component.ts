@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from "@angular/core";
+import { Component, signal, OnInit, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
@@ -8,16 +8,11 @@ import {
   CustomDropdownComponent,
   DropdownOption,
 } from "ui-shared";
-
-interface Order {
-  id: string;
-  customer: string;
-  status: "Pending" | "Processing" | "Completed" | "Cancelled";
-  amount: number;
-  date: string;
-  priority: boolean;
-  items?: { name: string; qty: number; price: number }[];
-}
+import {
+  InventoryDataService,
+  Order,
+  OrderItem,
+} from "../../../core/services/inventory-data.service";
 
 @Component({
   selector: "app-order-detail",
@@ -229,7 +224,16 @@ interface Order {
                         <td
                           class="px-6 py-4 font-bold text-slate-900 dark:text-white"
                         >
-                          <span *ngIf="!isEditing()">{{ item.name }}</span>
+                          <a
+                            *ngIf="!isEditing()"
+                            [routerLink]="[
+                              '/inventory/products',
+                              item.productId,
+                            ]"
+                            class="hover:text-primary hover:underline transition-colors"
+                          >
+                            {{ item.name }}
+                          </a>
                           <input
                             *ngIf="isEditing()"
                             type="text"
@@ -392,6 +396,7 @@ interface Order {
   `,
 })
 export class OrderDetailComponent implements OnInit {
+  private dataService = inject(InventoryDataService);
   order = signal<Order | null>(null);
   isEditing = signal(false);
   editBuffer: any = {};
@@ -402,43 +407,6 @@ export class OrderDetailComponent implements OnInit {
     { value: "Cancelled", label: "Cancelled", color: "#f43f5e" },
   ];
 
-  // Mock database
-  private orders: Order[] = [
-    {
-      id: "ORD-2341",
-      customer: "TechNexus Industries",
-      status: "Processing",
-      amount: 45200,
-      date: "2024-03-28",
-      priority: true,
-      items: [
-        { name: "Logic Controller V3", qty: 2, price: 12400 },
-        { name: "Sensor Array Pro", qty: 12, price: 1700 },
-      ],
-    },
-    {
-      id: "ORD-2342",
-      customer: "Global Logistics Co",
-      status: "Pending",
-      amount: 12450,
-      date: "2024-03-27",
-      priority: false,
-      items: [
-        { name: "Pneumatic Valve", qty: 45, price: 120 },
-        { name: "Control Harness", qty: 10, price: 705 },
-      ],
-    },
-    {
-      id: "ORD-2343",
-      customer: "Quantum Systems",
-      status: "Completed",
-      amount: 89000,
-      date: "2024-03-25",
-      priority: true,
-      items: [{ name: "Quantum Core Subsystem", qty: 1, price: 89000 }],
-    },
-  ];
-
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -447,7 +415,7 @@ export class OrderDetailComponent implements OnInit {
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get("id");
-    const found = this.orders.find((o) => o.id === id);
+    const found = this.dataService.orders().find((o) => o.id === id);
     if (found) {
       this.order.set(found);
     } else {

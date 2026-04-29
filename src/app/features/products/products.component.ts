@@ -4,15 +4,10 @@ import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { SearchService } from "ui-shared";
 
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  stock: number;
-  image: string;
-}
+import {
+  InventoryDataService,
+  Product,
+} from "../../core/services/inventory-data.service";
 
 @Component({
   selector: "app-products",
@@ -509,6 +504,7 @@ interface Product {
   styles: [],
 })
 export class ProductsComponent implements OnInit {
+  private dataService = inject(InventoryDataService);
   private searchService = inject(SearchService);
   viewType = signal<"grid" | "list">("grid");
   searchQuery = signal("");
@@ -521,127 +517,7 @@ export class ProductsComponent implements OnInit {
 
   categories = ["All", "Electronics", "Industrial", "Raw Materials"];
 
-  products = signal<Product[]>([
-    {
-      id: 1,
-      name: "Precision Logic Controller",
-      category: "Industrial",
-      price: 1240,
-      stock: 45,
-      description:
-        "High-speed automated processing unit with dual redundancy support.",
-      image: "",
-    },
-    {
-      id: 2,
-      name: "Thermal Flux Sensor",
-      category: "Electronics",
-      price: 450,
-      stock: 120,
-      description:
-        "Advanced temperature monitoring with ±0.1°C precision accuracy.",
-      image: "",
-    },
-    {
-      id: 3,
-      name: "Reinforced Steel Alloy",
-      category: "Raw Materials",
-      price: 89,
-      stock: 2500,
-      description:
-        "High-tensile strength industrial grade steel for structural components.",
-      image: "",
-    },
-    {
-      id: 4,
-      name: "Quantum Circuit Breaker",
-      category: "Electronics",
-      price: 2100,
-      stock: 12,
-      description:
-        "Next-gen energy protection system with instant isolation capabilities.",
-      image: "",
-    },
-    {
-      id: 5,
-      name: "Pneumatic Actuator X5",
-      category: "Industrial",
-      price: 670,
-      stock: 88,
-      description: "Heavy-duty air pressure driven mechanical movement system.",
-      image: "",
-    },
-    {
-      id: 6,
-      name: "Industrial Grade Coolant",
-      category: "Raw Materials",
-      price: 150,
-      stock: 430,
-      description:
-        "Non-corrosive heat dissipation fluid for high-temperature machinery.",
-      image: "",
-    },
-    {
-      id: 7,
-      name: "Logic Gate Array V2",
-      category: "Electronics",
-      price: 320,
-      stock: 15,
-      description:
-        "Programmable logic controller for complex sequence automation.",
-      image: "",
-    },
-    {
-      id: 8,
-      name: "Heavy Duty Gear Box",
-      category: "Industrial",
-      price: 4500,
-      stock: 5,
-      description:
-        "Ultra-durable transmission system for mining and heavy lifting.",
-      image: "",
-    },
-    {
-      id: 9,
-      name: "Hydraulic Pump H-100",
-      category: "Industrial",
-      price: 850,
-      stock: 22,
-      description:
-        "High-pressure hydraulic pumping system for industrial machinery.",
-      image: "",
-    },
-    {
-      id: 10,
-      name: "Laser Scanner Pro",
-      category: "Electronics",
-      price: 1500,
-      stock: 35,
-      description:
-        "High-precision 3D laser scanning tool for inventory verification.",
-      image: "",
-    },
-    {
-      id: 11,
-      name: "Copper Wiring Spool",
-      category: "Raw Materials",
-      price: 45,
-      stock: 1500,
-      description:
-        "Standard industrial grade copper wiring for electrical systems.",
-      image: "",
-    },
-    {
-      id: 12,
-      name: "Digital Multi-Meter",
-      category: "Electronics",
-      price: 120,
-      stock: 85,
-      description:
-        "Versatile electronic testing equipment for voltage and resistance.",
-      image: "",
-    },
-  ]);
+  products = this.dataService.products;
 
   ngOnInit(): void {
     this.registerSearchItems();
