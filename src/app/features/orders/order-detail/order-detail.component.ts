@@ -164,15 +164,15 @@ interface Order {
                   </span>
                 </div>
                 <div *ngIf="isEditing()" class="space-y-6">
-                  <div class="floating-input-group">
+                  <div class="relative group">
                     <input
                       type="text"
                       [(ngModel)]="editBuffer.customer"
-                      class="floating-input"
-                      id="edit-customer"
-                      placeholder=" "
+                      (keyup.enter)="saveChanges()"
+                      class="w-full bg-transparent border-b-2 border-primary/30 py-2 text-lg font-bold text-slate-900 dark:text-white focus:border-primary outline-none transition-colors"
                     />
-                    <label class="floating-label" for="edit-customer"
+                    <label
+                      class="absolute left-0 -top-3.5 text-primary text-[10px] uppercase font-bold tracking-widest"
                       >Customer Name</label
                     >
                   </div>

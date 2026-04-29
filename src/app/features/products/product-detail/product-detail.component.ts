@@ -222,6 +222,7 @@ interface Product {
                     <input
                       type="number"
                       [(ngModel)]="editBuffer.stock"
+                      (keyup.enter)="saveChanges()"
                       class="floating-input"
                       id="edit-stock"
                       placeholder=" "
@@ -239,6 +240,7 @@ interface Product {
                   <input
                     type="text"
                     [(ngModel)]="editBuffer.image"
+                    (keyup.enter)="saveChanges()"
                     class="floating-input"
                     id="edit-image"
                     placeholder=" "
