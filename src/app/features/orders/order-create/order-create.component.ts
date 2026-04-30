@@ -73,7 +73,7 @@ import {
             >
               <button
                 type="button"
-                (click)="toggleCustomerSearch()"
+                (click)="toggleCustomerSearch($event)"
                 class="w-full bg-transparent border-b-2 border-slate-200 dark:border-white/10 py-2.5 px-1 flex items-center justify-between cursor-pointer hover:border-primary transition-all group/btn outline-none focus:border-primary"
               >
                 <div class="flex items-center gap-3 truncate">
@@ -137,6 +137,7 @@ import {
               <!-- Customer Search Popover -->
               @if (showCustomerSearch()) {
                 <div
+                  (click)="$event.stopPropagation()"
                   class="absolute top-full left-0 right-0 mt-2 card-premium z-[300] p-3 animate-fade-in shadow-xl"
                 >
                   <div class="relative mb-3">
@@ -147,30 +148,48 @@ import {
                       (ngModelChange)="customerSearchQuery.set($event)"
                       (keydown)="handleCustomerKeydown($event)"
                       placeholder="Search customer..."
-                      class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary transition-all pr-8"
+                      class="w-full bg-transparent border-b-2 border-slate-200 dark:border-white/10 py-2.5 px-1 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary transition-all pr-10"
                     />
-                    @if (customerSearchQuery()) {
-                      <button
-                        (click)="customerSearchQuery.set('')"
-                        class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"
-                      >
+                    <div
+                      class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center"
+                    >
+                      @if (customerSearchQuery()) {
+                        <button
+                          (click)="customerSearchQuery.set('')"
+                          class="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                        >
+                          <svg
+                            class="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M6 18L18 6M6 6l12 12"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </button>
+                      } @else {
                         <svg
-                          class="w-3.5 h-3.5"
+                          class="w-3.5 h-3.5 text-slate-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
                           <path
-                            d="M6 18L18 6M6 6l12 12"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                             stroke-width="2"
                             stroke-linecap="round"
-                            stroke-linejoin="round"
                           />
                         </svg>
-                      </button>
-                    }
+                      }
+                    </div>
                   </div>
                   <div
+                    #customerResultsContainer
                     class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
                   >
                     @for (
@@ -180,11 +199,12 @@ import {
                     ) {
                       <button
                         (click)="onCustomerSelect(c)"
+                        (mouseenter)="activeCustomerIndex.set(i)"
                         [class.bg-primary/10]="activeCustomerIndex() === i"
                         class="w-full text-left px-3 py-2 rounded-lg hover:bg-primary/10 group transition-all outline-none"
                       >
                         <p
-                          class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary"
+                          class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors"
                           [class.text-primary]="activeCustomerIndex() === i"
                         >
                           {{ c.name }}
@@ -420,7 +440,7 @@ import {
               >
                 <button
                   type="button"
-                  (click)="toggleProductSearch()"
+                  (click)="toggleProductSearch($event)"
                   class="w-full bg-slate-50/50 dark:bg-white/[0.02] border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all outline-none focus:border-primary/50"
                 >
                   <div class="flex items-center gap-3">
@@ -468,6 +488,7 @@ import {
 
                 @if (showProductResults()) {
                   <div
+                    (click)="$event.stopPropagation()"
                     class="absolute top-full mt-2 left-0 right-0 card-premium z-[300] p-3 animate-fade-in shadow-xl"
                   >
                     <div class="relative mb-3">
@@ -478,22 +499,48 @@ import {
                         (ngModelChange)="productSearchQuery.set($event)"
                         (keydown)="handleProductKeydown($event)"
                         placeholder="Search products..."
-                        class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary pl-9"
+                        class="w-full bg-transparent border-b-2 border-slate-200 dark:border-white/10 py-2.5 px-1 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary pr-10"
                       />
-                      <svg
-                        class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                      <div
+                        class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center"
                       >
-                        <path
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                        />
-                      </svg>
+                        @if (productSearchQuery()) {
+                          <button
+                            (click)="productSearchQuery.set('')"
+                            class="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                          >
+                            <svg
+                              class="w-3.5 h-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                d="M6 18L18 6M6 6l12 12"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              />
+                            </svg>
+                          </button>
+                        } @else {
+                          <svg
+                            class="w-4 h-4 text-slate-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                            />
+                          </svg>
+                        }
+                      </div>
                     </div>
                     <div
+                      #productResultsContainer
                       class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
                     >
                       @for (
@@ -503,12 +550,13 @@ import {
                       ) {
                         <button
                           (click)="addItemToOrder(p)"
+                          (mouseenter)="activeProductIndex.set(i)"
                           [class.bg-primary/10]="activeProductIndex() === i"
-                          class="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 hover:bg-primary/10 rounded-lg transition-all group outline-none"
+                          class="w-full flex items-center justify-between p-3 rounded-lg transition-all group outline-none hover:bg-primary/10"
                         >
                           <div class="text-left truncate mr-4">
                             <p
-                              class="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-primary"
+                              class="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-primary transition-colors"
                               [class.text-primary]="activeProductIndex() === i"
                             >
                               {{ p.name }}
@@ -584,6 +632,12 @@ export class OrderCreateComponent implements OnInit {
   );
   productSearchInput =
     viewChild<ElementRef<HTMLInputElement>>("productSearchInput");
+  customerResultsContainer = viewChild<ElementRef<HTMLDivElement>>(
+    "customerResultsContainer",
+  );
+  productResultsContainer = viewChild<ElementRef<HTMLDivElement>>(
+    "productResultsContainer",
+  );
 
   selectedCustomerId = signal<string | null>(null);
   selectedCustomerName = signal<string | null>(null);
@@ -666,11 +720,19 @@ export class OrderCreateComponent implements OnInit {
         case "ArrowDown":
           event.preventDefault();
           this.activeCustomerIndex.update((i) => (i + 1) % options.length);
+          this.scrollToActiveItem(
+            this.customerResultsContainer(),
+            this.activeCustomerIndex(),
+          );
           break;
         case "ArrowUp":
           event.preventDefault();
           this.activeCustomerIndex.update(
             (i) => (i - 1 + options.length) % options.length,
+          );
+          this.scrollToActiveItem(
+            this.customerResultsContainer(),
+            this.activeCustomerIndex(),
           );
           break;
         case "Enter":
@@ -693,11 +755,19 @@ export class OrderCreateComponent implements OnInit {
         case "ArrowDown":
           event.preventDefault();
           this.activeProductIndex.update((i) => (i + 1) % options.length);
+          this.scrollToActiveItem(
+            this.productResultsContainer(),
+            this.activeProductIndex(),
+          );
           break;
         case "ArrowUp":
           event.preventDefault();
           this.activeProductIndex.update(
             (i) => (i - 1 + options.length) % options.length,
+          );
+          this.scrollToActiveItem(
+            this.productResultsContainer(),
+            this.activeProductIndex(),
           );
           break;
         case "Enter":
@@ -725,7 +795,8 @@ export class OrderCreateComponent implements OnInit {
     this.customerSearchQuery.set("");
   }
 
-  toggleCustomerSearch() {
+  toggleCustomerSearch(event: Event) {
+    event.stopPropagation();
     const currentState = this.showCustomerSearch();
     this.closeAllPopovers();
     this.showCustomerSearch.set(!currentState);
@@ -735,7 +806,8 @@ export class OrderCreateComponent implements OnInit {
     }
   }
 
-  toggleProductSearch() {
+  toggleProductSearch(event: Event) {
+    event.stopPropagation();
     const currentState = this.showProductResults();
     this.closeAllPopovers();
     this.showProductResults.set(!currentState);
@@ -842,5 +914,31 @@ export class OrderCreateComponent implements OnInit {
       this.isSubmitting.set(false);
       this.router.navigate(["/inventory/orders", newOrder.id]);
     }, 1500);
+  }
+
+  private scrollToActiveItem(
+    containerRef: ElementRef<HTMLDivElement> | undefined,
+    index: number,
+  ) {
+    if (!containerRef) return;
+    const container = containerRef.nativeElement;
+    const items = container.querySelectorAll("button");
+    const activeItem = items[index] as HTMLElement;
+
+    if (activeItem) {
+      const containerTop = container.scrollTop;
+      const containerBottom = containerTop + container.clientHeight;
+      const itemTop = activeItem.offsetTop;
+      const itemBottom = itemTop + activeItem.clientHeight;
+
+      if (itemTop < containerTop) {
+        container.scrollTo({ top: itemTop, behavior: "smooth" });
+      } else if (itemBottom > containerBottom) {
+        container.scrollTo({
+          top: itemBottom - container.clientHeight,
+          behavior: "smooth",
+        });
+      }
+    }
   }
 }
