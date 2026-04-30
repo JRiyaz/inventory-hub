@@ -109,130 +109,134 @@ import {
         </div>
       </div>
 
-      <!-- Content Area: Skeleton OR Grid -->
-      <div *ngIf="isLoading()" class="mt-8">
-        <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-        >
+      <!-- Content Area: Defer loading actual grid -->
+      @defer (when !isLoading()) {
+        <div class="mt-8 animate-fade-in">
           <div
-            *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8]"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 space-y-4"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           >
-            <div class="flex items-center gap-4">
-              <lib-skeleton
-                width="48px"
-                height="48px"
-                shape="rounded"
-              ></lib-skeleton>
-              <div class="space-y-2">
-                <lib-skeleton width="96px" height="1rem"></lib-skeleton>
-                <lib-skeleton width="64px" height="0.5rem"></lib-skeleton>
-              </div>
-            </div>
-            <div class="space-y-3">
-              <lib-skeleton width="100%" height="0.75rem"></lib-skeleton>
-              <lib-skeleton width="66%" height="0.75rem"></lib-skeleton>
-            </div>
-            <div
-              class="pt-4 border-t border-slate-100 dark:border-white/5 flex justify-between"
-            >
-              <lib-skeleton width="64px" height="0.75rem"></lib-skeleton>
-              <lib-skeleton
-                width="48px"
-                height="1rem"
-                shape="rounded"
-              ></lib-skeleton>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="!isLoading()" class="mt-8 animate-fade-in">
-        <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-        >
-          <div
-            *ngFor="let customer of filteredCustomers()"
-            [routerLink]="['/inventory/customers', customer.id]"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 hover:border-primary/50 transition-all group hover:shadow-sm cursor-pointer"
-          >
-            <div class="flex items-center gap-3 mb-4">
+            @for (customer of filteredCustomers(); track customer.id) {
               <div
-                class="w-10 h-10 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors text-lg font-black"
+                [routerLink]="['/inventory/customers', customer.id]"
+                class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 hover:border-primary/50 transition-all group hover:shadow-sm cursor-pointer"
               >
-                {{ customer.name.charAt(0) }}
-              </div>
-              <div>
-                <h3
-                  class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1"
-                >
-                  {{ customer.name }}
-                </h3>
-                <p
-                  class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
-                >
-                  {{ customer.company }}
-                </p>
-              </div>
-            </div>
+                <div class="flex items-center gap-3 mb-4">
+                  <div
+                    class="w-10 h-10 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors text-lg font-black"
+                  >
+                    {{ customer.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <h3
+                      class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1"
+                    >
+                      {{ customer.name }}
+                    </h3>
+                    <p
+                      class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
+                    >
+                      {{ customer.company }}
+                    </p>
+                  </div>
+                </div>
 
-            <div class="space-y-2 mb-4">
-              <div class="flex items-center gap-3 text-xs text-slate-500">
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-                {{ customer.email }}
-              </div>
-              <div class="flex items-center gap-3 text-xs text-slate-500">
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  />
-                </svg>
-                {{ customer.phone }}
-              </div>
-            </div>
+                <div class="space-y-2 mb-4">
+                  <div class="flex items-center gap-3 text-xs text-slate-500">
+                    <svg
+                      class="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    {{ customer.email }}
+                  </div>
+                  <div class="flex items-center gap-3 text-xs text-slate-500">
+                    <svg
+                      class="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    {{ customer.phone }}
+                  </div>
+                </div>
 
-            <div
-              class="pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between"
-            >
-              <span
-                class="text-[9px] font-black uppercase tracking-widest text-slate-400"
-                >Joined {{ customer.joinDate | date: "MMM YYYY" }}</span
-              >
-              <span
-                [ngClass]="{
-                  'bg-green-500/10 text-green-500 border-green-500/20':
-                    customer.status === 'Active',
-                  'bg-slate-500/10 text-slate-500 border-slate-500/20':
-                    customer.status === 'Inactive',
-                }"
-                class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-current/20"
-              >
-                {{ customer.status }}
-              </span>
-            </div>
+                <div
+                  class="pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between"
+                >
+                  <span
+                    class="text-[9px] font-black uppercase tracking-widest text-slate-400"
+                    >Joined {{ customer.joinDate | date: "MMM YYYY" }}</span
+                  >
+                  <span
+                    [ngClass]="{
+                      'bg-green-500/10 text-green-500 border-green-500/20':
+                        customer.status === 'Active',
+                      'bg-slate-500/10 text-slate-500 border-slate-500/20':
+                        customer.status === 'Inactive',
+                    }"
+                    class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-current/20"
+                  >
+                    {{ customer.status }}
+                  </span>
+                </div>
+              </div>
+            }
           </div>
         </div>
-      </div>
+      } @placeholder {
+        <div class="mt-8">
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
+            @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+              <div
+                class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 space-y-4"
+              >
+                <div class="flex items-center gap-4">
+                  <lib-skeleton
+                    width="48px"
+                    height="48px"
+                    shape="rounded"
+                  ></lib-skeleton>
+                  <div class="space-y-2">
+                    <lib-skeleton width="96px" height="1rem"></lib-skeleton>
+                    <lib-skeleton width="64px" height="0.5rem"></lib-skeleton>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <lib-skeleton width="100%" height="0.75rem"></lib-skeleton>
+                  <lib-skeleton width="66%" height="0.75rem"></lib-skeleton>
+                </div>
+                <div
+                  class="pt-4 border-t border-slate-100 dark:border-white/5 flex justify-between"
+                >
+                  <lib-skeleton width="64px" height="0.75rem"></lib-skeleton>
+                  <lib-skeleton
+                    width="48px"
+                    height="1rem"
+                    shape="rounded"
+                  ></lib-skeleton>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [],

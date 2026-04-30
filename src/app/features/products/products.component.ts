@@ -133,34 +133,37 @@ import {
               </div>
 
               <!-- Dropdown Menu -->
-              <div
-                *ngIf="categoryMenuOpen()"
-                class="absolute left-0 right-0 mt-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/[0.1] rounded-xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
-              >
+              @if (categoryMenuOpen()) {
                 <div
-                  *ngFor="let cat of categories"
-                  (click)="selectCategory(cat)"
-                  [class.bg-primary/10]="selectedCategory() === cat"
-                  [class.text-primary]="selectedCategory() === cat"
-                  class="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] hover:text-primary cursor-pointer transition-all flex items-center justify-between group/item"
+                  class="absolute left-0 right-0 mt-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/[0.1] rounded-xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
                 >
-                  {{ cat }}
-                  <svg
-                    *ngIf="selectedCategory() === cat"
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 13l4 4L19 7"
-                    ></path>
-                  </svg>
+                  @for (cat of categories; track cat) {
+                    <div
+                      (click)="selectCategory(cat)"
+                      [class.bg-primary/10]="selectedCategory() === cat"
+                      [class.text-primary]="selectedCategory() === cat"
+                      class="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] hover:text-primary cursor-pointer transition-all flex items-center justify-between group/item"
+                    >
+                      {{ cat }}
+                      @if (selectedCategory() === cat) {
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                          ></path>
+                        </svg>
+                      }
+                    </div>
+                  }
                 </div>
-              </div>
+              }
             </div>
           </div>
 
@@ -222,49 +225,272 @@ import {
         </div>
       </div>
 
-      <!-- Content Area: Skeleton OR Grid -->
-      <div *ngIf="isLoading()" class="mt-5">
-        <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-        >
-          <div
-            *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8]"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 space-y-3"
-          >
-            <lib-skeleton
-              width="100%"
-              height="200px"
-              shape="rounded"
-            ></lib-skeleton>
-            <lib-skeleton width="75%" height="1rem"></lib-skeleton>
-            <lib-skeleton width="50%" height="0.75rem"></lib-skeleton>
-            <div class="flex justify-between pt-4">
-              <lib-skeleton width="64px" height="1rem"></lib-skeleton>
-              <lib-skeleton width="48px" height="1rem"></lib-skeleton>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="!isLoading()" class="mt-5 animate-fade-in">
-        <!-- Grid View -->
-        <div
-          *ngIf="viewType() === 'grid'"
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in"
-        >
-          <div
-            *ngFor="let product of paginatedProducts()"
-            [routerLink]="['/inventory/products', product.id]"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-xl p-3.5 hover:border-primary/50 transition-all group hover:shadow-sm cursor-pointer"
-          >
+      <!-- Content Area: Defer loading actual content -->
+      @defer (when !isLoading()) {
+        <div class="mt-5 animate-fade-in">
+          @if (viewType() === "grid") {
+            <!-- Grid View -->
             <div
-              class="w-full aspect-square bg-slate-50 dark:bg-white/5 rounded-lg mb-3 overflow-hidden relative"
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in"
+            >
+              @for (product of paginatedProducts(); track product.id) {
+                <div
+                  [routerLink]="['/inventory/products', product.id]"
+                  class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-xl p-3.5 hover:border-primary/50 transition-all group hover:shadow-sm cursor-pointer"
+                >
+                  <div
+                    class="w-full aspect-square bg-slate-50 dark:bg-white/5 rounded-lg mb-3 overflow-hidden relative"
+                  >
+                    <div
+                      class="absolute inset-0 flex items-center justify-center text-slate-200 dark:text-white/5"
+                    >
+                      <svg
+                        class="w-16 h-16"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1.5"
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        ></path>
+                      </svg>
+                    </div>
+                    <div class="absolute top-3 right-3">
+                      <span
+                        class="px-2 py-1 bg-white/90 dark:bg-black/50 backdrop-blur-sm rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/10"
+                      >
+                        {{ product.category }}
+                      </span>
+                    </div>
+                  </div>
+                  <h3
+                    class="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors"
+                  >
+                    {{ product.name }}
+                  </h3>
+                  <p
+                    class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed"
+                  >
+                    {{ product.description }}
+                  </p>
+                  <div
+                    class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5"
+                  >
+                    <div class="flex flex-col">
+                      <span
+                        class="text-lg font-black text-primary leading-none"
+                        >{{ product.price | currency }}</span
+                      >
+                      <span
+                        class="text-[9px] text-slate-400 uppercase tracking-tighter mt-1"
+                        >Unit Price</span
+                      >
+                    </div>
+                    <span
+                      class="text-[9px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-lg uppercase tracking-wider border border-green-500/20"
+                    >
+                      {{ product.stock }} In Stock
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <!-- List View -->
+            <div class="space-y-3 animate-fade-in">
+              @for (product of paginatedProducts(); track product.id) {
+                <div
+                  class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-xl p-3 flex items-center gap-4 hover:border-primary/50 transition-all shadow-sm"
+                >
+                  <div
+                    class="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-xl flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5"
+                  >
+                    <svg
+                      class="w-8 h-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      ></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-1">
+                      <h3
+                        class="text-sm font-bold text-slate-900 dark:text-white truncate"
+                      >
+                        {{ product.name }}
+                      </h3>
+                      <span
+                        class="px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                        >{{ product.category }}</span
+                      >
+                    </div>
+                    <p
+                      class="text-xs text-slate-500 dark:text-slate-400 truncate"
+                    >
+                      {{ product.description }}
+                    </p>
+                  </div>
+                  <div class="text-right flex flex-col items-end gap-2 pr-4">
+                    <span class="text-base font-black text-primary">{{
+                      product.price | currency
+                    }}</span>
+                    <span
+                      class="text-[9px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-lg uppercase tracking-wider"
+                      >{{ product.stock }} units</span
+                    >
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Pagination Bar -->
+          @if (allFilteredProducts().length > 0) {
+            <div
+              class="mt-6 px-4 py-3.5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08] rounded-xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm"
+            >
+              <div class="flex flex-wrap items-center gap-4">
+                <!-- Count Display -->
+                <div class="flex items-center gap-3">
+                  <span
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                    >Showing</span
+                  >
+                  <div
+                    class="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10"
+                  >
+                    <span class="text-xs font-black text-primary">{{
+                      paginatedProducts().length
+                    }}</span>
+                    <span
+                      class="text-[9px] font-bold text-slate-400 uppercase tracking-tight"
+                      >of</span
+                    >
+                    <span
+                      class="text-xs font-black text-slate-900 dark:text-white"
+                      >{{ allFilteredProducts().length }}</span
+                    >
+                  </div>
+                  <span
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                    >Matches</span
+                  >
+                  @if (searchQuery() || selectedCategory() !== "All") {
+                    <span
+                      class="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-md border border-primary/20 animate-fade-in"
+                      >Filtered</span
+                    >
+                  }
+                </div>
+
+                <!-- Page Size Selector -->
+                <div
+                  class="flex items-center gap-3 border-l border-slate-200 dark:border-white/10 pl-6"
+                >
+                  <span
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap"
+                    >Show per page</span
+                  >
+                  <div
+                    class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10"
+                  >
+                    @for (size of [8, 16, 32]; track size) {
+                      <button
+                        (click)="setPageSize(size)"
+                        [class.bg-white]="pageSize() === size"
+                        [class.dark:bg-white/10]="pageSize() === size"
+                        [class.shadow-sm]="pageSize() === size"
+                        [class.text-primary]="pageSize() === size"
+                        [class.text-slate-400]="pageSize() !== size"
+                        class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all hover:text-primary"
+                      >
+                        {{ size }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <button
+                  [disabled]="currentPage() === 1"
+                  (click)="setPage(currentPage() - 1)"
+                  class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"
+                    ></path>
+                  </svg>
+                </button>
+
+                <div class="flex items-center gap-1 mx-2">
+                  @for (page of pagesArray(); track page) {
+                    <button
+                      (click)="setPage(page)"
+                      [class.bg-primary]="currentPage() === page"
+                      [class.text-white]="currentPage() === page"
+                      [class.border-primary]="currentPage() === page"
+                      [class.border-slate-200]="currentPage() !== page"
+                      [class.dark:border-white/10]="currentPage() !== page"
+                      class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary shadow-sm"
+                    >
+                      {{ page }}
+                    </button>
+                  }
+                </div>
+
+                <button
+                  [disabled]="currentPage() === totalPages()"
+                  (click)="setPage(currentPage() + 1)"
+                  class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Empty State -->
+          @if (allFilteredProducts().length === 0) {
+            <div
+              class="flex flex-col items-center justify-center py-20 text-center"
             >
               <div
-                class="absolute inset-0 flex items-center justify-center text-slate-200 dark:text-white/5"
+                class="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center text-slate-300 dark:text-white/10 mb-6"
               >
                 <svg
-                  class="w-16 h-16"
+                  class="w-10 h-10"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -273,260 +499,51 @@ import {
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="1.5"
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   ></path>
                 </svg>
               </div>
-              <div class="absolute top-3 right-3">
-                <span
-                  class="px-2 py-1 bg-white/90 dark:bg-black/50 backdrop-blur-sm rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/10"
-                >
-                  {{ product.category }}
-                </span>
-              </div>
-            </div>
-            <h3
-              class="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors"
-            >
-              {{ product.name }}
-            </h3>
-            <p
-              class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed"
-            >
-              {{ product.description }}
-            </p>
-            <div
-              class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5"
-            >
-              <div class="flex flex-col">
-                <span class="text-lg font-black text-primary leading-none">{{
-                  product.price | currency
-                }}</span>
-                <span
-                  class="text-[9px] text-slate-400 uppercase tracking-tighter mt-1"
-                  >Unit Price</span
-                >
-              </div>
-              <span
-                class="text-[9px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-lg uppercase tracking-wider border border-green-500/20"
-              >
-                {{ product.stock }} In Stock
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- List View -->
-        <div *ngIf="viewType() === 'list'" class="space-y-3 animate-fade-in">
-          <div
-            *ngFor="let product of paginatedProducts()"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-xl p-3 flex items-center gap-4 hover:border-primary/50 transition-all shadow-sm"
-          >
-            <div
-              class="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-xl flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5"
-            >
-              <svg
-                class="w-8 h-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                ></path>
-              </svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-3 mb-1">
-                <h3
-                  class="text-sm font-bold text-slate-900 dark:text-white truncate"
-                >
-                  {{ product.name }}
-                </h3>
-                <span
-                  class="px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                  >{{ product.category }}</span
-                >
-              </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
-                {{ product.description }}
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                No products found
+              </h3>
+              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Try adjusting your search or filters to find what you're looking
+                for.
               </p>
-            </div>
-            <div class="text-right flex flex-col items-end gap-2 pr-4">
-              <span class="text-base font-black text-primary">{{
-                product.price | currency
-              }}</span>
-              <span
-                class="text-[9px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-lg uppercase tracking-wider"
-                >{{ product.stock }} units</span
-              >
-            </div>
-          </div>
-        </div>
-
-        <!-- Pagination Bar -->
-        <div
-          *ngIf="allFilteredProducts().length > 0"
-          class="mt-6 px-4 py-3.5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08] rounded-xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm"
-        >
-          <div class="flex flex-wrap items-center gap-4">
-            <!-- Count Display -->
-            <div class="flex items-center gap-3">
-              <span
-                class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                >Showing</span
-              >
-              <div
-                class="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10"
-              >
-                <span class="text-xs font-black text-primary">{{
-                  paginatedProducts().length
-                }}</span>
-                <span
-                  class="text-[9px] font-bold text-slate-400 uppercase tracking-tight"
-                  >of</span
-                >
-                <span
-                  class="text-xs font-black text-slate-900 dark:text-white"
-                  >{{ allFilteredProducts().length }}</span
-                >
-              </div>
-              <span
-                class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                >Matches</span
-              >
-              <span
-                *ngIf="searchQuery() || selectedCategory() !== 'All'"
-                class="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-md border border-primary/20 animate-fade-in"
-                >Filtered</span
-              >
-            </div>
-
-            <!-- Page Size Selector -->
-            <div
-              class="flex items-center gap-3 border-l border-slate-200 dark:border-white/10 pl-6"
-            >
-              <span
-                class="text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap"
-                >Show per page</span
-              >
-              <div
-                class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10"
-              >
-                <button
-                  *ngFor="let size of [8, 16, 32]"
-                  (click)="setPageSize(size)"
-                  [class.bg-white]="pageSize() === size"
-                  [class.dark:bg-white/10]="pageSize() === size"
-                  [class.shadow-sm]="pageSize() === size"
-                  [class.text-primary]="pageSize() === size"
-                  [class.text-slate-400]="pageSize() !== size"
-                  class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all hover:text-primary"
-                >
-                  {{ size }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-1">
-            <button
-              [disabled]="currentPage() === 1"
-              (click)="setPage(currentPage() - 1)"
-              class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 19l-7-7 7-7"
-                ></path>
-              </svg>
-            </button>
-
-            <div class="flex items-center gap-1 mx-2">
               <button
-                *ngFor="let page of pagesArray()"
-                (click)="setPage(page)"
-                [class.bg-primary]="currentPage() === page"
-                [class.text-white]="currentPage() === page"
-                [class.border-primary]="currentPage() === page"
-                [class.border-slate-200]="currentPage() !== page"
-                [class.dark:border-white/10]="currentPage() !== page"
-                class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary shadow-sm"
+                (click)="resetFilters()"
+                class="mt-6 text-sm font-bold text-primary hover:underline uppercase tracking-widest"
               >
-                {{ page }}
+                Clear all filters
               </button>
             </div>
-
-            <button
-              [disabled]="currentPage() === totalPages()"
-              (click)="setPage(currentPage() + 1)"
-              class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                ></path>
-              </svg>
-            </button>
-          </div>
+          }
         </div>
-
-        <!-- Empty State -->
-        <div
-          *ngIf="allFilteredProducts().length === 0"
-          class="flex flex-col items-center justify-center py-20 text-center"
-        >
+      } @placeholder {
+        <div class="mt-5">
           <div
-            class="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center text-slate-300 dark:text-white/10 mb-6"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           >
-            <svg
-              class="w-10 h-10"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
+            @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+              <div
+                class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 space-y-3"
+              >
+                <lib-skeleton
+                  width="100%"
+                  height="200px"
+                  shape="rounded"
+                ></lib-skeleton>
+                <lib-skeleton width="75%" height="1rem"></lib-skeleton>
+                <lib-skeleton width="50%" height="0.75rem"></lib-skeleton>
+                <div class="flex justify-between pt-4">
+                  <lib-skeleton width="64px" height="1rem"></lib-skeleton>
+                  <lib-skeleton width="48px" height="1rem"></lib-skeleton>
+                </div>
+              </div>
+            }
           </div>
-          <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-            No products found
-          </h3>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Try adjusting your search or filters to find what you're looking
-            for.
-          </p>
-          <button
-            (click)="resetFilters()"
-            class="mt-6 text-sm font-bold text-primary hover:underline uppercase tracking-widest"
-          >
-            Clear all filters
-          </button>
         </div>
-      </div>
+      }
     </div>
   `,
   styles: [],

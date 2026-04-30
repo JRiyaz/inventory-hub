@@ -4,7 +4,7 @@ import {
   computed,
   inject,
   OnInit,
-  ViewChild,
+  viewChild,
   ElementRef,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
@@ -117,58 +117,64 @@ import {
               </div>
 
               <!-- Customer Search Popover -->
-              <div
-                *ngIf="showCustomerSearch()"
-                class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm z-[300] p-3 animate-fade-in"
-              >
-                <div class="relative mb-3">
-                  <input
-                    #customerSearchInput
-                    type="text"
-                    [ngModel]="customerSearchQuery()"
-                    (ngModelChange)="customerSearchQuery.set($event)"
-                    placeholder="Search customer..."
-                    class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary transition-all pr-8"
-                  />
-                  <button
-                    *ngIf="customerSearchQuery()"
-                    (click)="customerSearchQuery.set('')"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M6 18L18 6M6 6l12 12"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
+              <!-- Customer Search Popover -->
+              @if (showCustomerSearch()) {
                 <div
-                  class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
+                  class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm z-[300] p-3 animate-fade-in"
                 >
-                  <button
-                    *ngFor="let c of filteredCustomerOptions()"
-                    (click)="onCustomerSelect(c)"
-                    class="w-full text-left px-3 py-2 rounded-lg hover:bg-primary/10 group transition-all"
+                  <div class="relative mb-3">
+                    <input
+                      #customerSearchInput
+                      type="text"
+                      [ngModel]="customerSearchQuery()"
+                      (ngModelChange)="customerSearchQuery.set($event)"
+                      placeholder="Search customer..."
+                      class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary transition-all pr-8"
+                    />
+                    @if (customerSearchQuery()) {
+                      <button
+                        (click)="customerSearchQuery.set('')"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500"
+                      >
+                        <svg
+                          class="w-3.5 h-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            d="M6 18L18 6M6 6l12 12"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    }
+                  </div>
+                  <div
+                    class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
                   >
-                    <p
-                      class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary"
-                    >
-                      {{ c.name }}
-                    </p>
-                    <p class="text-[9px] font-black uppercase text-slate-400">
-                      #{{ c.id }}
-                    </p>
-                  </button>
+                    @for (c of filteredCustomerOptions(); track c.id) {
+                      <button
+                        (click)="onCustomerSelect(c)"
+                        class="w-full text-left px-3 py-2 rounded-lg hover:bg-primary/10 group transition-all"
+                      >
+                        <p
+                          class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary"
+                        >
+                          {{ c.name }}
+                        </p>
+                        <p
+                          class="text-[9px] font-black uppercase text-slate-400"
+                        >
+                          #{{ c.id }}
+                        </p>
+                      </button>
+                    }
+                  </div>
                 </div>
-              </div>
+              }
             </div>
 
             <!-- Stats & Priority -->
@@ -233,12 +239,13 @@ import {
               >
                 Create Order
               </button>
-              <p
-                *ngIf="!selectedCustomerId()"
-                class="text-[8px] text-rose-500 font-black uppercase tracking-widest text-center mt-1 animate-pulse"
-              >
-                * Select Customer
-              </p>
+              @if (!selectedCustomerId()) {
+                <p
+                  class="text-[8px] text-rose-500 font-black uppercase tracking-widest text-center mt-1 animate-pulse"
+                >
+                  * Select Customer
+                </p>
+              }
             </div>
           </div>
         </div>
@@ -284,32 +291,90 @@ import {
           >
             <div class="space-y-2">
               <!-- Table Headers -->
-              <div
-                *ngIf="orderItems().length > 0"
-                class="grid grid-cols-[40px_1fr_100px_100px_100px_40px] gap-2 p-3 border-b border-slate-100 dark:border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 sticky top-0 bg-white dark:bg-[#0f172a] z-20 border-b-2 border-b-primary dark:border-primary/40"
-              >
-                <span>#</span>
-                <span>Name</span>
-                <span class="text-center">Qty</span>
-                <span class="text-right">Price</span>
-                <span class="text-right">Total</span>
-                <span></span>
-              </div>
+              @if (orderItems().length > 0) {
+                <div
+                  class="grid grid-cols-[40px_1fr_100px_100px_100px_40px] gap-2 p-3 border-b border-slate-100 dark:border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 sticky top-0 bg-white dark:bg-[#0f172a] z-20 border-b-2 border-b-primary dark:border-primary/40"
+                >
+                  <span>#</span>
+                  <span>Name</span>
+                  <span class="text-center">Qty</span>
+                  <span class="text-right">Price</span>
+                  <span class="text-right">Total</span>
+                  <span></span>
+                </div>
+              }
 
               <!-- Item Rows -->
-              <div
-                *ngFor="let item of orderItems(); let i = index"
-                class="grid grid-cols-[40px_1fr_100px_100px_100px_40px] gap-2 px-4 py-2 bg-slate-50/50 dark:bg-white/[0.01] border border-slate-100 dark:border-white/5 rounded-xl items-center group animate-fade-in shadow-sm"
-              >
-                <span class="text-[10px] font-black text-slate-400">{{
-                  i + 1
-                }}</span>
-                <div class="flex items-center gap-2 truncate">
-                  <div
-                    class="w-6 h-6 bg-primary/10 rounded flex items-center justify-center text-primary flex-shrink-0"
+              @for (
+                item of orderItems();
+                track item.productId;
+                let i = $index
+              ) {
+                <div
+                  class="grid grid-cols-[40px_1fr_100px_100px_100px_40px] gap-2 px-4 py-2 bg-slate-50/50 dark:bg-white/[0.01] border border-slate-100 dark:border-white/5 rounded-xl items-center group animate-fade-in shadow-sm"
+                >
+                  <span class="text-[10px] font-black text-slate-400">{{
+                    i + 1
+                  }}</span>
+                  <div class="flex items-center gap-2 truncate">
+                    <div
+                      class="w-6 h-6 bg-primary/10 rounded flex items-center justify-center text-primary flex-shrink-0"
+                    >
+                      <svg
+                        class="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        />
+                      </svg>
+                    </div>
+                    <div class="truncate">
+                      <p
+                        class="text-xs font-bold text-slate-900 dark:text-white truncate"
+                      >
+                        {{ item.name }}
+                      </p>
+                      <p class="text-[8px] font-black uppercase text-slate-400">
+                        #{{ item.productId }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-center gap-1.5">
+                    <button
+                      (click)="updateQty(item, -1)"
+                      class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary transition-all text-xs"
+                    >
+                      -
+                    </button>
+                    <span
+                      class="w-6 text-center text-xs font-black text-slate-900 dark:text-white"
+                      >{{ item.qty }}</span
+                    >
+                    <button
+                      (click)="updateQty(item, 1)"
+                      class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary transition-all text-xs"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <span class="text-xs font-bold text-slate-500 text-right">{{
+                    item.price | currency
+                  }}</span>
+                  <span class="text-xs font-black text-primary text-right">{{
+                    item.price * item.qty | currency
+                  }}</span>
+                  <button
+                    (click)="removeItem(i)"
+                    class="p-1 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <svg
-                      class="w-3 h-3"
+                      class="w-3.5 h-3.5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -318,64 +383,12 @@ import {
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                       />
                     </svg>
-                  </div>
-                  <div class="truncate">
-                    <p
-                      class="text-xs font-bold text-slate-900 dark:text-white truncate"
-                    >
-                      {{ item.name }}
-                    </p>
-                    <p class="text-[8px] font-black uppercase text-slate-400">
-                      #{{ item.productId }}
-                    </p>
-                  </div>
-                </div>
-                <div class="flex items-center justify-center gap-1.5">
-                  <button
-                    (click)="updateQty(item, -1)"
-                    class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary transition-all text-xs"
-                  >
-                    -
-                  </button>
-                  <span
-                    class="w-6 text-center text-xs font-black text-slate-900 dark:text-white"
-                    >{{ item.qty }}</span
-                  >
-                  <button
-                    (click)="updateQty(item, 1)"
-                    class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary transition-all text-xs"
-                  >
-                    +
                   </button>
                 </div>
-                <span class="text-xs font-bold text-slate-500 text-right">{{
-                  item.price | currency
-                }}</span>
-                <span class="text-xs font-black text-primary text-right">{{
-                  item.price * item.qty | currency
-                }}</span>
-                <button
-                  (click)="removeItem(i)"
-                  class="p-1 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
-              </div>
+              }
 
               <!-- Search "Draft" Row -->
               <div
@@ -429,58 +442,60 @@ import {
                   </div>
                 </div>
 
-                <div
-                  *ngIf="showProductResults()"
-                  class="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm z-[300] p-3 animate-fade-in"
-                >
-                  <div class="relative mb-3">
-                    <input
-                      #productSearchInput
-                      type="text"
-                      [ngModel]="productSearchQuery()"
-                      (ngModelChange)="productSearchQuery.set($event)"
-                      placeholder="Search products..."
-                      class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary pl-9"
-                    />
-                    <svg
-                      class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                      />
-                    </svg>
-                  </div>
+                @if (showProductResults()) {
                   <div
-                    class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
+                    class="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm z-[300] p-3 animate-fade-in"
                   >
-                    <button
-                      *ngFor="let p of filteredProductOptions()"
-                      (click)="addItemToOrder(p)"
-                      class="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 hover:bg-primary/10 rounded-lg transition-all group"
+                    <div class="relative mb-3">
+                      <input
+                        #productSearchInput
+                        type="text"
+                        [ngModel]="productSearchQuery()"
+                        (ngModelChange)="productSearchQuery.set($event)"
+                        placeholder="Search products..."
+                        class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary pl-9"
+                      />
+                      <svg
+                        class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
                     >
-                      <div class="text-left truncate mr-4">
-                        <p
-                          class="text-xs font-bold text-slate-900 dark:text-white truncate"
+                      @for (p of filteredProductOptions(); track p.id) {
+                        <button
+                          (click)="addItemToOrder(p)"
+                          class="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 hover:bg-primary/10 rounded-lg transition-all group"
                         >
-                          {{ p.name }}
-                        </p>
-                        <p
-                          class="text-[9px] text-slate-400 font-bold uppercase"
-                        >
-                          Stock: {{ p.stock }}
-                        </p>
-                      </div>
-                      <p class="text-xs font-black text-primary">
-                        {{ p.price | currency }}
-                      </p>
-                    </button>
+                          <div class="text-left truncate mr-4">
+                            <p
+                              class="text-xs font-bold text-slate-900 dark:text-white truncate"
+                            >
+                              {{ p.name }}
+                            </p>
+                            <p
+                              class="text-[9px] text-slate-400 font-bold uppercase"
+                            >
+                              Stock: {{ p.stock }}
+                            </p>
+                          </div>
+                          <p class="text-xs font-black text-primary">
+                            {{ p.price | currency }}
+                          </p>
+                        </button>
+                      }
+                    </div>
                   </div>
-                </div>
+                }
               </div>
             </div>
           </div>
@@ -528,10 +543,11 @@ export class OrderCreateComponent implements OnInit {
   showProductResults = signal(false);
   showCustomerSearch = signal(false);
 
-  @ViewChild("customerSearchInput")
-  customerSearchInput?: ElementRef<HTMLInputElement>;
-  @ViewChild("productSearchInput")
-  productSearchInput?: ElementRef<HTMLInputElement>;
+  customerSearchInput = viewChild<ElementRef<HTMLInputElement>>(
+    "customerSearchInput",
+  );
+  productSearchInput =
+    viewChild<ElementRef<HTMLInputElement>>("productSearchInput");
 
   selectedCustomerId = signal<string | null>(null);
   selectedCustomerName = signal<string | null>(null);
@@ -599,7 +615,7 @@ export class OrderCreateComponent implements OnInit {
     this.closeAllPopovers();
     this.showCustomerSearch.set(!currentState);
     if (this.showCustomerSearch()) {
-      setTimeout(() => this.customerSearchInput?.nativeElement.focus(), 0);
+      setTimeout(() => this.customerSearchInput()?.nativeElement.focus(), 0);
     }
   }
 
@@ -611,7 +627,7 @@ export class OrderCreateComponent implements OnInit {
     if (this.showProductResults()) {
       this.productSearchQuery.set("");
       setTimeout(() => {
-        this.productSearchInput?.nativeElement.focus();
+        this.productSearchInput()?.nativeElement.focus();
         const container = document.querySelector(".max-h-\\[500px\\]");
         if (container) {
           container.scrollTo({
