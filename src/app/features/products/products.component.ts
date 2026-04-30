@@ -14,14 +14,14 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, SkeletonComponent],
   template: `
-    <div class="p-4 sm:p-8 max-w-7xl mx-auto">
+    <div class="p-3 sm:p-5 max-w-7xl mx-auto">
       <!-- Header Section -->
       <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
+        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5"
       >
         <div>
           <h2
-            class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
+            class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
           >
             Products Hub
           </h2>
@@ -33,7 +33,7 @@ import {
           class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto"
         >
           <div
-            class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm w-full sm:w-auto"
+            class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 w-full sm:w-auto"
           >
             <div class="px-4 py-2 text-center">
               <p
@@ -47,7 +47,7 @@ import {
             </div>
           </div>
           <button
-            class="w-full sm:w-auto px-6 py-3.5 bg-primary text-white rounded-2xl font-black text-[11px] hover:bg-primary-hover transition-all shadow-xl shadow-primary/20 uppercase tracking-[0.15em] flex items-center justify-center gap-3 group"
+            class="w-full sm:w-auto px-6 py-3.5 bg-primary text-white rounded-2xl font-black text-[11px] hover:bg-primary-hover transition-all uppercase tracking-[0.15em] flex items-center justify-center gap-3 group"
           >
             <svg
               class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"
@@ -68,11 +68,11 @@ import {
       </div>
 
       <!-- Filters & Controls Bar -->
-      <div class="mb-12">
-        <div class="flex flex-col lg:flex-row justify-between items-end gap-8">
+      <div class="mb-6">
+        <div class="flex flex-col lg:flex-row justify-between items-end gap-5">
           <!-- Search & Category -->
           <div
-            class="flex flex-col sm:flex-row items-end gap-8 w-full lg:w-auto"
+            class="flex flex-col sm:flex-row items-end gap-5 w-full lg:w-auto"
           >
             <!-- Search Input -->
             <div class="floating-input-group w-full sm:w-72">
@@ -135,7 +135,7 @@ import {
               <!-- Dropdown Menu -->
               <div
                 *ngIf="categoryMenuOpen()"
-                class="absolute left-0 right-0 mt-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/[0.1] rounded-xl shadow-2xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
+                class="absolute left-0 right-0 mt-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/[0.1] rounded-xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
               >
                 <div
                   *ngFor="let cat of categories"
@@ -223,13 +223,13 @@ import {
       </div>
 
       <!-- Content Area: Skeleton OR Grid -->
-      <div *ngIf="isLoading()" class="mt-8">
+      <div *ngIf="isLoading()" class="mt-5">
         <div
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
         >
           <div
             *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8]"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-3xl p-6 space-y-4"
+            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 space-y-3"
           >
             <lib-skeleton
               width="100%"
@@ -246,19 +246,19 @@ import {
         </div>
       </div>
 
-      <div *ngIf="!isLoading()" class="mt-8 animate-fade-in">
+      <div *ngIf="!isLoading()" class="mt-5 animate-fade-in">
         <!-- Grid View -->
         <div
           *ngIf="viewType() === 'grid'"
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-fade-in"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in"
         >
           <div
             *ngFor="let product of paginatedProducts()"
             [routerLink]="['/inventory/products', product.id]"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-5 hover:border-primary/50 transition-all group shadow-sm hover:shadow-xl hover:shadow-primary/5 cursor-pointer"
+            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-xl p-3.5 hover:border-primary/50 transition-all group hover:shadow-sm cursor-pointer"
           >
             <div
-              class="w-full aspect-square bg-slate-50 dark:bg-white/5 rounded-xl mb-4 overflow-hidden relative"
+              class="w-full aspect-square bg-slate-50 dark:bg-white/5 rounded-lg mb-3 overflow-hidden relative"
             >
               <div
                 class="absolute inset-0 flex items-center justify-center text-slate-200 dark:text-white/5"
@@ -291,12 +291,12 @@ import {
               {{ product.name }}
             </h3>
             <p
-              class="text-xs text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 leading-relaxed"
+              class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed"
             >
               {{ product.description }}
             </p>
             <div
-              class="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-white/5"
+              class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5"
             >
               <div class="flex flex-col">
                 <span class="text-lg font-black text-primary leading-none">{{
@@ -317,10 +317,10 @@ import {
         </div>
 
         <!-- List View -->
-        <div *ngIf="viewType() === 'list'" class="space-y-4 animate-fade-in">
+        <div *ngIf="viewType() === 'list'" class="space-y-3 animate-fade-in">
           <div
             *ngFor="let product of paginatedProducts()"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 flex items-center gap-6 hover:border-primary/50 transition-all shadow-sm"
+            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-xl p-3 flex items-center gap-4 hover:border-primary/50 transition-all shadow-sm"
           >
             <div
               class="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-xl flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5"
@@ -370,9 +370,9 @@ import {
         <!-- Pagination Bar -->
         <div
           *ngIf="allFilteredProducts().length > 0"
-          class="mt-10 px-6 py-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08] rounded-2xl flex flex-col lg:flex-row items-center justify-between gap-6 shadow-sm"
+          class="mt-6 px-4 py-3.5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08] rounded-xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm"
         >
-          <div class="flex flex-wrap items-center gap-6">
+          <div class="flex flex-wrap items-center gap-4">
             <!-- Count Display -->
             <div class="flex items-center gap-3">
               <span
@@ -380,7 +380,7 @@ import {
                 >Showing</span
               >
               <div
-                class="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm"
+                class="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10"
               >
                 <span class="text-xs font-black text-primary">{{
                   paginatedProducts().length
@@ -436,7 +436,7 @@ import {
             <button
               [disabled]="currentPage() === 1"
               (click)="setPage(currentPage() - 1)"
-              class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all shadow-sm"
+              class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
             >
               <svg
                 class="w-4 h-4"
@@ -471,7 +471,7 @@ import {
             <button
               [disabled]="currentPage() === totalPages()"
               (click)="setPage(currentPage() + 1)"
-              class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all shadow-sm"
+              class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
             >
               <svg
                 class="w-4 h-4"

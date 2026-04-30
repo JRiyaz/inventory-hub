@@ -23,10 +23,10 @@ import {
     SkeletonComponent,
   ],
   template: `
-    <div class="p-4 sm:p-8 max-w-5xl mx-auto animate-fade-in">
+    <div class="p-3 sm:p-5 max-w-5xl mx-auto animate-fade-in">
       <!-- Breadcrumbs -->
       <nav
-        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8"
+        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-5"
       >
         <a
           routerLink="/inventory/customers"
@@ -52,7 +52,7 @@ import {
       <div *ngIf="isLoading()">
         <!-- Skeleton Card -->
         <div
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl dark:shadow-none mb-12"
+          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden mb-8"
         >
           <div class="flex flex-col lg:flex-row">
             <div
@@ -83,7 +83,7 @@ import {
                 ></lib-skeleton>
               </div>
             </div>
-            <div class="flex-1 p-8 sm:p-12 space-y-10">
+            <div class="flex-1 p-6 sm:p-8 space-y-6">
               <div class="flex justify-between items-start">
                 <lib-skeleton width="200px" height="2rem"></lib-skeleton>
                 <lib-skeleton
@@ -110,15 +110,15 @@ import {
       <div *ngIf="!isLoading()">
         <div
           *ngIf="customer()"
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl dark:shadow-none mb-12"
+          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden mb-8"
         >
           <div class="flex flex-col lg:flex-row">
             <!-- Left: Profile Info -->
             <div
-              class="w-full lg:w-1/3 bg-slate-50 dark:bg-white/[0.02] p-8 flex flex-col items-center border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/[0.08]"
+              class="w-full lg:w-1/3 bg-slate-50 dark:bg-white/[0.02] p-6 flex flex-col items-center border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/[0.08]"
             >
               <div
-                class="w-32 h-32 bg-primary/10 rounded-3xl flex items-center justify-center text-primary text-4xl font-black mb-6"
+                class="w-24 h-24 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-3xl font-black mb-4"
               >
                 {{ customer()?.name?.charAt(0) }}
               </div>
@@ -133,9 +133,9 @@ import {
                 {{ customer()?.company }}
               </p>
 
-              <div class="mt-8 w-full space-y-4">
+              <div class="mt-5 w-full space-y-3">
                 <div
-                  class="p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm"
+                  class="p-3 bg-white dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10 shadow-sm"
                 >
                   <span
                     class="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1"
@@ -151,7 +151,7 @@ import {
                   >
                 </div>
                 <div
-                  class="p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm"
+                  class="p-3 bg-white dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10 shadow-sm"
                 >
                   <span
                     class="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-1"
@@ -165,8 +165,8 @@ import {
             </div>
 
             <!-- Right: Detailed Info / Edit -->
-            <div class="flex-1 p-8 sm:p-12">
-              <div class="flex justify-between items-start mb-10">
+            <div class="flex-1 p-6 sm:p-8">
+              <div class="flex justify-between items-start mb-6">
                 <div>
                   <h2
                     class="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight"
@@ -205,7 +205,7 @@ import {
                 </button>
               </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <!-- Contact Name -->
                 <div class="space-y-2">
                   <label
@@ -315,11 +315,11 @@ import {
               <!-- Save Changes -->
               <div
                 *ngIf="isEditing()"
-                class="mt-10 pt-8 border-t border-slate-100 dark:border-white/[0.05]"
+                class="mt-6 pt-5 border-t border-slate-100 dark:border-white/[0.05]"
               >
                 <button
                   (click)="saveChanges()"
-                  class="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                  class="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all"
                 >
                   Save Customer Profile
                 </button>
@@ -366,7 +366,7 @@ import {
             <div
               *ngFor="let order of relatedOrders()"
               [routerLink]="['/inventory/orders', order.id]"
-              class="group bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between shadow-sm hover:shadow-xl hover:shadow-primary/5"
+              class="group bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl px-4 py-2 hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between hover:shadow-sm"
             >
               <div class="flex items-center gap-6">
                 <div

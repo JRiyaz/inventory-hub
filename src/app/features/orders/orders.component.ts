@@ -14,14 +14,14 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, SkeletonComponent],
   template: `
-    <div class="p-4 sm:p-8 max-w-7xl mx-auto">
+    <div class="p-3 sm:p-5 max-w-7xl mx-auto">
       <!-- Header Section -->
       <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
+        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5"
       >
         <div>
           <h2
-            class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
+            class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
           >
             Order Tracking
           </h2>
@@ -33,7 +33,7 @@ import {
           class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto"
         >
           <div
-            class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm w-full sm:w-auto"
+            class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 w-full sm:w-auto"
           >
             <div
               class="px-4 py-2 text-center border-r border-slate-100 dark:border-white/5 flex-1 sm:flex-none"
@@ -60,7 +60,7 @@ import {
           </div>
           <button
             routerLink="create"
-            class="w-full sm:w-auto px-6 py-3.5 bg-primary text-white rounded-2xl font-black text-[11px] hover:bg-primary-hover transition-all shadow-xl shadow-primary/20 uppercase tracking-[0.15em] flex items-center justify-center gap-3 group"
+            class="w-full sm:w-auto px-4 py-2.5 bg-primary text-white rounded-xl font-black text-[11px] hover:bg-primary-hover transition-all uppercase tracking-[0.15em] flex items-center justify-center gap-2 group"
           >
             <svg
               class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"
@@ -81,12 +81,12 @@ import {
       </div>
 
       <!-- Filters & Controls Bar -->
-      <div class="mb-8">
+      <div class="mb-5">
         <div
-          class="flex flex-col lg:flex-row justify-between items-end gap-6 bg-white dark:bg-white/[0.02] p-6 rounded-3xl border border-slate-200 dark:border-white/[0.08] shadow-sm"
+          class="flex flex-col lg:flex-row justify-between items-end gap-4 bg-white dark:bg-white/[0.02] p-4 rounded-2xl border border-slate-200 dark:border-white/[0.08]"
         >
           <div
-            class="flex flex-col sm:flex-row items-end gap-6 w-full lg:w-auto"
+            class="flex flex-col sm:flex-row items-end gap-4 w-full lg:w-auto"
           >
             <!-- Search Input -->
             <div class="floating-input-group w-full sm:w-72">
@@ -149,7 +149,7 @@ import {
               <!-- Dropdown Menu -->
               <div
                 *ngIf="statusMenuOpen()"
-                class="absolute left-0 right-0 mt-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/[0.1] rounded-xl shadow-2xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
+                class="absolute left-0 right-0 mt-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/[0.1] rounded-xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
               >
                 <div
                   *ngFor="let status of statuses"
@@ -168,9 +168,9 @@ import {
       </div>
 
       <!-- Content Area: Skeleton OR Table -->
-      <div *ngIf="isLoading()" class="mt-8">
+      <div *ngIf="isLoading()" class="mt-5">
         <div
-          class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-3xl overflow-hidden p-6 space-y-6"
+          class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden p-4 space-y-4"
         >
           <div
             class="flex gap-4 border-b border-slate-100 dark:border-white/5 pb-4"
@@ -200,10 +200,10 @@ import {
         </div>
       </div>
 
-      <div *ngIf="!isLoading()" class="mt-8 animate-fade-in">
+      <div *ngIf="!isLoading()" class="mt-5 animate-fade-in">
         <!-- Table Section -->
         <div
-          class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-sm animate-fade-in"
+          class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in"
         >
           <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-left border-collapse min-w-[800px]">
@@ -213,7 +213,7 @@ import {
                 >
                   <th
                     (click)="toggleSort('id')"
-                    class="px-6 py-4 cursor-pointer group"
+                    class="px-4 py-3 cursor-pointer group"
                   >
                     <div class="flex items-center gap-2">
                       <span
@@ -239,7 +239,7 @@ import {
                   </th>
                   <th
                     (click)="toggleSort('customer')"
-                    class="px-6 py-4 cursor-pointer group"
+                    class="px-4 py-3 cursor-pointer group"
                   >
                     <div class="flex items-center gap-2">
                       <span
@@ -293,7 +293,7 @@ import {
                   </th>
                   <th
                     (click)="toggleSort('amount')"
-                    class="px-6 py-4 text-right cursor-pointer group"
+                    class="px-4 py-3 text-right cursor-pointer group"
                   >
                     <div class="flex items-center justify-end gap-2">
                       <span
@@ -323,7 +323,7 @@ import {
               <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04]">
                 <tr
                   *ngFor="let order of paginatedOrders()"
-                  class="border-b border-slate-50 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-all group"
+                  class="border-b border-slate-50 dark:border-white/[0.04] hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-all group hover:shadow-sm"
                 >
                   <td class="px-6 py-4">
                     <a
@@ -393,9 +393,9 @@ import {
           <!-- Pagination Bar -->
           <div
             *ngIf="allFilteredOrders().length > 0"
-            class="px-6 py-5 bg-slate-50/50 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-6"
+            class="px-4 py-3.5 bg-slate-50/50 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4"
           >
-            <div class="flex flex-wrap items-center gap-6">
+            <div class="flex flex-wrap items-center gap-4">
               <!-- Count Display -->
               <div class="flex items-center gap-3">
                 <span
@@ -403,7 +403,7 @@ import {
                   >Showing</span
                 >
                 <div
-                  class="flex items-center gap-1.5 bg-white dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10 shadow-sm"
+                  class="flex items-center gap-1.5 bg-white dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10"
                 >
                   <span class="text-xs font-black text-primary">{{
                     paginatedOrders().length
@@ -460,7 +460,7 @@ import {
               <button
                 [disabled]="currentPage() === 1"
                 (click)="setPage(currentPage() - 1)"
-                class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all shadow-sm"
+                class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
               >
                 <svg
                   class="w-4 h-4"
@@ -497,7 +497,7 @@ import {
               <button
                 [disabled]="currentPage() === totalPages()"
                 (click)="setPage(currentPage() + 1)"
-                class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all shadow-sm"
+                class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
               >
                 <svg
                   class="w-4 h-4"

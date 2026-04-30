@@ -23,10 +23,10 @@ import {
     SkeletonComponent,
   ],
   template: `
-    <div class="p-4 sm:p-8 max-w-5xl mx-auto animate-fade-in">
+    <div class="p-3 sm:p-5 max-w-5xl mx-auto animate-fade-in">
       <!-- Breadcrumbs -->
       <nav
-        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8"
+        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-5"
       >
         <a
           routerLink="/inventory/products"
@@ -52,7 +52,7 @@ import {
       <div *ngIf="isLoading()">
         <!-- Skeleton Card -->
         <div
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl dark:shadow-none"
+          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden"
         >
           <div class="flex flex-col lg:flex-row">
             <!-- Skeleton Image Area -->
@@ -66,7 +66,7 @@ import {
               ></lib-skeleton>
             </div>
             <!-- Skeleton Info Area -->
-            <div class="flex-1 p-8 sm:p-12 space-y-12">
+            <div class="flex-1 p-6 sm:p-8 space-y-8">
               <div class="space-y-4">
                 <lib-skeleton
                   width="120px"
@@ -99,7 +99,7 @@ import {
       <div *ngIf="!isLoading()">
         <div
           *ngIf="product()"
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl dark:shadow-none"
+          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden"
         >
           <div class="flex flex-col lg:flex-row">
             <!-- Left: Image/Visual -->
@@ -108,7 +108,7 @@ import {
             >
               <div class="relative group">
                 <div
-                  class="w-64 h-64 bg-white dark:bg-white/5 rounded-3xl shadow-inner flex items-center justify-center text-slate-200 dark:text-white/5 overflow-hidden"
+                  class="w-64 h-64 bg-white dark:bg-white/5 rounded-3xl flex items-center justify-center text-slate-200 dark:text-white/5 overflow-hidden"
                 >
                   <svg
                     class="w-32 h-32"
@@ -131,8 +131,8 @@ import {
             </div>
 
             <!-- Right: Details -->
-            <div class="flex-1 p-8 sm:p-12">
-              <div class="flex justify-between items-start mb-8">
+            <div class="flex-1 p-6 sm:p-8">
+              <div class="flex justify-between items-start mb-5">
                 <div>
                   <span
                     *ngIf="!isEditing()"
@@ -154,7 +154,7 @@ import {
                   </div>
                   <h1
                     *ngIf="!isEditing()"
-                    class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none"
+                    class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none"
                   >
                     {{ product()?.name }}
                   </h1>
@@ -200,7 +200,7 @@ import {
                 </button>
               </div>
 
-              <div class="space-y-8">
+              <div class="space-y-6">
                 <!-- Description -->
                 <div>
                   <label
@@ -227,7 +227,7 @@ import {
                 </div>
 
                 <!-- Metrics -->
-                <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-2 gap-5">
                   <div>
                     <label
                       class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block"
@@ -235,7 +235,7 @@ import {
                     >
                     <div
                       *ngIf="!isEditing()"
-                      class="text-2xl font-black text-primary"
+                      class="text-xl font-black text-primary"
                     >
                       {{ product()?.price | currency }}
                     </div>
@@ -259,7 +259,7 @@ import {
                     >
                     <div *ngIf="!isEditing()" class="flex items-center gap-2">
                       <span
-                        class="text-2xl font-black text-slate-900 dark:text-white"
+                        class="text-xl font-black text-slate-900 dark:text-white"
                         >{{ product()?.stock }}</span
                       >
                       <span
@@ -307,7 +307,7 @@ import {
                 >
                   <button
                     (click)="saveChanges()"
-                    class="w-full sm:w-auto px-8 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                    class="w-full sm:w-auto px-4 py-2 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all"
                   >
                     Save Changes
                   </button>
@@ -318,7 +318,7 @@ import {
         </div>
 
         <!-- Related Orders Section (Lazy/Dynamic) -->
-        <div class="mt-12 animate-fade-in">
+        <div class="mt-8 animate-fade-in">
           <div class="flex items-center justify-between mb-6">
             <div>
               <h2
@@ -355,7 +355,7 @@ import {
             <div
               *ngFor="let order of relatedOrders()"
               [routerLink]="['/inventory/orders', order.id]"
-              class="group bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between shadow-sm hover:shadow-xl hover:shadow-primary/5"
+              class="group bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl px-4 py-2 hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between hover:shadow-sm"
             >
               <div class="flex items-center gap-6">
                 <div

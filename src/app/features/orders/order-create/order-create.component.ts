@@ -24,12 +24,12 @@ import {
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div
-      class="p-4 sm:p-8 max-w-6xl mx-auto animate-fade-in"
+      class="p-3 sm:p-5 max-w-6xl mx-auto animate-fade-in"
       (click)="closeAllPopovers()"
     >
       <!-- Breadcrumbs -->
       <nav
-        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8"
+        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-5"
       >
         <a
           routerLink="/inventory/orders"
@@ -55,7 +55,7 @@ import {
       <div class="space-y-4">
         <!-- Top Dashboard Header (Summary + Customer + Priority) -->
         <div
-          class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 shadow-lg border-b-4 border-b-primary sticky top-0 z-[100] animate-fade-in"
+          class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 border-b-4 border-b-primary sticky top-0 z-[100] animate-fade-in"
         >
           <div
             class="flex flex-col xl:flex-row items-center justify-between gap-6"
@@ -119,7 +119,7 @@ import {
               <!-- Customer Search Popover -->
               <div
                 *ngIf="showCustomerSearch()"
-                class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl z-[300] p-3 animate-fade-in"
+                class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm z-[300] p-3 animate-fade-in"
               >
                 <div class="relative mb-3">
                   <input
@@ -229,7 +229,7 @@ import {
               <button
                 (click)="submitOrder()"
                 [disabled]="!canSubmit()"
-                class="w-full xl:w-56 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:scale-100 disabled:shadow-none"
+                class="w-full xl:w-56 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:scale-100"
               >
                 Create Order
               </button>
@@ -245,9 +245,9 @@ import {
 
         <!-- Dynamic Order Items List -->
         <div
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 shadow-sm relative"
+          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 relative"
         >
-          <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center justify-between mb-1">
             <h3
               class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight"
             >
@@ -260,7 +260,7 @@ import {
                 [(ngModel)]="scanInput"
                 (keyup.enter)="handleScan()"
                 placeholder="Scan..."
-                class="bg-slate-100 dark:bg-white/5 border-2 border-transparent focus:border-primary rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none transition-all pr-8 w-64 shadow-inner"
+                class="bg-slate-100 dark:bg-white/5 border-2 border-transparent focus:border-primary rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none transition-all pr-8 w-64"
               />
               <svg
                 class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"
@@ -286,7 +286,7 @@ import {
               <!-- Table Headers -->
               <div
                 *ngIf="orderItems().length > 0"
-                class="grid grid-cols-[40px_1fr_100px_100px_100px_40px] gap-2 px-4 py-3 border-b border-slate-100 dark:border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 sticky top-0 bg-white dark:bg-[#0f172a] z-20 shadow-sm"
+                class="grid grid-cols-[40px_1fr_100px_100px_100px_40px] gap-2 p-3 border-b border-slate-100 dark:border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 sticky top-0 bg-white dark:bg-[#0f172a] z-20 border-b-2 border-b-primary dark:border-primary/40"
               >
                 <span>#</span>
                 <span>Name</span>
@@ -384,7 +384,7 @@ import {
               >
                 <div
                   (click)="toggleProductSearch()"
-                  class="w-full bg-slate-50 dark:bg-white/[0.02] border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all shadow-sm"
+                  class="w-full bg-slate-50 dark:bg-white/[0.02] border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -431,7 +431,7 @@ import {
 
                 <div
                   *ngIf="showProductResults()"
-                  class="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl z-[300] p-4 animate-fade-in"
+                  class="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm z-[300] p-3 animate-fade-in"
                 >
                   <div class="relative mb-3">
                     <input

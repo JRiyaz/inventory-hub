@@ -14,14 +14,14 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, SkeletonComponent],
   template: `
-    <div class="p-4 sm:p-8 max-w-7xl mx-auto">
+    <div class="p-3 sm:p-5 max-w-7xl mx-auto">
       <!-- Header Section -->
       <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
+        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5"
       >
         <div>
           <h2
-            class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
+            class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
           >
             Customer Directory
           </h2>
@@ -30,7 +30,7 @@ import {
           </p>
         </div>
         <div
-          class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm"
+          class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10"
         >
           <div class="px-4 py-2 text-center">
             <p
@@ -46,8 +46,8 @@ import {
       </div>
 
       <!-- Filters & Search -->
-      <div class="mb-12">
-        <div class="flex flex-col sm:flex-row items-end gap-8">
+      <div class="mb-6">
+        <div class="flex flex-col sm:flex-row items-end gap-5">
           <div class="floating-input-group w-full sm:w-72">
             <input
               type="text"
@@ -116,7 +116,7 @@ import {
         >
           <div
             *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8]"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-3xl p-6 space-y-6"
+            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 space-y-4"
           >
             <div class="flex items-center gap-4">
               <lib-skeleton
@@ -154,11 +154,11 @@ import {
           <div
             *ngFor="let customer of filteredCustomers()"
             [routerLink]="['/inventory/customers', customer.id]"
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-3xl p-6 hover:border-primary/50 transition-all group shadow-sm hover:shadow-xl hover:shadow-primary/5 cursor-pointer"
+            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 hover:border-primary/50 transition-all group hover:shadow-sm cursor-pointer"
           >
-            <div class="flex items-center gap-4 mb-6">
+            <div class="flex items-center gap-3 mb-4">
               <div
-                class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors text-xl font-black"
+                class="w-10 h-10 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors text-lg font-black"
               >
                 {{ customer.name.charAt(0) }}
               </div>
@@ -176,7 +176,7 @@ import {
               </div>
             </div>
 
-            <div class="space-y-3 mb-6">
+            <div class="space-y-2 mb-4">
               <div class="flex items-center gap-3 text-xs text-slate-500">
                 <svg
                   class="w-3.5 h-3.5"

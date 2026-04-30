@@ -25,10 +25,10 @@ import {
     SkeletonComponent,
   ],
   template: `
-    <div class="p-4 sm:p-8 max-w-5xl mx-auto animate-fade-in">
+    <div class="p-3 sm:p-5 max-w-5xl mx-auto animate-fade-in">
       <!-- Breadcrumbs -->
       <nav
-        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-8"
+        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-5"
       >
         <a
           routerLink="/inventory/orders"
@@ -54,7 +54,7 @@ import {
       <div *ngIf="isLoading()">
         <!-- Skeleton Card -->
         <div
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-3xl p-8 space-y-12"
+          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 space-y-8"
         >
           <div
             class="flex justify-between items-center pb-8 border-b border-slate-100 dark:border-white/5"
@@ -103,11 +103,11 @@ import {
       <div *ngIf="!isLoading()">
         <div
           *ngIf="order()"
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl dark:shadow-none"
+          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden"
         >
           <!-- Status Header -->
           <div
-            class="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.08] p-8 flex flex-col sm:flex-row justify-between items-center gap-6"
+            class="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.08] p-4 flex flex-col sm:flex-row justify-between items-center gap-4"
           >
             <div class="flex items-center gap-4">
               <div
@@ -129,7 +129,7 @@ import {
               </div>
               <div>
                 <h2
-                  class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
+                  class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
                 >
                   Order #{{ order()?.id }}
                 </h2>
@@ -169,10 +169,10 @@ import {
             </div>
           </div>
 
-          <div class="p-8 sm:p-12">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div class="p-5 sm:p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <!-- Left: Info -->
-              <div class="lg:col-span-2 space-y-10">
+              <div class="lg:col-span-2 space-y-6">
                 <!-- Customer Section -->
                 <section>
                   <div class="flex justify-between items-center mb-4">
@@ -342,7 +342,7 @@ import {
                     >Order Summary</label
                   >
 
-                  <div class="space-y-4 mb-8">
+                  <div class="space-y-3 mb-6">
                     <div class="flex justify-between text-sm">
                       <span class="text-slate-500">Subtotal</span>
                       <span class="font-bold text-slate-900 dark:text-white">
@@ -398,7 +398,7 @@ import {
 
                     <button
                       (click)="saveChanges()"
-                      class="w-full py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                      class="w-full py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all"
                     >
                       Update Order
                     </button>
