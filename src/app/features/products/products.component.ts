@@ -3,16 +3,24 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import {
-  SearchService,
   InventoryDataService,
   Product,
   SkeletonComponent,
+  CustomDropdownComponent,
+  DropdownOption,
+  SearchService,
 } from "ui-shared";
 
 @Component({
   selector: "app-products",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SkeletonComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    SkeletonComponent,
+    CustomDropdownComponent,
+  ],
   template: `
     <div class="p-3 sm:p-5 max-w-7xl mx-auto">
       <!-- Header Section -->
@@ -110,68 +118,13 @@ import {
               </svg>
             </div>
 
-            <!-- Modern Custom Category Dropdown -->
-            <div class="relative w-full sm:w-64 group">
-              <label
-                class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-2 block px-1"
-                >Filter Category</label
-              >
-              <div
-                (click)="categoryMenuOpen.set(!categoryMenuOpen())"
-                class="flex items-center justify-between w-full bg-slate-50 dark:bg-white/[0.03] border-b-2 border-slate-200 dark:border-white/[0.1] py-2.5 px-1 cursor-pointer group hover:border-primary transition-all"
-              >
-                <span
-                  class="text-sm font-bold text-slate-900 dark:text-white"
-                  >{{ selectedCategory() }}</span
-                >
-                <svg
-                  class="w-4 h-4 text-slate-400 group-hover:text-primary transition-all duration-300"
-                  [class.rotate-180]="categoryMenuOpen()"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
-              </div>
-
-              <!-- Dropdown Menu -->
-              @if (categoryMenuOpen()) {
-                <div
-                  class="absolute left-0 right-0 mt-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/[0.1] rounded-xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
-                >
-                  @for (cat of categories; track cat) {
-                    <div
-                      (click)="selectCategory(cat)"
-                      [class.bg-primary/10]="selectedCategory() === cat"
-                      [class.text-primary]="selectedCategory() === cat"
-                      class="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] hover:text-primary cursor-pointer transition-all flex items-center justify-between group/item"
-                    >
-                      {{ cat }}
-                      @if (selectedCategory() === cat) {
-                        <svg
-                          class="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M5 13l4 4L19 7"
-                          ></path>
-                        </svg>
-                      }
-                    </div>
-                  }
-                </div>
-              }
+            <div class="w-full sm:w-64">
+              <lib-custom-dropdown
+                [options]="categoryOptions"
+                [value]="selectedCategory()"
+                [placeholder]="'Filter Category'"
+                (valueChange)="selectCategory($event)"
+              ></lib-custom-dropdown>
             </div>
           </div>
 
@@ -571,6 +524,10 @@ export class ProductsComponent implements OnInit {
   pageSize = signal(8);
 
   categories = ["All", "Electronics", "Industrial", "Raw Materials"];
+  categoryOptions: DropdownOption[] = this.categories.map((c) => ({
+    value: c,
+    label: c,
+  }));
 
   products = this.dataService.products;
 

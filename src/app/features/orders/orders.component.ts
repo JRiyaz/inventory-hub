@@ -3,16 +3,24 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import {
-  SearchService,
   InventoryDataService,
   Order,
   SkeletonComponent,
+  CustomDropdownComponent,
+  DropdownOption,
+  SearchService,
 } from "ui-shared";
 
 @Component({
   selector: "app-orders",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, SkeletonComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    SkeletonComponent,
+    CustomDropdownComponent,
+  ],
   template: `
     <div class="p-3 sm:p-5 max-w-7xl mx-auto">
       <!-- Header Section -->
@@ -132,54 +140,13 @@ import {
               </svg>
             </div>
 
-            <!-- Status Dropdown -->
-            <div class="relative w-full sm:w-64 group">
-              <label
-                class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-2 block px-1"
-                >Order Status</label
-              >
-              <div
-                (click)="statusMenuOpen.set(!statusMenuOpen())"
-                class="flex items-center justify-between w-full bg-slate-50 dark:bg-white/[0.03] border-b-2 border-slate-200 dark:border-white/[0.1] py-2.5 px-1 cursor-pointer group hover:border-primary transition-all"
-              >
-                <span
-                  class="text-sm font-bold text-slate-900 dark:text-white"
-                  >{{ selectedStatus() }}</span
-                >
-                <svg
-                  class="w-4 h-4 text-slate-400 group-hover:text-primary transition-all duration-300"
-                  [class.rotate-180]="statusMenuOpen()"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
-              </div>
-
-              <!-- Dropdown Menu -->
-              @if (statusMenuOpen()) {
-                <div
-                  class="absolute left-0 right-0 mt-2 card-premium z-50 overflow-hidden animate-dropdown-in shadow-xl"
-                >
-                  @for (status of statuses; track status) {
-                    <div
-                      (click)="
-                        selectedStatus.set(status); statusMenuOpen.set(false)
-                      "
-                      [class.bg-primary/10]="selectedStatus() === status"
-                      class="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] hover:text-primary cursor-pointer transition-all"
-                    >
-                      {{ status }}
-                    </div>
-                  }
-                </div>
-              }
+            <div class="w-full sm:w-64">
+              <lib-custom-dropdown
+                [options]="statusOptions"
+                [value]="selectedStatus()"
+                [placeholder]="'Order Status'"
+                (valueChange)="selectStatus($event)"
+              ></lib-custom-dropdown>
             </div>
           </div>
         </div>
@@ -597,6 +564,10 @@ export class OrdersComponent implements OnInit {
     "Completed",
     "Cancelled",
   ];
+  statusOptions: DropdownOption[] = this.statuses.map((s) => ({
+    value: s,
+    label: s,
+  }));
 
   orders = this.dataService.orders;
 

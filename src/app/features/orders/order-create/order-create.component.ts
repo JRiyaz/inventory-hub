@@ -6,6 +6,8 @@ import {
   OnInit,
   viewChild,
   ElementRef,
+  HostListener,
+  effect,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -16,6 +18,10 @@ import {
   Order,
   OrderItem,
   Customer,
+  SkeletonComponent,
+  CustomDropdownComponent,
+  DropdownOption,
+  SearchService,
 } from "ui-shared";
 
 @Component({
@@ -62,13 +68,13 @@ import {
           >
             <!-- Customer Selection (Most Prominent) -->
             <div
-              class="w-full xl:w-1/3 relative"
+              class="w-full xl:w-1/3 relative group"
               (click)="$event.stopPropagation()"
             >
-              <p class="label-premium">Selected Customer</p>
-              <div
+              <button
+                type="button"
                 (click)="toggleCustomerSearch()"
-                class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-primary transition-all group"
+                class="w-full bg-transparent border-b-2 border-slate-200 dark:border-white/10 py-2.5 px-1 flex items-center justify-between cursor-pointer hover:border-primary transition-all group/btn outline-none focus:border-primary"
               >
                 <div class="flex items-center gap-3 truncate">
                   <div
@@ -94,7 +100,7 @@ import {
                     [class.text-slate-900]="selectedCustomerId()"
                     [class.dark:text-white]="selectedCustomerId()"
                   >
-                    {{ selectedCustomerName() || "Choose Customer..." }}
+                    {{ selectedCustomerName() || "" }}
                   </span>
                 </div>
                 <svg
@@ -110,7 +116,22 @@ import {
                     d="M19 9l-7 7-7-7"
                   />
                 </svg>
-              </div>
+              </button>
+
+              <label
+                class="absolute left-1 transition-all duration-200 pointer-events-none uppercase font-black tracking-widest text-slate-400"
+                [class.text-[10px]]="
+                  selectedCustomerId() || showCustomerSearch()
+                "
+                [class.top-[-12px]]="
+                  selectedCustomerId() || showCustomerSearch()
+                "
+                [class.text-primary]="showCustomerSearch()"
+                [class.text-xs]="!selectedCustomerId() && !showCustomerSearch()"
+                [class.top-2.5]="!selectedCustomerId() && !showCustomerSearch()"
+              >
+                Selected Customer
+              </label>
 
               <!-- Customer Search Popover -->
               <!-- Customer Search Popover -->
@@ -124,6 +145,7 @@ import {
                       type="text"
                       [ngModel]="customerSearchQuery()"
                       (ngModelChange)="customerSearchQuery.set($event)"
+                      (keydown)="handleCustomerKeydown($event)"
                       placeholder="Search customer..."
                       class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary transition-all pr-8"
                     />
@@ -151,13 +173,19 @@ import {
                   <div
                     class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
                   >
-                    @for (c of filteredCustomerOptions(); track c.id) {
+                    @for (
+                      c of filteredCustomerOptions();
+                      track c.id;
+                      let i = $index
+                    ) {
                       <button
                         (click)="onCustomerSelect(c)"
-                        class="w-full text-left px-3 py-2 rounded-lg hover:bg-primary/10 group transition-all"
+                        [class.bg-primary/10]="activeCustomerIndex() === i"
+                        class="w-full text-left px-3 py-2 rounded-lg hover:bg-primary/10 group transition-all outline-none"
                       >
                         <p
                           class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary"
+                          [class.text-primary]="activeCustomerIndex() === i"
                         >
                           {{ c.name }}
                         </p>
@@ -253,9 +281,17 @@ import {
                 type="text"
                 [(ngModel)]="scanInput"
                 (keyup.enter)="handleScan()"
-                placeholder="Scan..."
-                class="bg-slate-100 dark:bg-white/5 border-2 border-transparent focus:border-primary rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 dark:text-white outline-none transition-all pr-8 w-64"
+                class="bg-transparent border-b-2 border-slate-200 dark:border-white/10 focus:border-primary py-1.5 px-1 text-xs font-bold text-slate-900 dark:text-white outline-none transition-all pr-8 w-64"
               />
+              <label
+                class="absolute left-1 transition-all duration-200 pointer-events-none uppercase font-black tracking-widest text-slate-400"
+                [class.text-[8px]]="scanInput"
+                [class.top-[-10px]]="scanInput"
+                [class.text-xs]="!scanInput"
+                [class.top-1.5]="!scanInput"
+              >
+                Scan Product ID
+              </label>
               <svg
                 class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400"
                 fill="none"
@@ -382,9 +418,10 @@ import {
                 class="relative group mt-2"
                 (click)="$event.stopPropagation()"
               >
-                <div
+                <button
+                  type="button"
                   (click)="toggleProductSearch()"
-                  class="w-full bg-slate-50 dark:bg-white/[0.02] border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all"
+                  class="w-full bg-slate-50/50 dark:bg-white/[0.02] border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-primary/50 transition-all outline-none focus:border-primary/50"
                 >
                   <div class="flex items-center gap-3">
                     <div
@@ -406,13 +443,13 @@ import {
                     </div>
                     <span
                       class="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight"
-                      >Add Product</span
+                      >Add Product Item</span
                     >
                   </div>
                   <div
                     class="flex items-center gap-2 text-primary font-black text-[9px] uppercase tracking-widest"
                   >
-                    <span>Search</span>
+                    <span>Click to Search</span>
                     <svg
                       class="w-3 h-3"
                       fill="none"
@@ -427,7 +464,7 @@ import {
                       />
                     </svg>
                   </div>
-                </div>
+                </button>
 
                 @if (showProductResults()) {
                   <div
@@ -439,6 +476,7 @@ import {
                         type="text"
                         [ngModel]="productSearchQuery()"
                         (ngModelChange)="productSearchQuery.set($event)"
+                        (keydown)="handleProductKeydown($event)"
                         placeholder="Search products..."
                         class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 dark:text-white outline-none focus:border-primary pl-9"
                       />
@@ -458,14 +496,20 @@ import {
                     <div
                       class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
                     >
-                      @for (p of filteredProductOptions(); track p.id) {
+                      @for (
+                        p of filteredProductOptions();
+                        track p.id;
+                        let i = $index
+                      ) {
                         <button
                           (click)="addItemToOrder(p)"
-                          class="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 hover:bg-primary/10 rounded-lg transition-all group"
+                          [class.bg-primary/10]="activeProductIndex() === i"
+                          class="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 hover:bg-primary/10 rounded-lg transition-all group outline-none"
                         >
                           <div class="text-left truncate mr-4">
                             <p
-                              class="text-xs font-bold text-slate-900 dark:text-white truncate"
+                              class="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-primary"
+                              [class.text-primary]="activeProductIndex() === i"
                             >
                               {{ p.name }}
                             </p>
@@ -530,6 +574,10 @@ export class OrderCreateComponent implements OnInit {
   customerSearchQuery = signal("");
   showProductResults = signal(false);
   showCustomerSearch = signal(false);
+  activeCustomerIndex = signal(0);
+  activeProductIndex = signal(0);
+
+  private eRef = inject(ElementRef);
 
   customerSearchInput = viewChild<ElementRef<HTMLInputElement>>(
     "customerSearchInput",
@@ -584,7 +632,86 @@ export class OrderCreateComponent implements OnInit {
     () => this.selectedCustomerId() !== null && this.orderItems().length > 0,
   );
 
+  constructor() {
+    effect(
+      () => {
+        this.customerSearchQuery();
+        this.activeCustomerIndex.set(0);
+      },
+      { allowSignalWrites: true },
+    );
+
+    effect(
+      () => {
+        this.productSearchQuery();
+        this.activeProductIndex.set(0);
+      },
+      { allowSignalWrites: true },
+    );
+  }
+
   ngOnInit(): void {}
+
+  @HostListener("document:click", ["$event"])
+  clickout(event: any) {
+    if (!this.eRef.nativeElement.contains(event.target)) {
+      this.closeAllPopovers();
+    }
+  }
+
+  handleCustomerKeydown(event: KeyboardEvent) {
+    if (this.showCustomerSearch()) {
+      const options = this.filteredCustomerOptions();
+      switch (event.key) {
+        case "ArrowDown":
+          event.preventDefault();
+          this.activeCustomerIndex.update((i) => (i + 1) % options.length);
+          break;
+        case "ArrowUp":
+          event.preventDefault();
+          this.activeCustomerIndex.update(
+            (i) => (i - 1 + options.length) % options.length,
+          );
+          break;
+        case "Enter":
+          event.preventDefault();
+          if (options[this.activeCustomerIndex()]) {
+            this.onCustomerSelect(options[this.activeCustomerIndex()]);
+          }
+          break;
+        case "Escape":
+          this.closeAllPopovers();
+          break;
+      }
+    }
+  }
+
+  handleProductKeydown(event: KeyboardEvent) {
+    if (this.showProductResults()) {
+      const options = this.filteredProductOptions();
+      switch (event.key) {
+        case "ArrowDown":
+          event.preventDefault();
+          this.activeProductIndex.update((i) => (i + 1) % options.length);
+          break;
+        case "ArrowUp":
+          event.preventDefault();
+          this.activeProductIndex.update(
+            (i) => (i - 1 + options.length) % options.length,
+          );
+          break;
+        case "Enter":
+          event.preventDefault();
+          if (options[this.activeProductIndex()]) {
+            this.addItemToOrder(options[this.activeProductIndex()]);
+          }
+          break;
+        case "Escape":
+          this.closeAllPopovers();
+          break;
+      }
+    }
+  }
 
   closeAllPopovers() {
     this.showCustomerSearch.set(false);
@@ -603,6 +730,7 @@ export class OrderCreateComponent implements OnInit {
     this.closeAllPopovers();
     this.showCustomerSearch.set(!currentState);
     if (this.showCustomerSearch()) {
+      this.activeCustomerIndex.set(0);
       setTimeout(() => this.customerSearchInput()?.nativeElement.focus(), 0);
     }
   }
@@ -614,6 +742,7 @@ export class OrderCreateComponent implements OnInit {
 
     if (this.showProductResults()) {
       this.productSearchQuery.set("");
+      this.activeProductIndex.set(0);
       setTimeout(() => {
         this.productSearchInput()?.nativeElement.focus();
         const container = document.querySelector(".max-h-\\[500px\\]");
