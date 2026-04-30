@@ -59,6 +59,7 @@ import {
             </div>
           </div>
           <button
+            routerLink="create"
             class="w-full sm:w-auto px-6 py-3.5 bg-primary text-white rounded-2xl font-black text-[11px] hover:bg-primary-hover transition-all shadow-xl shadow-primary/20 uppercase tracking-[0.15em] flex items-center justify-center gap-3 group"
           >
             <svg

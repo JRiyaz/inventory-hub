@@ -8,6 +8,14 @@ export const ORDERS_ROUTES: Routes = [
     data: { title: "Order Tracking" },
   },
   {
+    path: "create",
+    loadComponent: () =>
+      import("./order-create/order-create.component").then(
+        (m) => m.OrderCreateComponent,
+      ),
+    data: { title: "Create New Order" },
+  },
+  {
     path: ":id",
     loadComponent: () =>
       import("./order-detail/order-detail.component").then(
