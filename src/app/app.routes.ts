@@ -23,6 +23,13 @@ export const INVENTORY_ROUTES: Routes = [
             (m) => m.ORDERS_ROUTES,
           ),
       },
+      {
+        path: "customers",
+        loadChildren: () =>
+          import("./features/customers/customers.routes").then(
+            (m) => m.CUSTOMERS_ROUTES,
+          ),
+      },
     ],
   },
 ];

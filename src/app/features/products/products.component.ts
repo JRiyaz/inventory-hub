@@ -2,12 +2,7 @@ import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
-import { SearchService } from "ui-shared";
-
-import {
-  InventoryDataService,
-  Product,
-} from "../../core/services/inventory-data.service";
+import { SearchService, InventoryDataService, Product } from "ui-shared";
 
 @Component({
   selector: "app-products",
@@ -504,7 +499,7 @@ import {
   styles: [],
 })
 export class ProductsComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public dataService = inject(InventoryDataService);
   private searchService = inject(SearchService);
   viewType = signal<"grid" | "list">("grid");
   searchQuery = signal("");

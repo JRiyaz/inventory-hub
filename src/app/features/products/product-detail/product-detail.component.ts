@@ -3,15 +3,13 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
+  InventoryDataService,
+  Product,
+  Order,
   AuthStateService,
   CustomDropdownComponent,
   DropdownOption,
 } from "ui-shared";
-import {
-  InventoryDataService,
-  Product,
-  Order,
-} from "../../../core/services/inventory-data.service";
 
 @Component({
   selector: "app-product-detail",
@@ -363,7 +361,7 @@ import {
   `,
 })
 export class ProductDetailComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public dataService = inject(InventoryDataService);
   product = signal<Product | null>(null);
   isEditing = signal(false);
   showOrders = signal(false);

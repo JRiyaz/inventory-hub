@@ -3,16 +3,14 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
+  InventoryDataService,
+  Order,
+  OrderItem,
   AuthStateService,
   CustomDatePickerComponent,
   CustomDropdownComponent,
   DropdownOption,
 } from "ui-shared";
-import {
-  InventoryDataService,
-  Order,
-  OrderItem,
-} from "../../../core/services/inventory-data.service";
 
 @Component({
   selector: "app-order-detail",
@@ -143,11 +141,25 @@ import {
                   *ngIf="!isEditing()"
                   class="p-6 bg-slate-50 dark:bg-white/[0.02] rounded-2xl border border-slate-100 dark:border-white/[0.04]"
                 >
-                  <h3
-                    class="text-lg font-bold text-slate-900 dark:text-white mb-1"
+                  <a
+                    *ngIf="
+                      dataService.getCustomerIdByName(
+                        order()?.customer || ''
+                      ) as custId;
+                      else justName
+                    "
+                    [routerLink]="['/inventory/customers', custId]"
+                    class="text-lg font-bold text-slate-900 dark:text-white mb-1 hover:text-primary hover:underline cursor-pointer transition-colors block"
                   >
                     {{ order()?.customer }}
-                  </h3>
+                  </a>
+                  <ng-template #justName>
+                    <h3
+                      class="text-lg font-bold text-slate-900 dark:text-white mb-1"
+                    >
+                      {{ order()?.customer }}
+                    </h3>
+                  </ng-template>
                   <span
                     *ngIf="order()?.priority"
                     class="text-[9px] text-amber-500 font-black uppercase tracking-widest flex items-center gap-1"
@@ -396,7 +408,7 @@ import {
   `,
 })
 export class OrderDetailComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public dataService = inject(InventoryDataService);
   order = signal<Order | null>(null);
   isEditing = signal(false);
   editBuffer: any = {};

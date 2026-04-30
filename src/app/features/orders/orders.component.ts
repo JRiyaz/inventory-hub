@@ -2,12 +2,7 @@ import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
-import { SearchService } from "ui-shared";
-
-import {
-  InventoryDataService,
-  Order,
-} from "../../core/services/inventory-data.service";
+import { SearchService, InventoryDataService, Order } from "ui-shared";
 
 @Component({
   selector: "app-orders",
@@ -306,11 +301,25 @@ import {
                 </td>
                 <td class="px-6 py-4">
                   <div class="flex flex-col">
-                    <span
-                      class="text-sm font-bold text-slate-700 dark:text-slate-300"
+                    <a
+                      *ngIf="
+                        dataService.getCustomerIdByName(
+                          order.customer
+                        ) as custId;
+                        else justName
+                      "
+                      [routerLink]="['/inventory/customers', custId]"
+                      class="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-primary hover:underline cursor-pointer transition-colors"
                     >
                       {{ order.customer }}
-                    </span>
+                    </a>
+                    <ng-template #justName>
+                      <span
+                        class="text-sm font-bold text-slate-700 dark:text-slate-300"
+                      >
+                        {{ order.customer }}
+                      </span>
+                    </ng-template>
                     <span
                       *ngIf="order.priority"
                       class="text-[9px] text-amber-500 font-black uppercase tracking-widest mt-0.5"
@@ -508,7 +517,7 @@ import {
   styles: [],
 })
 export class OrdersComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public dataService = inject(InventoryDataService);
   private searchService = inject(SearchService);
   searchQuery = signal("");
   selectedStatus = signal("All Statuses");
