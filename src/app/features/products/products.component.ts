@@ -41,16 +41,24 @@ import {
               >
                 Total Stock
               </p>
-              <p class="text-lg font-black text-primary">
-                {{ isLoading() ? "..." : products().length }}
+              <p
+                class="text-lg font-black text-primary flex items-center justify-center min-h-[28px]"
+              >
+                @if (isLoading()) {
+                  <span class="dots-wave"
+                    ><span></span><span></span><span></span
+                  ></span>
+                } @else {
+                  {{ products().length }}
+                }
               </p>
             </div>
           </div>
           <button
-            class="w-full sm:w-auto px-6 py-3.5 bg-primary text-white rounded-2xl font-black text-[11px] hover:bg-primary-hover transition-all uppercase tracking-[0.15em] flex items-center justify-center gap-3 group"
+            class="btn-primary-premium w-full sm:w-auto !px-6 !py-3.5 flex items-center justify-center gap-2 group"
           >
             <svg
-              class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"
+              class="w-4 h-4 group-hover:rotate-45 transition-transform duration-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -62,7 +70,7 @@ import {
                 d="M12 4v16m8-8H4"
               ></path>
             </svg>
-            Add New Product
+            <span>Add New Product</span>
           </button>
         </div>
       </div>
@@ -236,7 +244,7 @@ import {
               @for (product of paginatedProducts(); track product.id) {
                 <div
                   [routerLink]="['/inventory/products', product.id]"
-                  class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-xl p-3.5 hover:border-primary/50 transition-all group hover:shadow-sm cursor-pointer"
+                  class="card-premium p-3.5 hover:border-primary/50 transition-all group hover:scale-[1.02] cursor-pointer"
                 >
                   <div
                     class="w-full aspect-square bg-slate-50 dark:bg-white/5 rounded-lg mb-3 overflow-hidden relative"
@@ -303,7 +311,8 @@ import {
             <div class="space-y-3 animate-fade-in">
               @for (product of paginatedProducts(); track product.id) {
                 <div
-                  class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-xl p-3 flex items-center gap-4 hover:border-primary/50 transition-all shadow-sm"
+                  class="card-premium p-3 flex items-center gap-4 hover:border-primary/50 transition-all shadow-sm group active:scale-[0.99] cursor-pointer"
+                  [routerLink]="['/inventory/products', product.id]"
                 >
                   <div
                     class="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-xl flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5"
@@ -357,7 +366,7 @@ import {
           <!-- Pagination Bar -->
           @if (allFilteredProducts().length > 0) {
             <div
-              class="mt-6 px-4 py-3.5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08] rounded-xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm"
+              class="mt-6 p-4 card-premium flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm"
             >
               <div class="flex flex-wrap items-center gap-4">
                 <!-- Count Display -->
@@ -425,7 +434,7 @@ import {
                 <button
                   [disabled]="currentPage() === 1"
                   (click)="setPage(currentPage() - 1)"
-                  class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
+                  class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
                 >
                   <svg
                     class="w-4 h-4"
@@ -451,7 +460,7 @@ import {
                       [class.border-primary]="currentPage() === page"
                       [class.border-slate-200]="currentPage() !== page"
                       [class.dark:border-white/10]="currentPage() !== page"
-                      class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary shadow-sm"
+                      class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary active:scale-95 shadow-sm"
                     >
                       {{ page }}
                     </button>
@@ -461,7 +470,7 @@ import {
                 <button
                   [disabled]="currentPage() === totalPages()"
                   (click)="setPage(currentPage() + 1)"
-                  class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
+                  class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
                 >
                   <svg
                     class="w-4 h-4"

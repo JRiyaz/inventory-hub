@@ -55,7 +55,7 @@ import {
       <div class="space-y-4">
         <!-- Top Dashboard Header (Summary + Customer + Priority) -->
         <div
-          class="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 border-b-4 border-b-primary sticky top-0 z-[100] animate-fade-in"
+          class="card-premium p-4 border-b-4 border-b-primary sticky top-0 z-[100] animate-fade-in"
         >
           <div
             class="flex flex-col xl:flex-row items-center justify-between gap-6"
@@ -65,11 +65,7 @@ import {
               class="w-full xl:w-1/3 relative"
               (click)="$event.stopPropagation()"
             >
-              <p
-                class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 px-1"
-              >
-                Selected Customer
-              </p>
+              <p class="label-premium">Selected Customer</p>
               <div
                 (click)="toggleCustomerSearch()"
                 class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-between cursor-pointer hover:border-primary transition-all group"
@@ -120,7 +116,7 @@ import {
               <!-- Customer Search Popover -->
               @if (showCustomerSearch()) {
                 <div
-                  class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm z-[300] p-3 animate-fade-in"
+                  class="absolute top-full left-0 right-0 mt-2 card-premium z-[300] p-3 animate-fade-in shadow-xl"
                 >
                   <div class="relative mb-3">
                     <input
@@ -182,11 +178,7 @@ import {
               class="flex-1 w-full flex flex-wrap items-center justify-center xl:justify-start gap-8"
             >
               <div class="flex flex-col">
-                <p
-                  class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5"
-                >
-                  Subtotal
-                </p>
+                <p class="label-premium mb-0.5">Subtotal</p>
                 <p class="text-lg font-black text-primary">
                   {{ subtotal() | currency }}
                 </p>
@@ -195,11 +187,7 @@ import {
                 class="h-6 w-[1px] bg-slate-200 dark:bg-white/10 hidden md:block"
               ></div>
               <div class="flex flex-col">
-                <p
-                  class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5"
-                >
-                  Items
-                </p>
+                <p class="label-premium mb-0.5">Items</p>
                 <p class="text-sm font-black text-slate-700 dark:text-white">
                   {{ totalItemsCount() }} Units
                 </p>
@@ -211,7 +199,7 @@ import {
               <!-- Priority Toggle -->
               <button
                 (click)="isPriority.set(!isPriority())"
-                class="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-[9px] font-black uppercase tracking-widest"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 active:scale-95 text-[9px] font-black uppercase tracking-widest"
                 [class.bg-amber-500/10]="isPriority()"
                 [class.text-amber-500]="isPriority()"
                 [class.border-amber-500/20]="isPriority()"
@@ -222,7 +210,7 @@ import {
                 [class.dark:border-white/10]="!isPriority()"
               >
                 <div
-                  class="w-2 h-2 rounded-full"
+                  class="w-2 h-2 rounded-full transition-colors duration-300"
                   [class.bg-amber-500]="isPriority()"
                   [class.bg-slate-300]="!isPriority()"
                 ></div>
@@ -234,8 +222,9 @@ import {
             <div class="w-full xl:w-auto">
               <button
                 (click)="submitOrder()"
-                [disabled]="!canSubmit()"
-                class="w-full xl:w-56 py-3 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:scale-100"
+                [disabled]="!canSubmit() || isSubmitting()"
+                [class.btn-loading]="isSubmitting()"
+                class="w-full xl:w-56 btn-primary-premium"
               >
                 Create Order
               </button>
@@ -251,9 +240,7 @@ import {
         </div>
 
         <!-- Dynamic Order Items List -->
-        <div
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-6 relative"
-        >
+        <div class="card-premium p-6 relative">
           <div class="flex items-center justify-between mb-1">
             <h3
               class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight"
@@ -348,7 +335,7 @@ import {
                   <div class="flex items-center justify-center gap-1.5">
                     <button
                       (click)="updateQty(item, -1)"
-                      class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary transition-all text-xs"
+                      class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary active:scale-90 transition-all text-xs"
                     >
                       -
                     </button>
@@ -358,7 +345,7 @@ import {
                     >
                     <button
                       (click)="updateQty(item, 1)"
-                      class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary transition-all text-xs"
+                      class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary active:scale-90 transition-all text-xs"
                     >
                       +
                     </button>
@@ -444,7 +431,7 @@ import {
 
                 @if (showProductResults()) {
                   <div
-                    class="absolute top-full mt-2 left-0 right-0 bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-white/10 rounded-xl shadow-sm z-[300] p-3 animate-fade-in"
+                    class="absolute top-full mt-2 left-0 right-0 card-premium z-[300] p-3 animate-fade-in shadow-xl"
                   >
                     <div class="relative mb-3">
                       <input
@@ -536,6 +523,7 @@ import {
 export class OrderCreateComponent implements OnInit {
   private dataService = inject(InventoryDataService);
   private router = inject(Router);
+  isSubmitting = signal(false);
 
   scanInput = "";
   productSearchQuery = signal("");
@@ -718,7 +706,12 @@ export class OrderCreateComponent implements OnInit {
       items: this.orderItems(),
     };
 
-    this.dataService.addOrder(newOrder);
-    this.router.navigate(["/inventory/orders", newOrder.id]);
+    this.isSubmitting.set(true);
+    // Simulate backend call
+    setTimeout(() => {
+      this.dataService.addOrder(newOrder);
+      this.isSubmitting.set(false);
+      this.router.navigate(["/inventory/orders", newOrder.id]);
+    }, 1500);
   }
 }

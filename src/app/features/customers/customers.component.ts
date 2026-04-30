@@ -7,6 +7,7 @@ import {
   Customer,
   SearchService,
   SkeletonComponent,
+  NotificationService,
 } from "ui-shared";
 
 @Component({
@@ -30,18 +31,71 @@ import {
           </p>
         </div>
         <div
-          class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10"
+          class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto"
         >
-          <div class="px-4 py-2 text-center">
-            <p
-              class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+          <div
+            class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 w-full sm:w-auto shadow-sm"
+          >
+            <div
+              class="px-4 py-2 text-center border-r border-slate-100 dark:border-white/5"
             >
-              Total Clients
-            </p>
-            <p class="text-lg font-black text-primary">
-              {{ isLoading() ? "..." : customers().length }}
-            </p>
+              <p
+                class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+              >
+                Total Clients
+              </p>
+              <p
+                class="text-lg font-black text-slate-900 dark:text-white flex items-center justify-center min-h-[28px]"
+              >
+                @if (isLoading()) {
+                  <span class="dots-wave"
+                    ><span></span><span></span><span></span
+                  ></span>
+                } @else {
+                  {{ customers().length }}
+                }
+              </p>
+            </div>
+            <div class="px-4 py-2 text-center">
+              <p
+                class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+              >
+                Active
+              </p>
+              <p
+                class="text-lg font-black text-primary flex items-center justify-center min-h-[28px]"
+              >
+                @if (isLoading()) {
+                  <span class="dots-wave"
+                    ><span></span><span></span><span></span
+                  ></span>
+                } @else {
+                  {{ activeCount() }}
+                }
+              </p>
+            </div>
           </div>
+          <button
+            (click)="addCustomer()"
+            [disabled]="isAddingCustomer()"
+            [class.btn-loading]="isAddingCustomer()"
+            class="btn-primary-premium w-full sm:w-auto !px-6 !py-3.5 flex items-center justify-center gap-2 group"
+          >
+            <svg
+              class="w-4 h-4 group-hover:rotate-45 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="3"
+                d="M12 4v16m8-8H4"
+              ></path>
+            </svg>
+            <span>Add New Customer</span>
+          </button>
         </div>
       </div>
 
@@ -246,9 +300,15 @@ export class CustomersComponent implements OnInit {
   private searchService = inject(SearchService);
 
   customers = this.dataService.customers;
+  activeCount = computed(
+    () => this.customers().filter((c) => c.status === "Active").length,
+  );
   isLoading = signal(true);
+  isAddingCustomer = signal(false);
   searchQuery = signal("");
   filterStatus = signal("All");
+
+  private notificationService = inject(NotificationService);
 
   filteredCustomers = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
@@ -269,6 +329,17 @@ export class CustomersComponent implements OnInit {
     setTimeout(() => {
       this.isLoading.set(false);
     }, 1000);
+  }
+
+  addCustomer(): void {
+    this.isAddingCustomer.set(true);
+    setTimeout(() => {
+      this.isAddingCustomer.set(false);
+      this.notificationService.success(
+        "Customer Added",
+        "The new customer has been added to the directory.",
+      );
+    }, 2000);
   }
 
   private registerSearchItems(): void {

@@ -43,8 +43,16 @@ import {
               >
                 Total
               </p>
-              <p class="text-lg font-black text-primary">
-                {{ isLoading() ? "..." : orders().length }}
+              <p
+                class="text-lg font-black text-primary flex items-center justify-center min-h-[28px]"
+              >
+                @if (isLoading()) {
+                  <span class="dots-wave"
+                    ><span></span><span></span><span></span
+                  ></span>
+                } @else {
+                  {{ orders().length }}
+                }
               </p>
             </div>
             <div class="px-4 py-2 text-center flex-1 sm:flex-none">
@@ -53,17 +61,25 @@ import {
               >
                 Pending
               </p>
-              <p class="text-lg font-black text-amber-500">
-                {{ isLoading() ? "..." : pendingCount() }}
+              <p
+                class="text-lg font-black text-amber-500 flex items-center justify-center min-h-[28px]"
+              >
+                @if (isLoading()) {
+                  <span class="dots-wave"
+                    ><span></span><span></span><span></span
+                  ></span>
+                } @else {
+                  {{ pendingCount() }}
+                }
               </p>
             </div>
           </div>
           <button
             routerLink="create"
-            class="w-full sm:w-auto px-4 py-2.5 bg-primary text-white rounded-xl font-black text-[11px] hover:bg-primary-hover transition-all uppercase tracking-[0.15em] flex items-center justify-center gap-2 group"
+            class="btn-primary-premium w-full sm:w-auto !px-4 !py-2.5 flex items-center justify-center gap-2 group"
           >
             <svg
-              class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"
+              class="w-4 h-4 group-hover:rotate-45 transition-transform duration-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -75,7 +91,7 @@ import {
                 d="M12 4v16m8-8H4"
               ></path>
             </svg>
-            Create New Order
+            <span>Create New Order</span>
           </button>
         </div>
       </div>
@@ -83,7 +99,7 @@ import {
       <!-- Filters & Controls Bar -->
       <div class="mb-5">
         <div
-          class="flex flex-col lg:flex-row justify-between items-end gap-4 bg-white dark:bg-white/[0.02] p-4 rounded-2xl border border-slate-200 dark:border-white/[0.08]"
+          class="flex flex-col lg:flex-row justify-between items-end gap-4 card-premium p-4"
         >
           <div
             class="flex flex-col sm:flex-row items-end gap-4 w-full lg:w-auto"
@@ -149,7 +165,7 @@ import {
               <!-- Dropdown Menu -->
               @if (statusMenuOpen()) {
                 <div
-                  class="absolute left-0 right-0 mt-2 bg-white dark:bg-dark-elevated border border-slate-200 dark:border-white/[0.1] rounded-xl z-50 overflow-hidden animate-dropdown-in backdrop-blur-xl"
+                  class="absolute left-0 right-0 mt-2 card-premium z-50 overflow-hidden animate-dropdown-in shadow-xl"
                 >
                   @for (status of statuses; track status) {
                     <div
@@ -173,9 +189,7 @@ import {
       @defer (when !isLoading()) {
         <div class="mt-5 animate-fade-in">
           <!-- Table Section -->
-          <div
-            class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden animate-fade-in"
-          >
+          <div class="card-premium overflow-hidden animate-fade-in">
             <div class="overflow-x-auto custom-scrollbar">
               <table class="w-full text-left border-collapse min-w-[800px]">
                 <thead>
@@ -436,7 +450,7 @@ import {
                   <button
                     [disabled]="currentPage() === 1"
                     (click)="setPage(currentPage() - 1)"
-                    class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
+                    class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
                   >
                     <svg
                       class="w-4 h-4"
@@ -463,7 +477,7 @@ import {
                         [class.border-primary]="currentPage() === page"
                         [class.border-slate-200]="currentPage() !== page"
                         [class.dark:border-white/10]="currentPage() !== page"
-                        class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary shadow-sm"
+                        class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary active:scale-95 shadow-sm"
                       >
                         {{ page }}
                       </button>
@@ -474,7 +488,7 @@ import {
                   <button
                     [disabled]="currentPage() === totalPages()"
                     (click)="setPage(currentPage() + 1)"
-                    class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
+                    class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
                   >
                     <svg
                       class="w-4 h-4"

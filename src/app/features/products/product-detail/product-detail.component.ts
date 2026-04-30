@@ -51,9 +51,7 @@ import {
 
       @defer (when !isLoading()) {
         @if (product(); as prod) {
-          <div
-            class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden"
-          >
+          <div class="card-premium overflow-hidden">
             <div class="flex flex-col lg:flex-row">
               <!-- Left: Image/Visual -->
               <div
@@ -95,10 +93,7 @@ import {
                       </span>
                     } @else {
                       <div class="w-full sm:w-64 mb-6">
-                        <label
-                          class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block"
-                          >Category</label
-                        >
+                        <label class="label-premium block mb-2">Category</label>
                         <lib-custom-dropdown
                           [options]="categoryOptions"
                           [value]="editBuffer.category"
@@ -130,13 +125,10 @@ import {
                     }
                   </div>
                   @if (auth.isAdmin()) {
-                    <button
-                      (click)="toggleEdit()"
-                      class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors"
-                    >
+                    <button (click)="toggleEdit()" class="btn-ghost-premium">
                       @if (!isEditing()) {
                         <svg
-                          class="w-5 h-5"
+                          class="w-4 h-4"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -149,10 +141,7 @@ import {
                           ></path>
                         </svg>
                       }
-                      <span
-                        class="text-[10px] font-black uppercase tracking-widest"
-                        >{{ isEditing() ? "Cancel" : "Edit" }}</span
-                      >
+                      <span>{{ isEditing() ? "Cancel" : "Edit" }}</span>
                     </button>
                   }
                 </div>
@@ -160,10 +149,7 @@ import {
                 <div class="space-y-6">
                   <!-- Description -->
                   <div>
-                    <label
-                      class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block"
-                      >Description</label
-                    >
+                    <label class="label-premium block mb-3">Description</label>
                     @if (!isEditing()) {
                       <p
                         class="text-slate-600 dark:text-slate-400 leading-relaxed"
@@ -188,10 +174,7 @@ import {
                   <!-- Metrics -->
                   <div class="grid grid-cols-2 gap-5">
                     <div>
-                      <label
-                        class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block"
-                        >Price</label
-                      >
+                      <label class="label-premium block mb-2">Price</label>
                       @if (!isEditing()) {
                         <div class="text-xl font-black text-primary">
                           {{ prod.price | currency }}
@@ -212,10 +195,7 @@ import {
                       }
                     </div>
                     <div>
-                      <label
-                        class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block"
-                        >In Stock</label
-                      >
+                      <label class="label-premium block mb-2">In Stock</label>
                       @if (!isEditing()) {
                         <div class="flex items-center gap-2">
                           <span
@@ -271,7 +251,7 @@ import {
                     >
                       <button
                         (click)="saveChanges()"
-                        class="w-full sm:w-auto px-4 py-2 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all"
+                        class="btn-primary-premium"
                       >
                         Save Changes
                       </button>
@@ -287,11 +267,7 @@ import {
         <div class="mt-8 animate-fade-in">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h2
-                class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
-              >
-                Order History
-              </h2>
+              <h2 class="heading-premium">Order History</h2>
               <p
                 class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1"
               >
@@ -300,7 +276,7 @@ import {
             </div>
             <button
               (click)="showOrders.set(!showOrders())"
-              class="px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-primary transition-all border border-slate-200 dark:border-white/10"
+              class="btn-secondary-premium !px-4 !py-2"
             >
               {{ showOrders() ? "Hide Orders" : "Show Orders" }} ({{
                 relatedOrders().length
