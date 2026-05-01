@@ -6,6 +6,7 @@ import {
   InventoryDataService,
   DetailLayoutComponent,
   StatusBadgeComponent,
+  Breadcrumb,
 } from "ui-shared";
 
 @Component({
@@ -17,12 +18,129 @@ import {
       [title]="warehouse()?.name || 'Loading...'"
       [subtitle]="warehouse()?.location || 'Unknown'"
       [status]="capacityStatus()"
+      [breadcrumbs]="breadcrumbs()"
       backLink="/inventory/warehouses"
       backLabel="Warehouse Logistics"
       actionLabel="Relocate Stock"
       [tabs]="['Overview', 'Zones & Capacity', 'Stored Products', 'Movements']"
+      [loading]="isActionLoading()"
       (tabChanged)="activeTab.set($event)"
+      (action)="handleAction()"
     >
+      <div top-content>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Utilization Card -->
+          <div
+            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  Storage Utilization
+                </h4>
+                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
+                  Across all active zones.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex-1 max-w-[200px]">
+              <div
+                class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest mb-1.5"
+              >
+                <span class="text-slate-400">Used Space</span>
+                <span
+                  [class]="
+                    getBarClass(warehouse()?.utilization || 0) +
+                    ' bg-transparent !text-current font-black'
+                  "
+                  >{{ warehouse()?.utilization }}%</span
+                >
+              </div>
+              <div
+                class="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner"
+              >
+                <div
+                  class="h-full transition-all duration-1000"
+                  [style.width.%]="warehouse()?.utilization"
+                  [class]="getBarClass(warehouse()?.utilization || 0)"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Efficiency Card -->
+          <div
+            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  Efficiency Rank
+                </h4>
+                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
+                  Based on throughput & error rate.
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right px-4">
+              <p
+                class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5"
+              >
+                Node Class
+              </p>
+              <p class="text-xl font-black text-amber-500 uppercase">Tier A</p>
+            </div>
+
+            <div class="px-4 border-l border-slate-100 dark:border-white/5">
+              <div
+                class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase tracking-widest"
+              >
+                High Performance
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div header-icon>
         <svg
           class="w-10 h-10"
@@ -50,26 +168,17 @@ import {
             {{ warehouse()?.totalCapacity?.toLocaleString() }} Units
           </p>
         </div>
-        <div class="space-y-1">
+        <div class="pt-4 border-t border-slate-100 dark:border-white/5">
           <p
-            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+            class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1"
           >
-            Utilization
+            Logistics Status
           </p>
-          <div class="flex items-center gap-2">
-            <p class="text-xl font-black text-slate-900 dark:text-white">
-              {{ warehouse()?.utilization }}%
-            </p>
-            <div
-              class="w-16 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden"
-            >
-              <div
-                [style.width.%]="warehouse()?.utilization"
-                [class]="getBarClass(warehouse()?.utilization || 0)"
-                class="h-full"
-              ></div>
-            </div>
-          </div>
+          <p
+            class="text-xs font-black text-slate-900 dark:text-white uppercase"
+          >
+            Operational
+          </p>
         </div>
         <div class="space-y-1">
           <p
@@ -289,24 +398,120 @@ import {
               >
                 <tr>
                   <th
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                    (click)="toggleSort('date')"
+                    class="px-6 py-4 cursor-pointer group"
                   >
-                    Date
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Date</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'date'"
+                        [class.text-slate-200]="sortField() !== 'date'"
+                        [class.rotate-180]="
+                          sortField() === 'date' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                   <th
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                    (click)="toggleSort('type')"
+                    class="px-6 py-4 cursor-pointer group"
                   >
-                    Type
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Type</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'type'"
+                        [class.text-slate-200]="sortField() !== 'type'"
+                        [class.rotate-180]="
+                          sortField() === 'type' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                   <th
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center"
+                    (click)="toggleSort('qty')"
+                    class="px-6 py-4 cursor-pointer group"
                   >
-                    Qty
+                    <div class="flex items-center justify-center gap-2">
+                      <span
+                        class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Qty</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'qty'"
+                        [class.text-slate-200]="sortField() !== 'qty'"
+                        [class.rotate-180]="
+                          sortField() === 'qty' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                   <th
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                    (click)="toggleSort('user')"
+                    class="px-6 py-4 cursor-pointer group"
                   >
-                    User
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >User</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'user'"
+                        [class.text-slate-200]="sortField() !== 'user'"
+                        [class.rotate-180]="
+                          sortField() === 'user' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                 </tr>
               </thead>
@@ -367,12 +572,22 @@ export class WarehouseDetailComponent implements OnInit {
   private dataService = inject(InventoryDataService);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   activeTab = signal(0);
+  sortField = signal<string>("date");
+  sortOrder = signal<"asc" | "desc">("desc");
 
   warehouseId = computed(() => this.route.snapshot.paramMap.get("id"));
   warehouse = computed(() =>
     this.dataService.warehouses().find((w) => w.id === this.warehouseId()),
   );
+
+  breadcrumbs = computed<Breadcrumb[]>(() => [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Warehouses", link: "/inventory/warehouses" },
+    { label: this.warehouse()?.name || "Detail" },
+  ]);
 
   storedProducts = computed(() => {
     const id = this.warehouseId();
@@ -384,13 +599,24 @@ export class WarehouseDetailComponent implements OnInit {
 
   movements = computed(() => {
     const id = this.warehouseId();
-    return this.dataService
+    const field = this.sortField();
+    const order = this.sortOrder();
+
+    let result = this.dataService
       .movements()
       .filter(
         (m) =>
           m.fromLocation.startsWith(id || "") ||
           m.toLocation.startsWith(id || ""),
       );
+
+    return result.sort((a: any, b: any) => {
+      const valA = a[field];
+      const valB = b[field];
+      if (valA < valB) return order === "asc" ? -1 : 1;
+      if (valA > valB) return order === "asc" ? 1 : -1;
+      return 0;
+    });
   });
 
   capacityStatus = computed(() => {
@@ -400,8 +626,24 @@ export class WarehouseDetailComponent implements OnInit {
     return "Optimal";
   });
 
+  toggleSort(field: string) {
+    if (this.sortField() === field) {
+      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
+    } else {
+      this.sortField.set(field);
+      this.sortOrder.set("asc");
+    }
+  }
+
   ngOnInit() {
-    setTimeout(() => this.isLoading.set(false), 800);
+    setTimeout(() => this.isLoading.set(false), 1500);
+  }
+
+  handleAction() {
+    this.isActionLoading.set(true);
+    setTimeout(() => {
+      this.isActionLoading.set(false);
+    }, 2000);
   }
 
   getBarClass(u: number) {

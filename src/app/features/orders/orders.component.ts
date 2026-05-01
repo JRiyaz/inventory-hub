@@ -1,13 +1,13 @@
-import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterModule, Router } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
-  SkeletonComponent,
   CustomDropdownComponent,
   DropdownOption,
+  InventoryDataService,
   PageHeaderComponent,
+  SkeletonComponent,
   StatusBadgeComponent,
 } from "ui-shared";
 
@@ -29,6 +29,9 @@ import {
         title="Order Tracking"
         subtitle="Monitor and manage all incoming industrial orders in real-time."
         [stats]="headerStats()"
+        [breadcrumbs]="breadcrumbs"
+        [count]="allFilteredOrders().length"
+        [loading]="isLoading()"
         actionLabel="Create New Order"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/orders/create'])"
@@ -36,7 +39,7 @@ import {
 
       <!-- Filters Bar (Ultra Compact) -->
       <div
-        class="mb-3 flex flex-col lg:flex-row justify-between items-end gap-3 bg-white dark:bg-white/5 p-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
+        class="mb-3 flex flex-col lg:flex-row justify-between items-end gap-3 bg-white dark:bg-white/5 p-2 rounded-xl"
       >
         <div class="flex flex-col sm:flex-row items-end gap-3 w-full lg:w-auto">
           <div class="floating-input-group w-full sm:w-60">
@@ -88,12 +91,21 @@ import {
             </div>
           </div>
 
-          <div class="w-full sm:w-56">
+          <div class="w-full sm:w-48">
             <lib-custom-dropdown
               [options]="statusOptions"
               [value]="selectedStatus()"
               [placeholder]="'Order Status'"
               (valueChange)="selectStatus($event)"
+            ></lib-custom-dropdown>
+          </div>
+
+          <div class="w-full sm:w-40">
+            <lib-custom-dropdown
+              [options]="pageSizeOptions"
+              [value]="pageSize()"
+              [placeholder]="'Per Page'"
+              (valueChange)="pageSize.set($event); currentPage.set(1)"
             ></lib-custom-dropdown>
           </div>
         </div>
@@ -137,9 +149,12 @@ import {
                         >ID</span
                       >
                       <svg
-                        *ngIf="sortField() === 'id'"
-                        class="w-2.5 h-2.5 text-primary"
-                        [class.rotate-180]="sortOrder() === 'desc'"
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'id'"
+                        [class.text-slate-200]="sortField() !== 'id'"
+                        [class.rotate-180]="
+                          sortField() === 'id' && sortOrder() === 'desc'
+                        "
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -162,6 +177,25 @@ import {
                         class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
                         >Client</span
                       >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'customerName'"
+                        [class.text-slate-200]="sortField() !== 'customerName'"
+                        [class.rotate-180]="
+                          sortField() === 'customerName' &&
+                          sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
                     </div>
                   </th>
                   <th class="px-6 py-4">
@@ -174,19 +208,60 @@ import {
                     (click)="toggleSort('date')"
                     class="px-6 py-4 cursor-pointer group"
                   >
-                    <span
-                      class="text-[9px] font-black uppercase tracking-widest text-slate-400"
-                      >Date</span
-                    >
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Date</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'date'"
+                        [class.text-slate-200]="sortField() !== 'date'"
+                        [class.rotate-180]="
+                          sortField() === 'date' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                   <th
                     (click)="toggleSort('totalAmount')"
                     class="px-6 py-4 text-right cursor-pointer group"
                   >
-                    <span
-                      class="text-[9px] font-black uppercase tracking-widest text-slate-400"
-                      >Amount</span
-                    >
+                    <div class="flex items-center justify-end gap-2">
+                      <span
+                        class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Amount</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'totalAmount'"
+                        [class.text-slate-200]="sortField() !== 'totalAmount'"
+                        [class.rotate-180]="
+                          sortField() === 'totalAmount' &&
+                          sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                 </tr>
               </thead>
@@ -331,6 +406,19 @@ export class OrdersComponent implements OnInit {
   currentPage = signal(1);
   pageSize = signal(10);
 
+  breadcrumbs = [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Orders" },
+  ];
+
+  pageSizeOptions: DropdownOption[] = [
+    { value: 10, label: "10 Per Page" },
+    { value: 25, label: "25 Per Page" },
+    { value: 50, label: "50 Per Page" },
+    { value: 100, label: "100 Per Page" },
+  ];
+
   statusOptions: DropdownOption[] = [
     { value: "All Statuses", label: "All Statuses" },
     { value: "Pending", label: "Pending" },
@@ -343,10 +431,17 @@ export class OrdersComponent implements OnInit {
   orders = this.dataService.orders;
 
   headerStats = computed(() => [
-    { label: "Total Orders", value: this.orders().length },
+    {
+      label: "Total Orders",
+      value: this.orders().length,
+      color: "primary" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>',
+    },
     {
       label: "Pending",
       value: this.orders().filter((o) => o.status === "Pending").length,
+      color: "warning" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
     },
     {
       label: "Revenue",
@@ -355,6 +450,8 @@ export class OrdersComponent implements OnInit {
         this.orders()
           .reduce((acc, o) => acc + (o.totalAmount || 0), 0)
           .toLocaleString(),
+      color: "success" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
     },
   ]);
 

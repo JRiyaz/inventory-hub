@@ -6,8 +6,10 @@ export const INVENTORY_ROUTES: Routes = [
     children: [
       {
         path: "",
-        redirectTo: "products",
-        pathMatch: "full",
+        loadChildren: () =>
+          import("./features/inventory/inventory.routes").then(
+            (m) => m.INVENTORY_ROOT_ROUTES,
+          ),
       },
       {
         path: "products",

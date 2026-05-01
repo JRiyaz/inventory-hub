@@ -6,6 +6,7 @@ import {
   InventoryDataService,
   DetailLayoutComponent,
   StatusBadgeComponent,
+  Breadcrumb,
 } from "ui-shared";
 
 @Component({
@@ -25,12 +26,115 @@ import {
         'Customer: ' + (order()?.customerName || order()?.customer || 'Unknown')
       "
       [status]="order()?.status || 'Unknown'"
+      [breadcrumbs]="breadcrumbs()"
       backLink="/inventory/orders"
       backLabel="Back to Tracking"
       actionLabel="Print Invoice"
       [tabs]="['Items', 'Customer Info', 'Payment Details', 'Shipping']"
+      [loading]="isActionLoading()"
       (tabChanged)="activeTab.set($event)"
+      (action)="handleAction()"
     >
+      <div top-content>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Fulfillment Card -->
+          <div
+            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  Fulfillment Status
+                </h4>
+                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
+                  Order processing in progress.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex-1 max-w-[200px]">
+              <div
+                class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest mb-1.5"
+              >
+                <span class="text-slate-400">Progress</span>
+                <span class="text-primary">65%</span>
+              </div>
+              <div
+                class="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner"
+              >
+                <div
+                  class="h-full bg-primary w-[65%] shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Priority Card -->
+          <div
+            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  Shipping Priority
+                </h4>
+                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
+                  Determined by SLA requirements.
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right px-4">
+              <p
+                class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5"
+              >
+                Delivery Tier
+              </p>
+              <p class="text-xl font-black text-amber-500 uppercase">
+                {{ order()?.priority ? "Express" : "Standard" }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div header-icon>
         <svg
           class="w-10 h-10"
@@ -68,20 +172,15 @@ import {
             {{ order()?.date }}
           </p>
         </div>
-        <div class="space-y-1">
+        <div class="pt-4 border-t border-slate-100 dark:border-white/5">
           <p
-            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+            class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1"
           >
-            Shipping Priority
+            SLA Compliance
           </p>
-          <span
-            [class]="
-              order()?.priority ? 'text-amber-500 font-bold' : 'text-slate-500'
-            "
-            class="text-[10px] font-black uppercase tracking-widest"
-          >
-            {{ order()?.priority ? "High Priority" : "Standard" }}
-          </span>
+          <p class="text-xs font-black text-emerald-500 uppercase">
+            Within Bounds
+          </p>
         </div>
       </div>
 
@@ -107,19 +206,88 @@ import {
                 >
                   <tr>
                     <th
-                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                      (click)="toggleSort('name')"
+                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer group"
                     >
-                      Product
+                      <div class="flex items-center gap-2">
+                        <span class="group-hover:text-primary transition-colors"
+                          >Product</span
+                        >
+                        <svg
+                          class="w-2.5 h-2.5 transition-all duration-300"
+                          [class.text-primary]="sortField() === 'name'"
+                          [class.text-slate-200]="sortField() !== 'name'"
+                          [class.rotate-180]="
+                            sortField() === 'name' && sortOrder() === 'desc'
+                          "
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="3"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      </div>
                     </th>
                     <th
-                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center"
+                      (click)="toggleSort('qty')"
+                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center cursor-pointer group"
                     >
-                      Qty
+                      <div class="flex items-center justify-center gap-2">
+                        <span class="group-hover:text-primary transition-colors"
+                          >Qty</span
+                        >
+                        <svg
+                          class="w-2.5 h-2.5 transition-all duration-300"
+                          [class.text-primary]="sortField() === 'qty'"
+                          [class.text-slate-200]="sortField() !== 'qty'"
+                          [class.rotate-180]="
+                            sortField() === 'qty' && sortOrder() === 'desc'
+                          "
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="3"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      </div>
                     </th>
                     <th
-                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right"
+                      (click)="toggleSort('price')"
+                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer group"
                     >
-                      Price
+                      <div class="flex items-center justify-end gap-2">
+                        <span class="group-hover:text-primary transition-colors"
+                          >Price</span
+                        >
+                        <svg
+                          class="w-2.5 h-2.5 transition-all duration-300"
+                          [class.text-primary]="sortField() === 'price'"
+                          [class.text-slate-200]="sortField() !== 'price'"
+                          [class.rotate-180]="
+                            sortField() === 'price' && sortOrder() === 'desc'
+                          "
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="3"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      </div>
                     </th>
                     <th
                       class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right"
@@ -382,12 +550,36 @@ export class OrderDetailComponent implements OnInit {
   private dataService = inject(InventoryDataService);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   activeTab = signal(0);
+  sortField = signal<string>("name");
+  sortOrder = signal<"asc" | "desc">("asc");
 
   orderId = computed(() => this.route.snapshot.paramMap.get("id"));
-  order = computed(() =>
-    this.dataService.orders().find((o) => o.id === this.orderId()),
-  );
+  order = computed(() => {
+    const o = this.dataService.orders().find((o) => o.id === this.orderId());
+    if (!o) return null;
+
+    const field = this.sortField();
+    const order = this.sortOrder();
+
+    const sortedItems = [...(o.items || [])].sort((a: any, b: any) => {
+      const valA = a[field];
+      const valB = b[field];
+      if (valA < valB) return order === "asc" ? -1 : 1;
+      if (valA > valB) return order === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return { ...o, items: sortedItems };
+  });
+
+  breadcrumbs = computed<Breadcrumb[]>(() => [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Orders", link: "/inventory/orders" },
+    { label: "#" + (this.order()?.id || "Detail") },
+  ]);
 
   customer = computed(() => {
     const o = this.order();
@@ -405,6 +597,22 @@ export class OrderDetailComponent implements OnInit {
   ngOnInit() {
     setTimeout(() => {
       this.isLoading.set(false);
-    }, 800);
+    }, 1500);
+  }
+
+  handleAction() {
+    this.isActionLoading.set(true);
+    setTimeout(() => {
+      this.isActionLoading.set(false);
+    }, 2000);
+  }
+
+  toggleSort(field: string) {
+    if (this.sortField() === field) {
+      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
+    } else {
+      this.sortField.set(field);
+      this.sortOrder.set("asc");
+    }
   }
 }

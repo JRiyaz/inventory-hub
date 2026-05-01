@@ -1,15 +1,16 @@
-import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterModule, Router } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import {
+  CustomDropdownComponent,
+  Customer,
+  DropdownOption,
   InventoryDataService,
+  PageHeaderComponent,
   SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
-  Customer,
-  PageHeaderComponent,
-  NotificationService,
 } from "ui-shared";
 
 @Component({
@@ -22,6 +23,7 @@ import {
     SkeletonComponent,
     PageHeaderComponent,
     StatusBadgeComponent,
+    CustomDropdownComponent,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
@@ -29,14 +31,17 @@ import {
         title="Customer Directory"
         subtitle="Manage your business relationships and client history."
         [stats]="headerStats()"
+        [breadcrumbs]="breadcrumbs"
+        [count]="allFilteredCustomers().length"
+        [loading]="isLoading()"
         actionLabel="Add New Customer"
-        backLink="/dashboard"
+        backLink="/inventory"
         (action)="router.navigate(['/inventory/customers/create'])"
       ></lib-page-header>
 
       <!-- Filters Bar (High Density) -->
       <div
-        class="mb-5 flex flex-col md:flex-row gap-4 items-end bg-white dark:bg-white/5 p-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
+        class="mb-5 flex flex-col md:flex-row gap-4 items-end bg-white dark:bg-white/5 p-2 rounded-xl"
       >
         <div class="flex-1 w-full relative group">
           <div class="floating-input-group">
@@ -49,7 +54,7 @@ import {
               class="floating-input"
             />
             <label for="cust-search" class="floating-label"
-              >Search Directory</label
+              >Search Customer</label
             >
             <div class="absolute right-1 top-6">
               <svg
@@ -67,6 +72,15 @@ import {
               </svg>
             </div>
           </div>
+        </div>
+
+        <div class="w-full md:w-40">
+          <lib-custom-dropdown
+            [options]="pageSizeOptions"
+            [value]="pageSize()"
+            [placeholder]="'Per Page'"
+            (valueChange)="pageSize.set($event); currentPage.set(1)"
+          ></lib-custom-dropdown>
         </div>
 
         <div
@@ -299,16 +313,39 @@ export class CustomersComponent implements OnInit {
   filterStatus = signal("All");
   currentPage = signal(1);
   pageSize = signal(12);
+
+  breadcrumbs = [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Customers" },
+  ];
+
+  pageSizeOptions: DropdownOption[] = [
+    { value: 12, label: "12 Per Page" },
+    { value: 24, label: "24 Per Page" },
+    { value: 48, label: "48 Per Page" },
+    { value: 100, label: "100 Per Page" },
+  ];
+
   customers = this.dataService.customers;
 
   headerStats = computed(() => [
-    { label: "Total Clients", value: this.customers().length },
+    {
+      label: "Total Clients",
+      value: this.customers().length,
+      color: "primary" as const,
+    },
     {
       label: "Active Business",
       value: this.customers().filter((c: Customer) => c.status === "Active")
         .length,
+      color: "success" as const,
     },
-    { label: "Avg. Retention", value: "94%" },
+    {
+      label: "Avg. Retention",
+      value: "94%",
+      color: "info" as const,
+    },
   ]);
 
   allFilteredCustomers = computed(() => {

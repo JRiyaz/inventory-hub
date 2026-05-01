@@ -1,11 +1,12 @@
-import { Component, signal, OnInit, inject, computed } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   DetailLayoutComponent,
+  InventoryDataService,
   StatusBadgeComponent,
+  Breadcrumb,
 } from "ui-shared";
 
 @Component({
@@ -23,12 +24,144 @@ import {
       [title]="product()?.name || 'Loading...'"
       [subtitle]="product()?.description || 'No description available'"
       [status]="stockStatus()"
+      [breadcrumbs]="breadcrumbs()"
       backLink="/inventory/products"
-      backLabel="Products Hub"
+      backLabel="Products"
       actionLabel="Order More Stock"
       [tabs]="['Overview', 'Supplier & Logistics', 'Relational Activity']"
+      [loading]="isActionLoading()"
       (tabChanged)="activeTab.set($event)"
+      (action)="handleAction()"
     >
+      <div top-content>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Inventory Health Card -->
+          <div
+            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  Inventory Health
+                </h4>
+                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
+                  Last audit completed 4 days ago.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex-1 max-w-[200px]">
+              <div
+                class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest mb-1.5"
+              >
+                <span class="text-slate-400">Velocity</span>
+                <span class="text-emerald-500">Stable</span>
+              </div>
+              <div
+                class="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner"
+              >
+                <div
+                  class="h-full bg-emerald-500 w-3/4 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                ></div>
+              </div>
+            </div>
+
+            <div
+              class="flex items-center gap-4 px-4 border-l border-slate-100 dark:border-white/5"
+            >
+              <div class="text-center">
+                <p
+                  class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5"
+                >
+                  Turn
+                </p>
+                <p class="text-xs font-black text-slate-900 dark:text-white">
+                  4.2x
+                </p>
+              </div>
+              <div class="text-center">
+                <p
+                  class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5"
+                >
+                  Fill
+                </p>
+                <p class="text-xs font-black text-emerald-500">98%</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Global Node Rank Card -->
+          <div
+            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  Global Node Rank
+                </h4>
+                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
+                  Active in APAC Region
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <p
+                class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5"
+              >
+                Rank Position
+              </p>
+              <p class="text-xl font-black text-primary">#4</p>
+            </div>
+
+            <div class="px-4 border-l border-slate-100 dark:border-white/5">
+              <div
+                class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase tracking-widest"
+              >
+                Top 5%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div header-icon>
         <div
           class="w-full h-full bg-primary/10 rounded-2xl flex items-center justify-center text-primary"
@@ -87,31 +220,16 @@ import {
       </div>
 
       <div sidebar-extra>
-        <h4
-          class="text-white text-xs font-black uppercase tracking-widest mb-4"
-        >
-          Inventory Health
-        </h4>
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <div
-              class="flex justify-between items-center text-[10px] text-white/70 font-bold uppercase tracking-wider"
+        <div class="flex flex-col gap-2">
+          <div
+            class="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10"
+          >
+            <p
+              class="text-[8px] font-black text-white/50 uppercase tracking-[0.2em] mb-1"
             >
-              <span>Demand Velocity</span>
-              <span class="text-emerald-400">Stable</span>
-            </div>
-            <div
-              class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden shadow-inner"
-            >
-              <div
-                class="h-full bg-emerald-400 w-3/4 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
-              ></div>
-            </div>
-          </div>
-          <div class="pt-2">
-            <p class="text-[10px] text-white/50 leading-relaxed italic">
-              Last audit completed 4 days ago. All batches verified.
+              Stock Availability
             </p>
+            <p class="text-xs font-black text-white">{{ stockStatus() }}</p>
           </div>
         </div>
       </div>
@@ -219,7 +337,7 @@ import {
             </div>
           </div>
         } @else if (activeTab() === 1) {
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
             <!-- Supplier Link Card -->
             <div
               *ngIf="supplier()"
@@ -249,7 +367,7 @@ import {
               </h4>
               <div class="flex items-center gap-5">
                 <div
-                  class="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-primary font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
+                  class="w-14 h-14 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-primary font-black text-xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
                 >
                   {{ supplier()?.name?.[0] }}
                 </div>
@@ -301,7 +419,7 @@ import {
               </h4>
               <div class="flex items-center gap-5">
                 <div
-                  class="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-amber-500 font-black group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
+                  class="w-14 h-14 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-amber-500 font-black group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
                 >
                   <svg
                     class="w-8 h-8"
@@ -346,7 +464,7 @@ import {
             @for (order of relatedOrders(); track order.id) {
               <div
                 [routerLink]="['/inventory/orders', order.id]"
-                class="card-premium p-5 flex items-center justify-between group hover:border-primary transition-all cursor-pointer"
+                class="card-premium p-3 flex items-center justify-between group hover:border-primary transition-all cursor-pointer"
               >
                 <div class="flex items-center gap-5">
                   <div
@@ -424,12 +542,20 @@ export class ProductDetailComponent implements OnInit {
   private dataService = inject(InventoryDataService);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   activeTab = signal(0);
 
   productId = computed(() => Number(this.route.snapshot.paramMap.get("id")));
   product = computed(() =>
     this.dataService.products().find((p) => p.id === this.productId()),
   );
+
+  breadcrumbs = computed<Breadcrumb[]>(() => [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Products", link: "/inventory/products" },
+    { label: this.product()?.name || "Detail" },
+  ]);
 
   supplier = computed(() => {
     const p = this.product();
@@ -463,7 +589,14 @@ export class ProductDetailComponent implements OnInit {
   });
 
   ngOnInit() {
-    setTimeout(() => this.isLoading.set(false), 800);
+    setTimeout(() => this.isLoading.set(false), 1500);
+  }
+
+  handleAction() {
+    this.isActionLoading.set(true);
+    setTimeout(() => {
+      this.isActionLoading.set(false);
+    }, 2000);
   }
 
   getQuantityInOrder(orderId: string): number {

@@ -1,11 +1,13 @@
-import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterModule, Router } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import {
+  CustomDropdownComponent,
+  DropdownOption,
   InventoryDataService,
-  SkeletonComponent,
   PageHeaderComponent,
+  SkeletonComponent,
 } from "ui-shared";
 
 @Component({
@@ -17,6 +19,7 @@ import {
     RouterModule,
     SkeletonComponent,
     PageHeaderComponent,
+    CustomDropdownComponent,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
@@ -24,6 +27,9 @@ import {
         title="Warehouses & Logistics"
         subtitle="Monitor spatial capacity and stock distribution across your facilities."
         [stats]="headerStats()"
+        [breadcrumbs]="breadcrumbs"
+        [count]="filteredWarehouses().length"
+        [loading]="isLoading()"
         actionLabel="Register New Warehouse"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/warehouses/create'])"
@@ -31,7 +37,7 @@ import {
 
       <!-- Filters Bar (High Density) -->
       <div
-        class="mb-5 flex flex-col md:flex-row gap-4 items-end bg-white dark:bg-white/5 p-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
+        class="mb-5 flex flex-col md:flex-row gap-4 items-end bg-white dark:bg-white/5 p-2 rounded-xl"
       >
         <div class="flex-1 w-full relative group">
           <div class="floating-input-group">
@@ -62,6 +68,15 @@ import {
               </svg>
             </div>
           </div>
+        </div>
+
+        <div class="w-full md:w-48">
+          <lib-custom-dropdown
+            [options]="pageSizeOptions"
+            [value]="pageSize()"
+            [placeholder]="'Per Page'"
+            (valueChange)="pageSize.set($event)"
+          ></lib-custom-dropdown>
         </div>
       </div>
 
@@ -209,6 +224,20 @@ export class WarehousesComponent implements OnInit {
   public router = inject(Router);
   isLoading = signal(true);
   searchQuery = signal("");
+  pageSize = signal(12);
+
+  breadcrumbs = [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Warehouses" },
+  ];
+
+  pageSizeOptions: DropdownOption[] = [
+    { value: 6, label: "6 Per Page" },
+    { value: 12, label: "12 Per Page" },
+    { value: 24, label: "24 Per Page" },
+    { value: 48, label: "48 Per Page" },
+  ];
 
   warehouses = this.dataService.warehouses;
 
@@ -228,8 +257,13 @@ export class WarehousesComponent implements OnInit {
       value: this.warehouses()
         .reduce((acc, w) => acc + w.totalCapacity, 0)
         .toLocaleString(),
+      color: "primary" as const,
     },
-    { label: "Active Facilities", value: this.warehouses().length },
+    {
+      label: "Active Facilities",
+      value: this.warehouses().length,
+      color: "info" as const,
+    },
     {
       label: "Avg. Utilization",
       value:
@@ -239,6 +273,7 @@ export class WarehousesComponent implements OnInit {
                 this.warehouses().length,
             )
           : 0) + "%",
+      color: "warning" as const,
     },
   ]);
 

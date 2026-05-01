@@ -1,10 +1,11 @@
-import { Component, inject, signal, computed } from "@angular/core";
+import { Component, inject, signal, computed, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import {
   InventoryDataService,
   DetailLayoutComponent,
   StatusBadgeComponent,
+  Breadcrumb,
 } from "ui-shared";
 
 @Component({
@@ -18,12 +19,116 @@ import {
         (supplier()?.category || '') + ' • ' + (supplier()?.location || '')
       "
       [status]="supplier()?.status || 'Active'"
+      [breadcrumbs]="breadcrumbs()"
       backLink="/inventory/suppliers"
       backLabel="Suppliers"
       actionLabel="Create Purchase Order"
       [tabs]="['Overview', 'Products', 'Purchase Orders', 'Compliance']"
+      [loading]="isActionLoading()"
       (tabChanged)="activeTab.set($event)"
+      (action)="handleAction()"
     >
+      <div top-content>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Reliability Card -->
+          <div
+            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  Reliability Score
+                </h4>
+                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
+                  Based on last 50 shipments.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex-1 max-w-[200px]">
+              <div
+                class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest mb-1.5"
+              >
+                <span class="text-slate-400">Trust Level</span>
+                <span class="text-emerald-500"
+                  >{{ supplier()?.reliability }}%</span
+                >
+              </div>
+              <div
+                class="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner"
+              >
+                <div
+                  class="h-full bg-emerald-500 transition-all duration-1000"
+                  [style.width.%]="supplier()?.reliability"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Partner Rank Card -->
+          <div
+            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
+          >
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  Global Partner Rank
+                </h4>
+                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
+                  Tier 1 Strategic Vendor
+                </p>
+              </div>
+            </div>
+
+            <div class="text-right px-4">
+              <p
+                class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5"
+              >
+                Global Rank
+              </p>
+              <p class="text-xl font-black text-primary">#12</p>
+            </div>
+          </div>
+        </div>
+      </div>
       <div header-icon>{{ supplier()?.name?.[0] }}</div>
 
       <div sidebar-info class="space-y-6">
@@ -59,23 +164,13 @@ import {
         </div>
         <div class="pt-4 border-t border-slate-100 dark:border-white/5">
           <p
-            class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2"
+            class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1"
           >
-            Reliability Score
+            Supply Capacity
           </p>
-          <div class="flex items-center gap-3">
-            <div
-              class="flex-1 h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden"
-            >
-              <div
-                class="h-full bg-primary transition-all duration-1000"
-                [style.width.%]="supplier()?.reliability"
-              ></div>
-            </div>
-            <span class="text-sm font-black text-primary"
-              >{{ supplier()?.reliability }}%</span
-            >
-          </div>
+          <p class="text-xs font-bold text-slate-900 dark:text-white uppercase">
+            High Volume
+          </p>
         </div>
       </div>
 
@@ -234,15 +329,35 @@ export class SupplierDetailComponent {
   private route = inject(ActivatedRoute);
   private dataService = inject(InventoryDataService);
 
+  isLoading = signal(true);
+  isActionLoading = signal(false);
   activeTab = signal(0);
 
   supplierId = computed(() => this.route.snapshot.paramMap.get("id") || "");
   supplier = computed(() =>
     this.dataService.suppliers().find((s) => s.id === this.supplierId()),
   );
+
+  breadcrumbs = computed<Breadcrumb[]>(() => [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Suppliers", link: "/inventory/suppliers" },
+    { label: this.supplier()?.name || "Detail" },
+  ]);
   products = computed(() =>
     this.dataService
       .products()
       .filter((p) => p.supplierId === this.supplierId()),
   );
+
+  ngOnInit() {
+    setTimeout(() => this.isLoading.set(false), 1500);
+  }
+
+  handleAction() {
+    this.isActionLoading.set(true);
+    setTimeout(() => {
+      this.isActionLoading.set(false);
+    }, 2000);
+  }
 }

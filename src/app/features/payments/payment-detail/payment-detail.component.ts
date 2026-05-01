@@ -6,6 +6,7 @@ import {
   InventoryDataService,
   DetailLayoutComponent,
   StatusBadgeComponent,
+  Breadcrumb,
 } from "ui-shared";
 
 @Component({
@@ -23,6 +24,7 @@ import {
       [title]="payment()?.id || 'Loading...'"
       [subtitle]="'Transaction ID: ' + (payment()?.transactionId || 'N/A')"
       [status]="payment()?.status || 'Unknown'"
+      [breadcrumbs]="breadcrumbs()"
       backLink="/inventory/payments"
       backLabel="Financial Ledger"
       actionLabel="Print Receipt"
@@ -322,6 +324,13 @@ export class PaymentDetailComponent implements OnInit {
   payment = computed(() =>
     this.dataService.payments().find((p) => p.id === this.paymentId()),
   );
+
+  breadcrumbs = computed<Breadcrumb[]>(() => [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Payments", link: "/inventory/payments" },
+    { label: this.payment()?.id || "Detail" },
+  ]);
 
   relatedOrder = computed(() => {
     const p = this.payment();

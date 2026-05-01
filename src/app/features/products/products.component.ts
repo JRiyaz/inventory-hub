@@ -1,15 +1,14 @@
-import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterModule, Router } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
-  SkeletonComponent,
   CustomDropdownComponent,
   DropdownOption,
+  InventoryDataService,
   PageHeaderComponent,
-  StatusBadgeComponent,
   SearchService,
+  SkeletonComponent,
 } from "ui-shared";
 
 @Component({
@@ -26,9 +25,12 @@ import {
   template: `
     <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
       <lib-page-header
-        title="Products Hub"
+        title="Products"
         subtitle="Manage and monitor your industrial inventory levels across all nodes."
         [stats]="headerStats()"
+        [breadcrumbs]="breadcrumbs"
+        [count]="allFilteredProducts().length"
+        [loading]="isLoading()"
         actionLabel="Add New Product"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/products/create'])"
@@ -36,7 +38,7 @@ import {
 
       <!-- Filters Bar (High Density) -->
       <div
-        class="mb-5 flex flex-col lg:flex-row justify-between items-end gap-3 bg-white dark:bg-white/5 p-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
+        class="mb-5 flex flex-col lg:flex-row justify-between items-end gap-3 bg-white dark:bg-white/5 p-2 rounded-xl"
       >
         <div
           class="flex flex-col sm:flex-row items-end gap-3 w-full lg:w-auto flex-1"
@@ -70,12 +72,21 @@ import {
             </div>
           </div>
 
-          <div class="w-full sm:w-56">
+          <div class="w-full sm:w-48">
             <lib-custom-dropdown
               [options]="categoryOptions"
               [value]="selectedCategory()"
               [placeholder]="'Category'"
               (valueChange)="selectCategory($event)"
+            ></lib-custom-dropdown>
+          </div>
+
+          <div class="w-full sm:w-40">
+            <lib-custom-dropdown
+              [options]="pageSizeOptions"
+              [value]="pageSize()"
+              [placeholder]="'Per Page'"
+              (valueChange)="pageSize.set($event); currentPage.set(1)"
             ></lib-custom-dropdown>
           </div>
         </div>
@@ -399,6 +410,19 @@ export class ProductsComponent implements OnInit {
   currentPage = signal(1);
   pageSize = signal(8);
 
+  breadcrumbs = [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Products" },
+  ];
+
+  pageSizeOptions: DropdownOption[] = [
+    { value: 8, label: "8 Per Page" },
+    { value: 16, label: "16 Per Page" },
+    { value: 32, label: "32 Per Page" },
+    { value: 50, label: "50 Per Page" },
+  ];
+
   categories = ["All", "Electronics", "Industrial", "Raw Materials"];
   categoryOptions: DropdownOption[] = this.categories.map((c) => ({
     value: c,
@@ -408,10 +432,17 @@ export class ProductsComponent implements OnInit {
   products = this.dataService.products;
 
   headerStats = computed(() => [
-    { label: "Live Inventory", value: this.products().length },
+    {
+      label: "Live Inventory",
+      value: this.products().length,
+      color: "primary" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
+    },
     {
       label: "Shortage Alerts",
       value: this.products().filter((p) => p.stock < 20).length,
+      color: "danger" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
     },
     {
       label: "Global Valuation",
@@ -422,6 +453,8 @@ export class ProductsComponent implements OnInit {
           1000000
         ).toFixed(2) +
         "M",
+      color: "success" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
     },
   ]);
 

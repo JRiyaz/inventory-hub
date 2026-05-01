@@ -6,6 +6,7 @@ import {
   InventoryDataService,
   DetailLayoutComponent,
   StatusBadgeComponent,
+  Breadcrumb,
 } from "ui-shared";
 
 @Component({
@@ -23,6 +24,7 @@ import {
       [title]="customer()?.name || 'Loading...'"
       [subtitle]="customer()?.company || 'Organization Details'"
       [status]="customer()?.status || 'Unknown'"
+      [breadcrumbs]="breadcrumbs()"
       backLink="/inventory/customers"
       backLabel="Customer Directory"
       actionLabel="Create Invoice"
@@ -386,6 +388,13 @@ export class CustomerDetailComponent implements OnInit {
   customer = computed(() =>
     this.dataService.customers().find((c) => c.id === this.customerId()),
   );
+
+  breadcrumbs = computed<Breadcrumb[]>(() => [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Customers", link: "/inventory/customers" },
+    { label: this.customer()?.name || "Detail" },
+  ]);
 
   relatedOrders = computed(() => {
     const c = this.customer();

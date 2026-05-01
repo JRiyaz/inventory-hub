@@ -1,13 +1,15 @@
-import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import {
+  CustomDropdownComponent,
+  DropdownOption,
   InventoryDataService,
-  SkeletonComponent,
-  PageHeaderComponent,
-  StatusBadgeComponent,
   NotificationService,
+  PageHeaderComponent,
+  SkeletonComponent,
+  StatusBadgeComponent,
 } from "ui-shared";
 
 @Component({
@@ -20,6 +22,7 @@ import {
     SkeletonComponent,
     PageHeaderComponent,
     StatusBadgeComponent,
+    CustomDropdownComponent,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
@@ -27,6 +30,9 @@ import {
         title="Financial Ledger"
         subtitle="Monitor all inbound and outbound transactions across the organization."
         [stats]="headerStats()"
+        [breadcrumbs]="breadcrumbs"
+        [count]="allFilteredPayments().length"
+        [loading]="isLoading()"
         actionLabel="Process Refund"
         backLink="/dashboard"
         (action)="initiateRefund()"
@@ -34,7 +40,7 @@ import {
 
       <!-- Filters Bar (High Density) -->
       <div
-        class="flex flex-col md:flex-row gap-4 mb-5 items-end bg-white dark:bg-white/5 p-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
+        class="flex flex-col md:flex-row gap-4 mb-5 items-end bg-white dark:bg-white/5 p-2 rounded-xl"
       >
         <div class="flex-1 w-full relative group">
           <div class="floating-input-group">
@@ -63,6 +69,15 @@ import {
               </svg>
             </div>
           </div>
+        </div>
+
+        <div class="w-full md:w-40">
+          <lib-custom-dropdown
+            [options]="pageSizeOptions"
+            [value]="pageSize()"
+            [placeholder]="'Per Page'"
+            (valueChange)="pageSize.set($event); currentPage.set(1)"
+          ></lib-custom-dropdown>
         </div>
 
         <div
@@ -104,24 +119,120 @@ import {
               >
                 <tr>
                   <th
-                    class="px-6 py-3.5 text-[9px] font-black uppercase tracking-widest text-slate-400"
+                    (click)="toggleSort('id')"
+                    class="px-6 py-3.5 cursor-pointer group"
                   >
-                    Transaction
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Transaction</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'id'"
+                        [class.text-slate-200]="sortField() !== 'id'"
+                        [class.rotate-180]="
+                          sortField() === 'id' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                   <th
-                    class="px-6 py-3.5 text-[9px] font-black uppercase tracking-widest text-slate-400"
+                    (click)="toggleSort('method')"
+                    class="px-6 py-3.5 cursor-pointer group"
                   >
-                    Method
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Method</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'method'"
+                        [class.text-slate-200]="sortField() !== 'method'"
+                        [class.rotate-180]="
+                          sortField() === 'method' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                   <th
-                    class="px-6 py-3.5 text-[9px] font-black uppercase tracking-widest text-slate-400"
+                    (click)="toggleSort('status')"
+                    class="px-6 py-3.5 cursor-pointer group"
                   >
-                    Status
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Status</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'status'"
+                        [class.text-slate-200]="sortField() !== 'status'"
+                        [class.rotate-180]="
+                          sortField() === 'status' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                   <th
-                    class="px-6 py-3.5 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right"
+                    (click)="toggleSort('amount')"
+                    class="px-6 py-3.5 text-right cursor-pointer group"
                   >
-                    Amount
+                    <div class="flex items-center justify-end gap-2">
+                      <span
+                        class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
+                        >Amount</span
+                      >
+                      <svg
+                        class="w-2.5 h-2.5 transition-all duration-300"
+                        [class.text-primary]="sortField() === 'amount'"
+                        [class.text-slate-200]="sortField() !== 'amount'"
+                        [class.rotate-180]="
+                          sortField() === 'amount' && sortOrder() === 'desc'
+                        "
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="3"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </div>
                   </th>
                   <th class="px-6 py-3.5"></th>
                 </tr>
@@ -317,8 +428,23 @@ export class PaymentsComponent implements OnInit {
   isLoading = signal(true);
   searchQuery = signal("");
   filterMethod = signal("All");
+  sortField = signal<string>("id");
+  sortOrder = signal<"asc" | "desc">("desc");
   currentPage = signal(1);
   pageSize = signal(12);
+
+  breadcrumbs = [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Payments" },
+  ];
+
+  pageSizeOptions: DropdownOption[] = [
+    { value: 12, label: "12 Per Page" },
+    { value: 24, label: "24 Per Page" },
+    { value: 48, label: "48 Per Page" },
+    { value: 100, label: "100 Per Page" },
+  ];
 
   payments = this.dataService.payments;
 
@@ -333,24 +459,40 @@ export class PaymentsComponent implements OnInit {
             .reduce((acc, p) => acc + p.amount, 0) / 1000
         ).toFixed(1) +
         "k",
+      color: "success" as const,
     },
     {
       label: "Pending Clear",
       value: this.payments().filter((p) => p.status === "Pending").length,
+      color: "warning" as const,
     },
-    { label: "Success Rate", value: "98.2%" },
+    {
+      label: "Success Rate",
+      value: "98.2%",
+      color: "info" as const,
+    },
   ]);
 
   allFilteredPayments = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const method = this.filterMethod();
+    const field = this.sortField();
+    const order = this.sortOrder();
 
-    return this.payments().filter((p) => {
+    let result = this.payments().filter((p) => {
       const matchesSearch =
         p.id.toLowerCase().includes(query) ||
         p.method.toLowerCase().includes(query);
       const matchesMethod = method === "All" || p.method === method;
       return matchesSearch && matchesMethod;
+    });
+
+    return result.sort((a: any, b: any) => {
+      const valA = a[field];
+      const valB = b[field];
+      if (valA < valB) return order === "asc" ? -1 : 1;
+      if (valA > valB) return order === "asc" ? 1 : -1;
+      return 0;
     });
   });
 
@@ -371,6 +513,16 @@ export class PaymentsComponent implements OnInit {
     if (page >= 1 && page <= this.totalPages()) {
       this.currentPage.set(page);
     }
+  }
+
+  toggleSort(field: string) {
+    if (this.sortField() === field) {
+      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
+    } else {
+      this.sortField.set(field);
+      this.sortOrder.set("asc");
+    }
+    this.currentPage.set(1);
   }
 
   initiateRefund(): void {

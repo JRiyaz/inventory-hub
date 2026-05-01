@@ -28,6 +28,9 @@ import {
         title="Suppliers Network"
         subtitle="Manage your global vendor relationships and procurement sources."
         [stats]="headerStats()"
+        [breadcrumbs]="breadcrumbs"
+        [count]="allFilteredSuppliers().length"
+        [loading]="isLoading()"
         actionLabel="Add New Supplier"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/suppliers/create'])"
@@ -91,12 +94,21 @@ import {
               </div>
             </div>
 
-            <div class="w-full sm:w-64">
+            <div class="w-full sm:w-56">
               <lib-custom-dropdown
                 [options]="statusOptions"
                 [value]="selectedStatus()"
                 [placeholder]="'Filter Status'"
                 (valueChange)="selectStatus($event)"
+              ></lib-custom-dropdown>
+            </div>
+
+            <div class="w-full sm:w-40">
+              <lib-custom-dropdown
+                [options]="pageSizeOptions"
+                [value]="pageSize()"
+                [placeholder]="'Per Page'"
+                (valueChange)="pageSize.set($event); currentPage.set(1)"
               ></lib-custom-dropdown>
             </div>
           </div>
@@ -417,6 +429,19 @@ export class SuppliersComponent implements OnInit {
   currentPage = signal(1);
   pageSize = signal(8);
 
+  breadcrumbs = [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
+    { label: "Suppliers" },
+  ];
+
+  pageSizeOptions: DropdownOption[] = [
+    { value: 8, label: "8 Per Page" },
+    { value: 16, label: "16 Per Page" },
+    { value: 32, label: "32 Per Page" },
+    { value: 50, label: "50 Per Page" },
+  ];
+
   statusOptions: DropdownOption[] = [
     { value: "All", label: "All Status" },
     { value: "Active", label: "Active" },
@@ -427,9 +452,21 @@ export class SuppliersComponent implements OnInit {
   suppliers = this.dataService.suppliers;
 
   headerStats = computed(() => [
-    { label: "Active Vendors", value: this.suppliers().length.toString() },
-    { label: "Network Reach", value: "Global" },
-    { label: "Reliability", value: "98.4%" },
+    {
+      label: "Active Vendors",
+      value: this.suppliers().length.toString(),
+      color: "primary" as const,
+    },
+    {
+      label: "Network Reach",
+      value: "Global",
+      color: "info" as const,
+    },
+    {
+      label: "Reliability",
+      value: "98.4%",
+      color: "success" as const,
+    },
   ]);
 
   ngOnInit(): void {
