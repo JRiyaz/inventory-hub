@@ -45,7 +45,7 @@ import {
             Client Since
           </p>
           <p class="text-lg font-black text-slate-900 dark:text-white">
-            {{ customer()?.joinDate | date: "MMM YYYY" }}
+            {{ customer()?.joinDate | date: "MMM yyyy" }}
           </p>
         </div>
         <div class="space-y-1">

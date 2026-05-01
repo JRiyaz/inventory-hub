@@ -168,7 +168,7 @@ import {
                   >
                   <span
                     class="text-[10px] font-black text-slate-900 dark:text-white"
-                    >{{ customer.joinDate | date: "MMM d, YYYY" }}</span
+                    >{{ customer.joinDate | date: "MMM d, yyyy" }}</span
                   >
                 </div>
                 <lib-status-badge
