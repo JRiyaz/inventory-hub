@@ -18,7 +18,6 @@ import {
   Order,
   OrderItem,
   Customer,
-  SkeletonComponent,
   CustomDropdownComponent,
   DropdownOption,
   SearchService,
@@ -61,7 +60,7 @@ import {
       <div class="space-y-4">
         <!-- Top Dashboard Header (Summary + Customer + Priority) -->
         <div
-          class="card-premium p-4 border-b-4 border-b-primary sticky top-0 z-[100] animate-fade-in"
+          class="card-premium p-3 border-b-2 border-b-primary sticky top-0 z-[100] animate-fade-in"
         >
           <div
             class="flex flex-col xl:flex-row items-center justify-between gap-6"
@@ -223,11 +222,15 @@ import {
 
             <!-- Stats & Priority -->
             <div
-              class="flex-1 w-full flex flex-wrap items-center justify-center xl:justify-start gap-8"
+              class="flex-1 w-full flex flex-wrap items-center justify-center xl:justify-start gap-6"
             >
               <div class="flex flex-col">
-                <p class="label-premium mb-0.5">Subtotal</p>
-                <p class="text-lg font-black text-primary">
+                <p
+                  class="text-[8px] font-black uppercase text-slate-400 mb-0.5"
+                >
+                  Subtotal
+                </p>
+                <p class="text-base font-black text-primary">
                   {{ subtotal() | currency }}
                 </p>
               </div>
@@ -272,23 +275,16 @@ import {
                 (click)="submitOrder()"
                 [disabled]="!canSubmit() || isSubmitting()"
                 [class.btn-loading]="isSubmitting()"
-                class="w-full xl:w-56 btn-primary-premium"
+                class="w-full xl:w-48 btn-primary-premium !py-2.5"
               >
                 Create Order
               </button>
-              @if (!selectedCustomerId()) {
-                <p
-                  class="text-[8px] text-rose-500 font-black uppercase tracking-widest text-center mt-1 animate-pulse"
-                >
-                  * Select Customer
-                </p>
-              }
             </div>
           </div>
         </div>
 
         <!-- Dynamic Order Items List -->
-        <div class="card-premium p-6 relative">
+        <div class="card-premium p-4 relative">
           <div class="flex items-center justify-between mb-1">
             <h3
               class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight"

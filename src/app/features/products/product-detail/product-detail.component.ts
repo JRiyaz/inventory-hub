@@ -1,15 +1,11 @@
 import { Component, signal, OnInit, inject, computed } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { ActivatedRoute, RouterModule } from "@angular/router";
 import {
   InventoryDataService,
-  Product,
-  Order,
-  AuthStateService,
-  CustomDropdownComponent,
-  DropdownOption,
-  SkeletonComponent,
+  DetailLayoutComponent,
+  StatusBadgeComponent,
 } from "ui-shared";
 
 @Component({
@@ -19,50 +15,154 @@ import {
     CommonModule,
     FormsModule,
     RouterModule,
-    CustomDropdownComponent,
-    SkeletonComponent,
+    DetailLayoutComponent,
+    StatusBadgeComponent,
   ],
   template: `
-    <div class="p-3 sm:p-5 max-w-5xl mx-auto animate-fade-in">
-      <!-- Breadcrumbs -->
-      <nav
-        class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-5"
-      >
-        <a
-          routerLink="/inventory/products"
-          class="hover:text-primary transition-colors"
-          >Products</a
+    <lib-detail-layout
+      [title]="product()?.name || 'Loading...'"
+      [subtitle]="product()?.description || 'No description available'"
+      [status]="stockStatus()"
+      backLink="/inventory/products"
+      backLabel="Products Hub"
+      actionLabel="Order More Stock"
+      [tabs]="['Overview', 'Supplier & Logistics', 'Relational Activity']"
+      (tabChanged)="activeTab.set($event)"
+    >
+      <div header-icon>
+        <div
+          class="w-full h-full bg-primary/10 rounded-2xl flex items-center justify-center text-primary"
         >
-        <svg
-          class="w-3 h-3"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            d="M9 5l7 7-7 7"
-            stroke-width="3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        <span class="text-slate-900 dark:text-white">Product Detail</span>
-      </nav>
+          <svg
+            class="w-10 h-10"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            ></path>
+          </svg>
+        </div>
+      </div>
 
-      @defer (when !isLoading()) {
-        @if (product(); as prod) {
-          <div class="card-premium overflow-hidden">
-            <div class="flex flex-col lg:flex-row">
-              <!-- Left: Image/Visual -->
+      <div sidebar-info class="space-y-6">
+        <div class="space-y-1">
+          <p
+            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+          >
+            Price Point
+          </p>
+          <p class="text-xl font-black text-primary">
+            {{ product()?.price | currency }}
+          </p>
+        </div>
+        <div class="space-y-1">
+          <p
+            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+          >
+            Current Stock
+          </p>
+          <div class="flex items-center gap-2">
+            <p class="text-xl font-black text-slate-900 dark:text-white">
+              {{ product()?.stock }} Units
+            </p>
+          </div>
+        </div>
+        <div class="space-y-1">
+          <p
+            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+          >
+            Category
+          </p>
+          <p
+            class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight"
+          >
+            {{ product()?.category }}
+          </p>
+        </div>
+      </div>
+
+      <div sidebar-extra>
+        <h4
+          class="text-white text-xs font-black uppercase tracking-widest mb-4"
+        >
+          Inventory Health
+        </h4>
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <div
+              class="flex justify-between items-center text-[10px] text-white/70 font-bold uppercase tracking-wider"
+            >
+              <span>Demand Velocity</span>
+              <span class="text-emerald-400">Stable</span>
+            </div>
+            <div
+              class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden shadow-inner"
+            >
               <div
-                class="w-full lg:w-2/5 bg-slate-50 dark:bg-white/[0.02] p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/[0.08]"
+                class="h-full bg-emerald-400 w-3/4 shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+              ></div>
+            </div>
+          </div>
+          <div class="pt-2">
+            <p class="text-[10px] text-white/50 leading-relaxed italic">
+              Last audit completed 4 days ago. All batches verified.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div tab-content class="animate-fade-in">
+        @if (activeTab() === 0) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card-premium p-6">
+              <h4
+                class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6"
               >
-                <div class="relative group">
+                Market Strategy
+              </h4>
+              <div class="space-y-4">
+                <div
+                  class="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center"
+                >
+                  <span
+                    class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                    >Target Margin</span
+                  >
+                  <span class="text-lg font-black text-emerald-500">28.4%</span>
+                </div>
+                <div
+                  class="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center"
+                >
+                  <span
+                    class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                    >Market Index</span
+                  >
+                  <span
+                    class="text-lg font-black text-slate-900 dark:text-white"
+                    >+12.5%</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="card-premium p-6">
+              <h4
+                class="text-xs font-black uppercase tracking-widest text-slate-400 mb-6"
+              >
+                Fulfillment Details
+              </h4>
+              <div class="space-y-4">
+                <div class="flex items-start gap-4">
                   <div
-                    class="w-64 h-64 bg-white dark:bg-white/5 rounded-3xl flex items-center justify-center text-slate-200 dark:text-white/5 overflow-hidden"
+                    class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
                   >
                     <svg
-                      class="w-32 h-32"
+                      class="w-5 h-5"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -70,398 +170,306 @@ import {
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        stroke-width="1"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                      ></path>
+                        stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </div>
+                  <div>
+                    <p
+                      class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                    >
+                      Standard Lead Time
+                    </p>
+                    <p class="text-sm font-bold text-slate-900 dark:text-white">
+                      14 Business Days
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-4">
                   <div
-                    class="absolute -bottom-4 -right-4 w-20 h-20 bg-primary/10 rounded-2xl blur-2xl group-hover:blur-xl transition-all"
-                  ></div>
-                </div>
-              </div>
-
-              <!-- Right: Details -->
-              <div class="flex-1 p-6 sm:p-8">
-                <div class="flex justify-between items-start mb-5">
-                  <div>
-                    @if (!isEditing()) {
-                      <span
-                        class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary/20 mb-3 block w-fit"
-                      >
-                        {{ prod.category }}
-                      </span>
-                    } @else {
-                      <div class="w-full sm:w-64 mb-6">
-                        <label class="label-premium block mb-2">Category</label>
-                        <lib-custom-dropdown
-                          [options]="categoryOptions"
-                          [value]="editBuffer.category"
-                          (valueChange)="editBuffer.category = $event"
-                        >
-                        </lib-custom-dropdown>
-                      </div>
-                    }
-
-                    @if (!isEditing()) {
-                      <h1
-                        class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-none"
-                      >
-                        {{ prod.name }}
-                      </h1>
-                    } @else {
-                      <div class="floating-input-group w-full sm:w-96">
-                        <input
-                          type="text"
-                          [(ngModel)]="editBuffer.name"
-                          class="floating-input"
-                          id="edit-name"
-                          placeholder=" "
-                        />
-                        <label class="floating-label" for="edit-name"
-                          >Product Name</label
-                        >
-                      </div>
-                    }
-                  </div>
-                  @if (auth.isAdmin()) {
-                    <button (click)="toggleEdit()" class="btn-ghost-premium">
-                      @if (!isEditing()) {
-                        <svg
-                          class="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          ></path>
-                        </svg>
-                      }
-                      <span>{{ isEditing() ? "Cancel" : "Edit" }}</span>
-                    </button>
-                  }
-                </div>
-
-                <div class="space-y-6">
-                  <!-- Description -->
-                  <div>
-                    <label class="label-premium block mb-3">Description</label>
-                    @if (!isEditing()) {
-                      <p
-                        class="text-slate-600 dark:text-slate-400 leading-relaxed"
-                      >
-                        {{ prod.description }}
-                      </p>
-                    } @else {
-                      <div class="floating-input-group">
-                        <textarea
-                          [(ngModel)]="editBuffer.description"
-                          class="floating-input min-h-[100px] py-4"
-                          id="edit-desc"
-                          placeholder=" "
-                        ></textarea>
-                        <label class="floating-label" for="edit-desc"
-                          >Description</label
-                        >
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Metrics -->
-                  <div class="grid grid-cols-2 gap-5">
-                    <div>
-                      <label class="label-premium block mb-2">Price</label>
-                      @if (!isEditing()) {
-                        <div class="text-xl font-black text-primary">
-                          {{ prod.price | currency }}
-                        </div>
-                      } @else {
-                        <div class="floating-input-group">
-                          <input
-                            type="number"
-                            [(ngModel)]="editBuffer.price"
-                            class="floating-input"
-                            id="edit-price"
-                            placeholder=" "
-                          />
-                          <label class="floating-label" for="edit-price"
-                            >Price</label
-                          >
-                        </div>
-                      }
-                    </div>
-                    <div>
-                      <label class="label-premium block mb-2">In Stock</label>
-                      @if (!isEditing()) {
-                        <div class="flex items-center gap-2">
-                          <span
-                            class="text-xl font-black text-slate-900 dark:text-white"
-                            >{{ prod.stock }}</span
-                          >
-                          <span
-                            class="text-[10px] font-bold text-green-500 uppercase"
-                            >Available</span
-                          >
-                        </div>
-                      } @else {
-                        <div class="floating-input-group">
-                          <input
-                            type="number"
-                            [(ngModel)]="editBuffer.stock"
-                            (keyup.enter)="saveChanges()"
-                            class="floating-input"
-                            id="edit-stock"
-                            placeholder=" "
-                          />
-                          <label class="floating-label" for="edit-stock"
-                            >Stock Level</label
-                          >
-                        </div>
-                      }
-                    </div>
-                  </div>
-
-                  <!-- Image URL Editing -->
-                  @if (isEditing()) {
-                    <div class="pt-2">
-                      <div class="floating-input-group">
-                        <input
-                          type="text"
-                          [(ngModel)]="editBuffer.image"
-                          (keyup.enter)="saveChanges()"
-                          class="floating-input"
-                          id="edit-image"
-                          placeholder=" "
-                        />
-                        <label class="floating-label" for="edit-image"
-                          >Product Image URL</label
-                        >
-                      </div>
-                    </div>
-                  }
-
-                  <!-- Save Button -->
-                  @if (isEditing()) {
-                    <div
-                      class="pt-8 border-t border-slate-100 dark:border-white/[0.05]"
+                    class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <button
-                        (click)="saveChanges()"
-                        class="btn-primary-premium"
-                      >
-                        Save Changes
-                      </button>
-                    </div>
-                  }
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p
+                      class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                    >
+                      Minimum Stock Threshold
+                    </p>
+                    <p class="text-sm font-bold text-slate-900 dark:text-white">
+                      25 Units (Critical)
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        }
-
-        <!-- Related Orders Section (Lazy/Dynamic) -->
-        <div class="mt-8 animate-fade-in">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="heading-premium">Order History</h2>
-              <p
-                class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1"
-              >
-                Orders containing this product
-              </p>
-            </div>
-            <button
-              (click)="showOrders.set(!showOrders())"
-              class="btn-secondary-premium !px-4 !py-2"
+        } @else if (activeTab() === 1) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Supplier Link Card -->
+            <div
+              *ngIf="supplier()"
+              [routerLink]="['/inventory/suppliers', supplier()?.id]"
+              class="card-premium p-6 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden"
             >
-              {{ showOrders() ? "Hide Orders" : "Show Orders" }} ({{
-                relatedOrders().length
-              }})
-            </button>
-          </div>
-
-          @if (showOrders()) {
-            <div class="space-y-4 animate-dropdown-in">
-              @if (relatedOrders().length === 0) {
-                <div
-                  class="p-12 text-center bg-slate-50 dark:bg-white/[0.02] rounded-3xl border border-dashed border-slate-200 dark:border-white/10"
+              <div
+                class="absolute -right-4 -top-4 w-16 h-16 bg-primary/5 rounded-full group-hover:scale-150 transition-transform duration-700"
+              ></div>
+              <h4
+                class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center justify-between"
+              >
+                Primary Source
+                <svg
+                  class="w-4 h-4 text-slate-300 group-hover:text-primary transition-all"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <p class="text-sm text-slate-400 font-medium">
-                    No orders found for this product.
-                  </p>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M14 5l7 7-7 7"
+                  />
+                </svg>
+              </h4>
+              <div class="flex items-center gap-5">
+                <div
+                  class="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-primary font-black text-2xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
+                >
+                  {{ supplier()?.name?.[0] }}
                 </div>
-              }
+                <div>
+                  <p
+                    class="text-lg font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight"
+                  >
+                    {{ supplier()?.name }}
+                  </p>
+                  <p
+                    class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1"
+                  >
+                    {{ supplier()?.location }}
+                  </p>
+                  <lib-status-badge
+                    [status]="supplier()?.status || ''"
+                    class="mt-3 scale-75 origin-left"
+                  ></lib-status-badge>
+                </div>
+              </div>
+            </div>
 
-              @for (order of relatedOrders(); track order.id) {
-                <div
-                  [routerLink]="['/inventory/orders', order.id]"
-                  class="group bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl px-4 py-2 hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between hover:shadow-sm"
+            <!-- Warehouse Link Card -->
+            <div
+              *ngIf="warehouse()"
+              [routerLink]="['/inventory/warehouses', warehouse()?.id]"
+              class="card-premium p-6 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden"
+            >
+              <div
+                class="absolute -right-4 -top-4 w-16 h-16 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"
+              ></div>
+              <h4
+                class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center justify-between"
+              >
+                Logistics Node
+                <svg
+                  class="w-4 h-4 text-slate-300 group-hover:text-primary transition-all"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <div class="flex items-center gap-6">
-                    <div
-                      class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors"
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M14 5l7 7-7 7"
+                  />
+                </svg>
+              </h4>
+              <div class="flex items-center gap-5">
+                <div
+                  class="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-amber-500 font-black group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
+                >
+                  <svg
+                    class="w-8 h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1.5"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    ></path>
+                  </svg>
+                </div>
+                <div>
+                  <p
+                    class="text-lg font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight"
+                  >
+                    {{ warehouse()?.name }}
+                  </p>
+                  <p
+                    class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1"
+                  >
+                    {{ warehouse()?.location }}
+                  </p>
+                  <div class="mt-3 flex items-center gap-2">
+                    <span
+                      class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                      >Load:</span
                     >
-                      <svg
-                        class="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <div class="flex items-center gap-3 mb-1">
-                        <span
-                          class="text-sm font-black text-slate-900 dark:text-white"
-                          >#{{ order.id }}</span
-                        >
-                        <span
-                          [ngClass]="{
-                            'bg-amber-500/10 text-amber-500':
-                              order.status === 'Pending',
-                            'bg-primary/10 text-primary':
-                              order.status === 'Processing',
-                            'bg-green-500/10 text-green-500':
-                              order.status === 'Completed',
-                          }"
-                          class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border border-current/20"
-                        >
-                          {{ order.status }}
-                        </span>
-                      </div>
-                      <p class="text-xs text-slate-500 font-medium">
-                        {{ order.customer }}
-                      </p>
-                    </div>
+                    <span class="text-xs font-black text-primary"
+                      >{{ warehouse()?.utilization }}% Capacity</span
+                    >
                   </div>
-                  <div class="text-right">
-                    <div class="text-sm font-black text-primary mb-1">
-                      {{ getQuantityInOrder(order.id) }} Units
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else if (activeTab() === 2) {
+          <div class="space-y-4">
+            @for (order of relatedOrders(); track order.id) {
+              <div
+                [routerLink]="['/inventory/orders', order.id]"
+                class="card-premium p-5 flex items-center justify-between group hover:border-primary transition-all cursor-pointer"
+              >
+                <div class="flex items-center gap-5">
+                  <div
+                    class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-primary transition-all shadow-inner border border-slate-100 dark:border-white/10"
+                  >
+                    <svg
+                      class="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-3 mb-1">
+                      <p
+                        class="text-sm font-black text-slate-900 dark:text-white"
+                      >
+                        Order #{{ order.id }}
+                      </p>
+                      <lib-status-badge
+                        [status]="order.status"
+                        class="scale-75 origin-left"
+                      ></lib-status-badge>
                     </div>
                     <p
                       class="text-[10px] text-slate-400 font-bold uppercase tracking-widest"
                     >
-                      {{ order.date }}
+                      {{ order.customerName }} •
+                      {{ order.date | date: "mediumDate" }}
                     </p>
                   </div>
                 </div>
-              }
-            </div>
-          }
-        </div>
-      } @placeholder {
-        <!-- Skeleton Card -->
-        <div
-          class="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl overflow-hidden"
-        >
-          <div class="flex flex-col lg:flex-row">
-            <!-- Skeleton Image Area -->
-            <div
-              class="w-full lg:w-2/5 bg-slate-50 dark:bg-white/[0.02] p-8 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/[0.08]"
-            >
-              <lib-skeleton
-                width="256px"
-                height="256px"
-                shape="rounded"
-              ></lib-skeleton>
-            </div>
-            <!-- Skeleton Info Area -->
-            <div class="flex-1 p-6 sm:p-8 space-y-8">
-              <div class="space-y-4">
-                <lib-skeleton
-                  width="120px"
-                  height="1.5rem"
-                  shape="rounded"
-                ></lib-skeleton>
-                <lib-skeleton width="300px" height="3rem"></lib-skeleton>
-                <lib-skeleton width="150px" height="1.5rem"></lib-skeleton>
+                <div class="text-right">
+                  <p class="text-lg font-black text-primary">
+                    {{ getQuantityInOrder(order.id) }} Units
+                  </p>
+                  <p
+                    class="text-[9px] text-slate-400 font-black uppercase tracking-widest"
+                  >
+                    Allocation
+                  </p>
+                </div>
               </div>
-              <div class="space-y-4">
-                <lib-skeleton width="100%" height="1rem"></lib-skeleton>
-                <lib-skeleton width="100%" height="1rem"></lib-skeleton>
-                <lib-skeleton width="80%" height="1rem"></lib-skeleton>
-              </div>
+            } @empty {
               <div
-                class="flex justify-between items-center pt-8 border-t border-slate-100 dark:border-white/5"
+                class="text-center py-24 bg-white/50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10"
               >
-                <lib-skeleton width="150px" height="2.5rem"></lib-skeleton>
-                <lib-skeleton
-                  width="120px"
-                  height="3rem"
-                  shape="rounded"
-                ></lib-skeleton>
+                <p class="text-slate-400 font-medium italic">
+                  No transactional records found for this SKU.
+                </p>
               </div>
-            </div>
+            }
           </div>
-        </div>
-      }
-    </div>
+        }
+      </div>
+    </lib-detail-layout>
   `,
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ProductDetailComponent implements OnInit {
-  public dataService = inject(InventoryDataService);
+  private route = inject(ActivatedRoute);
+  private dataService = inject(InventoryDataService);
+
   isLoading = signal(true);
-  product = signal<Product | null>(null);
-  isEditing = signal(false);
-  showOrders = signal(false);
-  editBuffer: any = {};
+  activeTab = signal(0);
+
+  productId = computed(() => Number(this.route.snapshot.paramMap.get("id")));
+  product = computed(() =>
+    this.dataService.products().find((p) => p.id === this.productId()),
+  );
+
+  supplier = computed(() => {
+    const p = this.product();
+    return p?.supplierId
+      ? this.dataService.suppliers().find((s) => s.id === p.supplierId)
+      : null;
+  });
+
+  warehouse = computed(() => {
+    const p = this.product();
+    return p?.warehouseId
+      ? this.dataService.warehouses().find((w) => w.id === p.warehouseId)
+      : null;
+  });
 
   relatedOrders = computed(() => {
     const p = this.product();
-    return p ? this.dataService.getOrdersForProduct(p.id) : [];
+    return p
+      ? this.dataService
+          .orders()
+          .filter((o) => o.items.some((i) => i.productId === p.id))
+      : [];
   });
 
-  categoryOptions: DropdownOption[] = [
-    { value: "Industrial", label: "Industrial" },
-    { value: "Electronics", label: "Electronics" },
-    { value: "Raw Materials", label: "Raw Materials" },
-  ];
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    public auth: AuthStateService,
-  ) {}
+  stockStatus = computed(() => {
+    const p = this.product();
+    if (!p) return "Unknown";
+    if (p.stock === 0) return "Out of Stock";
+    if (p.stock < 20) return "Low Stock";
+    return "Optimal Stock";
+  });
 
   ngOnInit() {
-    const id = Number(this.route.snapshot.paramMap.get("id"));
-    const found = this.dataService.products().find((p) => p.id === id);
-    if (found) {
-      this.product.set(found);
-    }
-    setTimeout(() => {
-      this.isLoading.set(false);
-    }, 800);
+    setTimeout(() => this.isLoading.set(false), 800);
   }
 
   getQuantityInOrder(orderId: string): number {
     const p = this.product();
-    return p ? this.dataService.getProductQuantityInOrder(p.id, orderId) : 0;
-  }
-
-  toggleEdit() {
-    if (!this.isEditing()) {
-      this.editBuffer = { ...this.product() };
-    }
-    this.isEditing.set(!this.isEditing());
-  }
-
-  saveChanges() {
-    // In a real app, this would be an API call
-    this.product.set({ ...this.editBuffer });
-    this.isEditing.set(false);
-
-    // Show a success state or notification would go here
-    console.log("Product updated:", this.product());
+    if (!p) return 0;
+    const order = this.dataService.orders().find((o) => o.id === orderId);
+    return order?.items.find((i) => i.productId === p.id)?.qty || 0;
   }
 }

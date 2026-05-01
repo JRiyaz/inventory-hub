@@ -30,6 +30,27 @@ export const INVENTORY_ROUTES: Routes = [
             (m) => m.CUSTOMERS_ROUTES,
           ),
       },
+      {
+        path: "suppliers",
+        loadChildren: () =>
+          import("./features/suppliers/suppliers.routes").then(
+            (m) => m.SUPPLIERS_ROUTES,
+          ),
+      },
+      {
+        path: "warehouses",
+        loadChildren: () =>
+          import("./features/warehouses/warehouses.routes").then(
+            (m) => m.WAREHOUSES_ROUTES,
+          ),
+      },
+      {
+        path: "payments",
+        loadChildren: () =>
+          import("./features/payments/payments.routes").then(
+            (m) => m.PAYMENTS_ROUTES,
+          ),
+      },
     ],
   },
 ];

@@ -1,13 +1,14 @@
 import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { RouterModule } from "@angular/router";
+import { RouterModule, Router } from "@angular/router";
 import {
   InventoryDataService,
-  Product,
   SkeletonComponent,
   CustomDropdownComponent,
   DropdownOption,
+  PageHeaderComponent,
+  StatusBadgeComponent,
   SearchService,
 } from "ui-shared";
 
@@ -20,53 +21,78 @@ import {
     RouterModule,
     SkeletonComponent,
     CustomDropdownComponent,
+    PageHeaderComponent,
   ],
   template: `
-    <div class="p-3 sm:p-5 max-w-7xl mx-auto">
-      <!-- Header Section -->
+    <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
+      <lib-page-header
+        title="Products Hub"
+        subtitle="Manage and monitor your industrial inventory levels across all nodes."
+        [stats]="headerStats()"
+        actionLabel="Add New Product"
+        backLink="/dashboard"
+        (action)="router.navigate(['/inventory/products/create'])"
+      ></lib-page-header>
+
+      <!-- Filters Bar (High Density) -->
       <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5"
+        class="mb-5 flex flex-col lg:flex-row justify-between items-end gap-3 bg-white dark:bg-white/5 p-2 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
       >
-        <div>
-          <h2
-            class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
-          >
-            Products Hub
-          </h2>
-          <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Manage and monitor your industrial inventory levels.
-          </p>
-        </div>
         <div
-          class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto"
+          class="flex flex-col sm:flex-row items-end gap-3 w-full lg:w-auto flex-1"
         >
-          <div
-            class="flex items-center gap-3 bg-white dark:bg-white/5 p-1 rounded-2xl border border-slate-200 dark:border-white/10 w-full sm:w-auto"
-          >
-            <div class="px-4 py-2 text-center">
-              <p
-                class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+          <div class="floating-input-group w-full sm:w-64">
+            <input
+              type="text"
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event)"
+              placeholder=" "
+              class="floating-input"
+              id="prod-search"
+            />
+            <label class="floating-label" for="prod-search"
+              >Search Inventory</label
+            >
+            <div class="absolute right-1 top-6">
+              <svg
+                class="w-3.5 h-3.5 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                Total Stock
-              </p>
-              <p
-                class="text-lg font-black text-primary flex items-center justify-center min-h-[28px]"
-              >
-                @if (isLoading()) {
-                  <span class="dots-wave"
-                    ><span></span><span></span><span></span
-                  ></span>
-                } @else {
-                  {{ products().length }}
-                }
-              </p>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                ></path>
+              </svg>
             </div>
           </div>
+
+          <div class="w-full sm:w-56">
+            <lib-custom-dropdown
+              [options]="categoryOptions"
+              [value]="selectedCategory()"
+              [placeholder]="'Category'"
+              (valueChange)="selectCategory($event)"
+            ></lib-custom-dropdown>
+          </div>
+        </div>
+
+        <div
+          class="flex bg-slate-100 dark:bg-white/[0.05] p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-inner"
+        >
           <button
-            class="btn-primary-premium w-full sm:w-auto !px-6 !py-3.5 flex items-center justify-center gap-2 group"
+            (click)="viewType.set('grid')"
+            [class.bg-white]="viewType() === 'grid'"
+            [class.dark:bg-white/10]="viewType() === 'grid'"
+            [class.shadow-sm]="viewType() === 'grid'"
+            [class.text-primary]="viewType() === 'grid'"
+            class="p-2 rounded-lg transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
           >
             <svg
-              class="w-4 h-4 group-hover:rotate-45 transition-transform duration-300"
+              class="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -74,43 +100,66 @@ import {
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                stroke-width="3"
-                d="M12 4v16m8-8H4"
+                stroke-width="2"
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
               ></path>
             </svg>
-            <span>Add New Product</span>
+          </button>
+          <button
+            (click)="viewType.set('list')"
+            [class.bg-white]="viewType() === 'list'"
+            [class.dark:bg-white/10]="viewType() === 'list'"
+            [class.shadow-sm]="viewType() === 'list'"
+            [class.text-primary]="viewType() === 'list'"
+            class="p-2 rounded-lg transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              ></path>
+            </svg>
           </button>
         </div>
       </div>
 
-      <!-- Filters & Controls Bar -->
-      <div class="mb-6">
-        <div class="flex flex-col lg:flex-row justify-between items-end gap-5">
-          <!-- Search & Category -->
-          <div
-            class="flex flex-col sm:flex-row items-end gap-5 w-full lg:w-auto"
-          >
-            <!-- Search Input -->
-            <div class="floating-input-group w-full sm:w-72">
-              <input
-                type="text"
-                [ngModel]="searchQuery()"
-                (ngModelChange)="searchQuery.set($event)"
-                placeholder=" "
-                class="floating-input"
-                id="product-search"
-              />
-              <label class="floating-label" for="product-search"
-                >Search Products</label
-              >
-              <div class="absolute right-0 top-7">
-                @if (searchQuery()) {
-                  <button
-                    (click)="searchQuery.set('')"
-                    class="p-1 text-slate-400 hover:text-rose-500 transition-colors"
+      @if (isLoading()) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+            <div class="card-premium p-6 space-y-4">
+              <lib-skeleton
+                width="100%"
+                height="180px"
+                shape="rounded"
+              ></lib-skeleton>
+              <lib-skeleton width="80%" height="1.5rem"></lib-skeleton>
+              <lib-skeleton width="40%" height="1rem"></lib-skeleton>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="animate-fade-in">
+          @if (viewType() === "grid") {
+            <div
+              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            >
+              @for (product of paginatedProducts(); track product.id) {
+                <div
+                  [routerLink]="[product.id]"
+                  class="card-premium p-4 hover:border-primary/50 transition-all group cursor-pointer flex flex-col relative overflow-hidden"
+                >
+                  <div
+                    class="w-full aspect-video bg-slate-50 dark:bg-white/5 rounded-xl mb-3 flex items-center justify-center text-slate-200 dark:text-white/5 relative overflow-hidden transition-colors border border-slate-100 dark:border-white/10"
                   >
                     <svg
-                      class="w-4 h-4"
+                      class="w-10 h-10 transition-transform duration-700 group-hover:scale-110"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -118,183 +167,57 @@ import {
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
+                        stroke-width="1"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                       ></path>
                     </svg>
-                  </button>
-                } @else {
-                  <svg
-                    class="w-4 h-4 text-slate-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    ></path>
-                  </svg>
-                }
-              </div>
-            </div>
-
-            <div class="w-full sm:w-64">
-              <lib-custom-dropdown
-                [options]="categoryOptions"
-                [value]="selectedCategory()"
-                [placeholder]="'Filter Category'"
-                (valueChange)="selectCategory($event)"
-              ></lib-custom-dropdown>
-            </div>
-          </div>
-
-          <!-- View Toggle -->
-          <div
-            class="flex items-center gap-4 w-full lg:w-auto justify-end pb-1"
-          >
-            <span
-              class="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2"
-              >Layout</span
-            >
-            <div
-              class="flex bg-slate-100 dark:bg-white/[0.05] p-1 rounded-xl border border-slate-200 dark:border-white/[0.08]"
-            >
-              <button
-                (click)="viewType.set('grid')"
-                [class.bg-white]="viewType() === 'grid'"
-                [class.dark:bg-white/10]="viewType() === 'grid'"
-                [class.shadow-md]="viewType() === 'grid'"
-                class="p-2.5 rounded-lg transition-all text-slate-500 hover:text-primary"
-              >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  ></path>
-                </svg>
-              </button>
-              <button
-                (click)="viewType.set('list')"
-                [class.bg-white]="viewType() === 'list'"
-                [class.dark:bg-white/10]="viewType() === 'list'"
-                [class.shadow-md]="viewType() === 'list'"
-                class="p-2.5 rounded-lg transition-all text-slate-500 hover:text-primary"
-              >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  ></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content Area: Defer loading actual content -->
-      @defer (when !isLoading()) {
-        <div class="mt-5 animate-fade-in">
-          @if (viewType() === "grid") {
-            <!-- Grid View -->
-            <div
-              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in"
-            >
-              @for (product of paginatedProducts(); track product.id) {
-                <div
-                  [routerLink]="['/inventory/products', product.id]"
-                  class="card-premium p-3.5 hover:border-primary/50 transition-all group hover:scale-[1.02] cursor-pointer"
-                >
-                  <div
-                    class="w-full aspect-square bg-slate-50 dark:bg-white/5 rounded-lg mb-3 overflow-hidden relative"
-                  >
-                    <div
-                      class="absolute inset-0 flex items-center justify-center text-slate-200 dark:text-white/5"
-                    >
-                      <svg
-                        class="w-16 h-16"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="1.5"
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div class="absolute top-3 right-3">
+                    <div class="absolute top-2 left-2">
                       <span
-                        class="px-2 py-1 bg-white/90 dark:bg-black/50 backdrop-blur-sm rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/10"
+                        class="px-1.5 py-0.5 bg-white/90 dark:bg-black/40 backdrop-blur-md rounded text-[8px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/10 shadow-sm"
                       >
                         {{ product.category }}
                       </span>
                     </div>
                   </div>
-                  <h3
-                    class="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors"
-                  >
-                    {{ product.name }}
-                  </h3>
-                  <p
-                    class="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 leading-relaxed"
-                  >
-                    {{ product.description }}
-                  </p>
+
+                  <div class="flex-1">
+                    <h3
+                      class="text-xs font-black text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors truncate"
+                    >
+                      {{ product.name }}
+                    </h3>
+                    <div class="flex items-center gap-2 mb-4">
+                      <span
+                        class="text-[9px] font-black text-slate-400 uppercase tracking-widest"
+                        >Stock:</span
+                      >
+                      <span
+                        [class]="
+                          product.stock < 20
+                            ? 'text-rose-500'
+                            : 'text-emerald-500'
+                        "
+                        class="text-[9px] font-black uppercase tracking-widest"
+                        >{{ product.stock }} Units</span
+                      >
+                    </div>
+                  </div>
+
                   <div
-                    class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5"
+                    class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5 mt-auto"
                   >
                     <div class="flex flex-col">
                       <span
-                        class="text-lg font-black text-primary leading-none"
-                        >{{ product.price | currency }}</span
+                        class="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1"
+                        >MSRP</span
                       >
                       <span
-                        class="text-[9px] text-slate-400 uppercase tracking-tighter mt-1"
-                        >Unit Price</span
+                        class="text-base font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-none"
+                        >{{ product.price | currency }}</span
                       >
                     </div>
-                    <span
-                      class="text-[9px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-lg uppercase tracking-wider border border-green-500/20"
-                    >
-                      {{ product.stock }} In Stock
-                    </span>
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <!-- List View -->
-            <div class="space-y-3 animate-fade-in">
-              @for (product of paginatedProducts(); track product.id) {
-                <div
-                  class="card-premium p-3 flex items-center gap-4 hover:border-primary/50 transition-all shadow-sm group active:scale-[0.99] cursor-pointer"
-                  [routerLink]="['/inventory/products', product.id]"
-                >
-                  <div
-                    class="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-xl flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5"
-                  >
                     <svg
-                      class="w-8 h-8"
+                      class="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -302,180 +225,107 @@ import {
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        stroke-width="1.5"
+                        stroke-width="2.5"
+                        d="M9 5l7 7-7 7"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="space-y-2">
+              @for (product of paginatedProducts(); track product.id) {
+                <div
+                  class="card-premium p-3 flex items-center gap-4 hover:border-primary/50 transition-all group cursor-pointer"
+                  [routerLink]="[product.id]"
+                >
+                  <div
+                    class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-lg flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5 group-hover:bg-primary/10 transition-all border border-slate-100 dark:border-white/10"
+                  >
+                    <svg
+                      class="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1"
                         d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                       ></path>
                     </svg>
                   </div>
                   <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-3 mb-1">
+                    <div class="flex items-center gap-2 mb-0.5">
                       <h3
-                        class="text-sm font-bold text-slate-900 dark:text-white truncate"
+                        class="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate"
                       >
                         {{ product.name }}
                       </h3>
                       <span
-                        class="px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                        >{{ product.category }}</span
+                        class="px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[8px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400"
                       >
+                        {{ product.category }}
+                      </span>
                     </div>
                     <p
-                      class="text-xs text-slate-500 dark:text-slate-400 truncate"
+                      class="text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 truncate"
                     >
                       {{ product.description }}
                     </p>
                   </div>
-                  <div class="text-right flex flex-col items-end gap-2 pr-4">
-                    <span class="text-base font-black text-primary">{{
-                      product.price | currency
-                    }}</span>
-                    <span
-                      class="text-[9px] font-bold px-2 py-1 bg-green-500/10 text-green-500 rounded-lg uppercase tracking-wider"
-                      >{{ product.stock }} units</span
-                    >
+                  <div class="flex items-center gap-8 pr-4">
+                    <div class="text-right">
+                      <p
+                        class="text-base font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-none"
+                      >
+                        {{ product.price | currency }}
+                      </p>
+                    </div>
+                    <div class="text-right w-20">
+                      <p
+                        [class]="
+                          product.stock < 20
+                            ? 'text-rose-500'
+                            : 'text-emerald-500'
+                        "
+                        class="text-[10px] font-black uppercase tracking-widest"
+                      >
+                        {{ product.stock }} Units
+                      </p>
+                    </div>
                   </div>
                 </div>
               }
             </div>
           }
 
-          <!-- Pagination Bar -->
-          @if (allFilteredProducts().length > 0) {
-            <div
-              class="mt-6 p-4 card-premium flex flex-col lg:flex-row items-center justify-between gap-4 shadow-sm"
-            >
-              <div class="flex flex-wrap items-center gap-4">
-                <!-- Count Display -->
-                <div class="flex items-center gap-3">
-                  <span
-                    class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                    >Showing</span
-                  >
-                  <div
-                    class="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10"
-                  >
-                    <span class="text-xs font-black text-primary">{{
-                      paginatedProducts().length
-                    }}</span>
-                    <span
-                      class="text-[9px] font-bold text-slate-400 uppercase tracking-tight"
-                      >of</span
-                    >
-                    <span
-                      class="text-xs font-black text-slate-900 dark:text-white"
-                      >{{ allFilteredProducts().length }}</span
-                    >
-                  </div>
-                  <span
-                    class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                    >Matches</span
-                  >
-                  @if (searchQuery() || selectedCategory() !== "All") {
-                    <span
-                      class="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-md border border-primary/20 animate-fade-in"
-                      >Filtered</span
-                    >
-                  }
-                </div>
-
-                <!-- Page Size Selector -->
-                <div
-                  class="flex items-center gap-3 border-l border-slate-200 dark:border-white/10 pl-6"
-                >
-                  <span
-                    class="text-[10px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap"
-                    >Show per page</span
-                  >
-                  <div
-                    class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10"
-                  >
-                    @for (size of [8, 16, 32]; track size) {
-                      <button
-                        (click)="setPageSize(size)"
-                        [class.bg-white]="pageSize() === size"
-                        [class.dark:bg-white/10]="pageSize() === size"
-                        [class.shadow-sm]="pageSize() === size"
-                        [class.text-primary]="pageSize() === size"
-                        [class.text-slate-400]="pageSize() !== size"
-                        class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all hover:text-primary"
-                      >
-                        {{ size }}
-                      </button>
-                    }
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-1">
-                <button
-                  [disabled]="currentPage() === 1"
-                  (click)="setPage(currentPage() - 1)"
-                  class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 19l-7-7 7-7"
-                    ></path>
-                  </svg>
-                </button>
-
-                <div class="flex items-center gap-1 mx-2">
-                  @for (page of pagesArray(); track page) {
-                    <button
-                      (click)="setPage(page)"
-                      [class.bg-primary]="currentPage() === page"
-                      [class.text-white]="currentPage() === page"
-                      [class.border-primary]="currentPage() === page"
-                      [class.border-slate-200]="currentPage() !== page"
-                      [class.dark:border-white/10]="currentPage() !== page"
-                      class="w-10 h-10 rounded-xl text-xs font-black border transition-all hover:border-primary active:scale-95 shadow-sm"
-                    >
-                      {{ page }}
-                    </button>
-                  }
-                </div>
-
-                <button
-                  [disabled]="currentPage() === totalPages()"
-                  (click)="setPage(currentPage() + 1)"
-                  class="w-10 h-10 rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 hover:bg-primary hover:text-white active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit transition-all hover:shadow-sm"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5l7 7-7 7"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
+          <!-- Pagination (Compact) -->
+          <div
+            *ngIf="allFilteredProducts().length > 0"
+            class="mt-8 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-sm shadow-sm"
+          >
+            <div class="flex items-center gap-4">
+              <span
+                class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+              >
+                Records:
+                <span class="text-slate-900 dark:text-white">{{
+                  paginatedProducts().length
+                }}</span>
+                / {{ allFilteredProducts().length }}
+              </span>
             </div>
-          }
-
-          <!-- Empty State -->
-          @if (allFilteredProducts().length === 0) {
-            <div
-              class="flex flex-col items-center justify-center py-20 text-center"
-            >
-              <div
-                class="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center text-slate-300 dark:text-white/10 mb-6"
+            <div class="flex items-center gap-2">
+              <button
+                [disabled]="currentPage() === 1"
+                (click)="setPage(currentPage() - 1)"
+                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
               >
                 <svg
-                  class="w-10 h-10"
+                  class="w-3.5 h-3.5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -483,66 +333,69 @@ import {
                   <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    stroke-width="2.5"
+                    d="M15 19l-7-7 7-7"
                   ></path>
                 </svg>
+              </button>
+
+              <div class="flex items-center gap-1">
+                @for (p of [].constructor(totalPages()); track $index) {
+                  @if ($index < 5 || $index === totalPages() - 1) {
+                    <button
+                      (click)="setPage($index + 1)"
+                      [class.bg-primary]="currentPage() === $index + 1"
+                      [class.text-white]="currentPage() === $index + 1"
+                      class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
+                    >
+                      {{ $index + 1 }}
+                    </button>
+                  }
+                }
               </div>
-              <h3 class="text-lg font-bold text-slate-900 dark:text-white">
-                No products found
-              </h3>
-              <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Try adjusting your search or filters to find what you're looking
-                for.
-              </p>
+
               <button
-                (click)="resetFilters()"
-                class="mt-6 text-sm font-bold text-primary hover:underline uppercase tracking-widest"
+                [disabled]="currentPage() === totalPages()"
+                (click)="setPage(currentPage() + 1)"
+                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
               >
-                Clear all filters
+                <svg
+                  class="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M9 5l7 7-7 7"
+                  ></path>
+                </svg>
               </button>
             </div>
-          }
-        </div>
-      } @placeholder {
-        <div class="mt-5">
-          <div
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-          >
-            @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
-              <div
-                class="bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] rounded-2xl p-4 space-y-3"
-              >
-                <lib-skeleton
-                  width="100%"
-                  height="200px"
-                  shape="rounded"
-                ></lib-skeleton>
-                <lib-skeleton width="75%" height="1rem"></lib-skeleton>
-                <lib-skeleton width="50%" height="0.75rem"></lib-skeleton>
-                <div class="flex justify-between pt-4">
-                  <lib-skeleton width="64px" height="1rem"></lib-skeleton>
-                  <lib-skeleton width="48px" height="1rem"></lib-skeleton>
-                </div>
-              </div>
-            }
           </div>
         </div>
       }
     </div>
   `,
-  styles: [],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class ProductsComponent implements OnInit {
-  public dataService = inject(InventoryDataService);
+  private dataService = inject(InventoryDataService);
   private searchService = inject(SearchService);
+  public router = inject(Router);
+
   isLoading = signal(true);
   viewType = signal<"grid" | "list">("grid");
   searchQuery = signal("");
   selectedCategory = signal("All");
-  categoryMenuOpen = signal(false);
-
-  // Pagination Signals
   currentPage = signal(1);
   pageSize = signal(8);
 
@@ -554,23 +407,27 @@ export class ProductsComponent implements OnInit {
 
   products = this.dataService.products;
 
+  headerStats = computed(() => [
+    { label: "Live Inventory", value: this.products().length },
+    {
+      label: "Shortage Alerts",
+      value: this.products().filter((p) => p.stock < 20).length,
+    },
+    {
+      label: "Global Valuation",
+      value:
+        "$" +
+        (
+          this.products().reduce((acc, p) => acc + p.price * p.stock, 0) /
+          1000000
+        ).toFixed(2) +
+        "M",
+    },
+  ]);
+
   ngOnInit(): void {
     this.registerSearchItems();
-    // Simulate data fetch
-    setTimeout(() => {
-      this.isLoading.set(false);
-    }, 1500);
-  }
-
-  private registerSearchItems(): void {
-    const items = this.products().map((p) => ({
-      id: `prod-${p.id}`,
-      title: p.name,
-      path: `/inventory/products/${p.id}`,
-      category: "Product",
-      keywords: [p.category, p.description],
-    }));
-    this.searchService.register(items);
+    setTimeout(() => this.isLoading.set(false), 800);
   }
 
   allFilteredProducts = computed(() => {
@@ -588,21 +445,15 @@ export class ProductsComponent implements OnInit {
 
   paginatedProducts = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize();
-    const end = start + this.pageSize();
-    return this.allFilteredProducts().slice(start, end);
+    return this.allFilteredProducts().slice(start, start + this.pageSize());
   });
 
   totalPages = computed(() =>
     Math.ceil(this.allFilteredProducts().length / this.pageSize()),
   );
 
-  pagesArray = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, i) => i + 1),
-  );
-
   selectCategory(cat: string) {
     this.selectedCategory.set(cat);
-    this.categoryMenuOpen.set(false);
     this.currentPage.set(1);
   }
 
@@ -612,14 +463,14 @@ export class ProductsComponent implements OnInit {
     }
   }
 
-  setPageSize(size: number) {
-    this.pageSize.set(size);
-    this.currentPage.set(1);
-  }
-
-  resetFilters() {
-    this.searchQuery.set("");
-    this.selectedCategory.set("All");
-    this.currentPage.set(1);
+  private registerSearchItems(): void {
+    const items = this.products().map((p) => ({
+      id: `prod-${p.id}`,
+      title: p.name,
+      path: `/inventory/products/${p.id}`,
+      category: "Product",
+      keywords: [p.category, p.description],
+    }));
+    this.searchService.register(items);
   }
 }
