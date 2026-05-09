@@ -1,7 +1,7 @@
-import { Component, signal, inject, computed } from "@angular/core";
+import { Component, signal, inject, computed, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
   InventoryDataService,
   Product,
@@ -37,7 +37,29 @@ import {
             stroke-linejoin="round"
           />
         </svg>
-        <span class="text-slate-900 dark:text-white">New SKU</span>
+        @if (isEditMode()) {
+          <a
+            [routerLink]="['/inventory/products', productId]"
+            class="hover:text-primary transition-colors"
+            >{{ formData.name || "Product" }}</a
+          >
+          <svg
+            class="w-3 h-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M9 5l7 7-7 7"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="text-slate-900 dark:text-white">Modify Record</span>
+        } @else {
+          <span class="text-slate-900 dark:text-white">New SKU</span>
+        }
       </nav>
 
       <div class="card-premium p-8">
@@ -53,24 +75,39 @@ import {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
+              @if (isEditMode()) {
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              } @else {
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                />
+              }
             </svg>
           </div>
           <div>
             <h2
               class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
             >
-              Register New Product
+              {{
+                isEditMode() ? "Modify Catalog Item" : "Register New Product"
+              }}
             </h2>
             <p
               class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1"
             >
-              Catalog Entry & Stock Initialization
+              {{
+                isEditMode()
+                  ? "System Asset ID: " + productId
+                  : "Catalog Entry & Stock Initialization"
+              }}
             </p>
           </div>
         </div>
@@ -119,7 +156,7 @@ import {
                 required
               />
               <label for="stock" class="floating-label"
-                >Initial Inventory Count</label
+                >Current Inventory Count</label
               >
             </div>
 
@@ -166,6 +203,23 @@ import {
                 >Product Specifications / Description</label
               >
             </div>
+
+            <!-- Discount (Edit Mode only) -->
+            @if (isEditMode()) {
+              <div class="floating-input-group md:col-span-2">
+                <input
+                  type="number"
+                  id="discount"
+                  name="discount"
+                  [(ngModel)]="formData.discount"
+                  placeholder=" "
+                  class="floating-input"
+                />
+                <label for="discount" class="floating-label"
+                  >Promotional Discount (%)</label
+                >
+              </div>
+            }
           </div>
 
           <div
@@ -173,7 +227,11 @@ import {
           >
             <button
               type="button"
-              routerLink="/inventory/products"
+              [routerLink]="
+                isEditMode()
+                  ? ['/inventory/products', productId]
+                  : ['/inventory/products']
+              "
               class="btn-secondary-premium"
             >
               Cancel
@@ -184,7 +242,7 @@ import {
               [class.btn-loading]="isSubmitting()"
               class="btn-primary-premium min-w-[160px]"
             >
-              Initialize SKU
+              {{ isEditMode() ? "Save Changes" : "Initialize SKU" }}
             </button>
           </div>
         </form>
@@ -199,11 +257,14 @@ import {
     `,
   ],
 })
-export class ProductCreateComponent {
+export class ProductCreateComponent implements OnInit {
   private dataService = inject(InventoryDataService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
+  isEditMode = signal(false);
+  productId: number | null = null;
   isSubmitting = signal(false);
 
   formData = {
@@ -213,6 +274,7 @@ export class ProductCreateComponent {
     category: "Electronics",
     description: "",
     supplierId: "",
+    discount: 0,
   };
 
   categoryOptions: DropdownOption[] = [
@@ -225,6 +287,39 @@ export class ProductCreateComponent {
   supplierOptions = computed(() =>
     this.dataService.suppliers().map((s) => ({ value: s.id, label: s.name })),
   );
+
+  ngOnInit() {
+    this.route.params.subscribe((params) => {
+      if (params["id"]) {
+        this.isEditMode.set(true);
+        this.productId = Number(params["id"]);
+        this.loadProduct();
+      }
+    });
+  }
+
+  loadProduct() {
+    const product = this.dataService
+      .products()
+      .find((p) => p.id === this.productId);
+    if (product) {
+      this.formData = {
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+        category: product.category,
+        description: product.description,
+        supplierId: product.supplierId || "",
+        discount: product.discount || 0,
+      };
+    } else {
+      this.notificationService.error(
+        "Product Not Found",
+        "The requested SKU could not be located.",
+      );
+      this.router.navigate(["/inventory/products"]);
+    }
+  }
 
   isValid(): boolean {
     return !!(
@@ -239,20 +334,36 @@ export class ProductCreateComponent {
 
     this.isSubmitting.set(true);
 
-    const newProduct: Product = {
-      id: Math.floor(10000 + Math.random() * 90000),
-      ...this.formData,
-    };
+    if (this.isEditMode()) {
+      const updatedProduct: Product = {
+        id: this.productId!,
+        ...this.formData,
+      };
 
-    // Simulate backend call
-    setTimeout(() => {
-      this.dataService.addProduct(newProduct);
-      this.notificationService.success(
-        "Product Initialized",
-        `${newProduct.name} has been added to the master catalog.`,
-      );
-      this.isSubmitting.set(false);
-      this.router.navigate(["/inventory/products", newProduct.id]);
-    }, 1500);
+      setTimeout(() => {
+        this.dataService.updateProduct(updatedProduct);
+        this.notificationService.success(
+          "Update Successful",
+          `${updatedProduct.name} has been modified in the catalog.`,
+        );
+        this.isSubmitting.set(false);
+        this.router.navigate(["/inventory/products", this.productId]);
+      }, 1200);
+    } else {
+      const newProduct: Product = {
+        id: Math.floor(10000 + Math.random() * 90000),
+        ...this.formData,
+      };
+
+      setTimeout(() => {
+        this.dataService.addProduct(newProduct);
+        this.notificationService.success(
+          "Product Initialized",
+          `${newProduct.name} has been added to the master catalog.`,
+        );
+        this.isSubmitting.set(false);
+        this.router.navigate(["/inventory/products", newProduct.id]);
+      }, 1500);
+    }
   }
 }

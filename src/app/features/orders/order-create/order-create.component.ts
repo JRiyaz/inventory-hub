@@ -11,7 +11,7 @@ import {
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
   InventoryDataService,
   Product,
@@ -20,13 +20,12 @@ import {
   Customer,
   CustomDropdownComponent,
   DropdownOption,
-  SearchService,
 } from "ui-shared";
 
 @Component({
   selector: "app-order-create",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, CustomDropdownComponent],
   template: `
     <div
       class="p-3 sm:p-5 max-w-6xl mx-auto animate-fade-in"
@@ -54,7 +53,29 @@ import {
             stroke-linejoin="round"
           />
         </svg>
-        <span class="text-slate-900 dark:text-white">New Order</span>
+        @if (isEditMode()) {
+          <a
+            [routerLink]="['/inventory/orders', orderId]"
+            class="hover:text-primary transition-colors"
+            >Order #{{ orderId }}</a
+          >
+          <svg
+            class="w-3 h-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M9 5l7 7-7 7"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="text-slate-900 dark:text-white">Modify Record</span>
+        } @else {
+          <span class="text-slate-900 dark:text-white">New Order</span>
+        }
       </nav>
 
       <div class="space-y-4">
@@ -85,12 +106,21 @@ import {
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
+                      @if (isEditMode()) {
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      } @else {
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      }
                     </svg>
                   </div>
                   <span
@@ -220,9 +250,9 @@ import {
               }
             </div>
 
-            <!-- Stats & Priority -->
+            <!-- Stats (Primary row) -->
             <div
-              class="flex-1 w-full flex flex-wrap items-center justify-center xl:justify-start gap-6"
+              class="flex-1 w-full flex flex-wrap items-center justify-center xl:justify-start gap-10"
             >
               <div class="flex flex-col">
                 <p
@@ -238,16 +268,87 @@ import {
                 class="h-6 w-[1px] bg-slate-200 dark:bg-white/10 hidden md:block"
               ></div>
               <div class="flex flex-col">
-                <p class="label-premium mb-0.5">Items</p>
+                <p class="label-premium mb-0.5">Total Items</p>
                 <p class="text-sm font-black text-slate-700 dark:text-white">
                   {{ totalItemsCount() }} Units
                 </p>
               </div>
-              <div
-                class="h-6 w-[1px] bg-slate-200 dark:bg-white/10 hidden md:block"
-              ></div>
+            </div>
 
-              <!-- Priority Toggle -->
+            <!-- Action Button -->
+            <div class="w-full xl:w-auto">
+              <button
+                (click)="submitOrder()"
+                [disabled]="!canSubmit() || isSubmitting()"
+                [class.btn-loading]="isSubmitting()"
+                class="w-full xl:w-48 btn-primary-premium !py-2.5"
+              >
+                {{ isEditMode() ? "Save Changes" : "Create Order" }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Edit Configuration Row -->
+          @if (isEditMode()) {
+            <div
+              class="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex flex-wrap items-end gap-10 animate-fade-in"
+            >
+              <div class="w-48">
+                <label
+                  class="text-[8px] font-black uppercase text-slate-400 mb-1 block"
+                  >Order Status</label
+                >
+                <lib-custom-dropdown
+                  [options]="statusOptions"
+                  [value]="selectedStatus()"
+                  (valueChange)="selectedStatus.set($event)"
+                ></lib-custom-dropdown>
+              </div>
+
+              <div class="w-48">
+                <label
+                  class="text-[8px] font-black uppercase text-slate-400 mb-1 block"
+                  >Shipping Priority</label
+                >
+                <lib-custom-dropdown
+                  [options]="priorityOptions"
+                  [value]="isPriority() ? 'Express' : 'Standard'"
+                  (valueChange)="isPriority.set($event === 'Express')"
+                ></lib-custom-dropdown>
+              </div>
+
+              <div class="w-48">
+                <label
+                  class="text-[8px] font-black uppercase text-slate-400 mb-1 block"
+                  >Fulfillment Date</label
+                >
+                <input
+                  type="date"
+                  [ngModel]="orderDate()"
+                  (ngModelChange)="orderDate.set($event)"
+                  class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-900 dark:text-white outline-none focus:border-primary transition-all"
+                />
+              </div>
+
+              <div class="flex-1"></div>
+
+              <div
+                class="flex items-center gap-3 bg-slate-50 dark:bg-white/5 px-4 py-2 rounded-xl border border-slate-100 dark:border-white/5"
+              >
+                <div
+                  class="w-2 h-2 rounded-full bg-primary animate-pulse"
+                ></div>
+                <span
+                  class="text-[9px] font-black uppercase tracking-widest text-slate-500"
+                  >Live Edit Mode Active</span
+                >
+              </div>
+            </div>
+          } @else {
+            <!-- Simple Priority Toggle for Creation Mode -->
+            <div
+              class="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center animate-fade-in"
+            >
               <button
                 (click)="isPriority.set(!isPriority())"
                 class="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 active:scale-95 text-[9px] font-black uppercase tracking-widest"
@@ -265,22 +366,10 @@ import {
                   [class.bg-amber-500]="isPriority()"
                   [class.bg-slate-300]="!isPriority()"
                 ></div>
-                High Priority
+                Mark as High Priority
               </button>
             </div>
-
-            <!-- Action Button -->
-            <div class="w-full xl:w-auto">
-              <button
-                (click)="submitOrder()"
-                [disabled]="!canSubmit() || isSubmitting()"
-                [class.btn-loading]="isSubmitting()"
-                class="w-full xl:w-48 btn-primary-premium !py-2.5"
-              >
-                Create Order
-              </button>
-            </div>
-          </div>
+          }
         </div>
 
         <!-- Dynamic Order Items List -->
@@ -611,6 +700,10 @@ import {
 export class OrderCreateComponent implements OnInit {
   private dataService = inject(InventoryDataService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  isEditMode = signal(false);
+  orderId: string | null = null;
   isSubmitting = signal(false);
 
   scanInput = "";
@@ -638,7 +731,21 @@ export class OrderCreateComponent implements OnInit {
   selectedCustomerId = signal<string | null>(null);
   selectedCustomerName = signal<string | null>(null);
   isPriority = signal(false);
+  selectedStatus = signal<any>("Pending");
+  orderDate = signal<string>(new Date().toISOString().split("T")[0]);
   orderItems = signal<OrderItem[]>([]);
+
+  statusOptions: DropdownOption[] = [
+    { value: "Pending", label: "Pending" },
+    { value: "Processing", label: "Processing" },
+    { value: "Completed", label: "Completed" },
+    { value: "Cancelled", label: "Cancelled" },
+  ];
+
+  priorityOptions: DropdownOption[] = [
+    { value: "Standard", label: "Standard Tier" },
+    { value: "Express", label: "Express (High Priority)" },
+  ];
 
   customerOptions = computed(() =>
     this.dataService.customers().map((c) => ({
@@ -700,7 +807,32 @@ export class OrderCreateComponent implements OnInit {
     );
   }
 
-  ngOnInit(): void {}
+  ngOnInit() {
+    this.route.params.subscribe((params) => {
+      if (params["id"]) {
+        this.isEditMode.set(true);
+        this.orderId = params["id"];
+        this.loadOrder();
+      }
+    });
+  }
+
+  loadOrder() {
+    const order = this.dataService.orders().find((o) => o.id === this.orderId);
+    if (order) {
+      const customer = this.dataService
+        .customers()
+        .find((c) => c.name === order.customer || c.id === order.customer);
+      this.selectedCustomerId.set(customer?.id || "manual");
+      this.selectedCustomerName.set(order.customer);
+      this.isPriority.set(order.priority);
+      this.selectedStatus.set(order.status);
+      this.orderDate.set(order.date);
+      this.orderItems.set([...order.items]);
+    } else {
+      this.router.navigate(["/inventory/orders"]);
+    }
+  }
 
   @HostListener("document:click", ["$event"])
   clickout(event: any) {
@@ -886,30 +1018,44 @@ export class OrderCreateComponent implements OnInit {
   submitOrder() {
     if (!this.canSubmit()) return;
 
-    const customerId = this.selectedCustomerId();
-    const customer = this.dataService
-      .customers()
-      .find((c) => c.id === customerId);
-
-    if (!customer) return;
-
-    const newOrder: Order = {
-      id: "ORD-" + Math.floor(1000 + Math.random() * 9000),
-      customer: customer.name,
-      status: "Pending",
-      amount: this.subtotal(),
-      date: new Date().toISOString().split("T")[0],
-      priority: this.isPriority(),
-      items: this.orderItems(),
-    };
-
     this.isSubmitting.set(true);
-    // Simulate backend call
-    setTimeout(() => {
-      this.dataService.addOrder(newOrder);
-      this.isSubmitting.set(false);
-      this.router.navigate(["/inventory/orders", newOrder.id]);
-    }, 1500);
+
+    if (this.isEditMode()) {
+      const existingOrder = this.dataService
+        .orders()
+        .find((o) => o.id === this.orderId);
+      const updatedOrder: Order = {
+        ...existingOrder!,
+        customer: this.selectedCustomerName()!,
+        items: this.orderItems(),
+        amount: this.subtotal(),
+        priority: this.isPriority(),
+        status: this.selectedStatus(),
+        date: this.orderDate(),
+      };
+
+      setTimeout(() => {
+        this.dataService.updateOrder(updatedOrder);
+        this.isSubmitting.set(false);
+        this.router.navigate(["/inventory/orders", this.orderId]);
+      }, 1200);
+    } else {
+      const newOrder: Order = {
+        id: "ORD-" + Math.floor(1000 + Math.random() * 9000),
+        customer: this.selectedCustomerName()!,
+        status: "Pending",
+        amount: this.subtotal(),
+        date: new Date().toISOString().split("T")[0],
+        priority: this.isPriority(),
+        items: this.orderItems(),
+      };
+
+      setTimeout(() => {
+        this.dataService.addOrder(newOrder);
+        this.isSubmitting.set(false);
+        this.router.navigate(["/inventory/orders", newOrder.id]);
+      }, 1500);
+    }
   }
 
   private scrollToActiveItem(

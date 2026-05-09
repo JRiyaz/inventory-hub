@@ -23,4 +23,12 @@ export const ORDERS_ROUTES: Routes = [
       ),
     data: { title: "Order Details" },
   },
+  {
+    path: ":id/edit",
+    loadComponent: () =>
+      import("./order-create/order-create.component").then(
+        (m) => m.OrderCreateComponent,
+      ),
+    data: { title: "Edit Order" },
+  },
 ];

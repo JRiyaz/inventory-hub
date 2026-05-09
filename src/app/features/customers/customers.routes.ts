@@ -20,4 +20,11 @@ export const CUSTOMERS_ROUTES: Routes = [
         (m) => m.CustomerDetailComponent,
       ),
   },
+  {
+    path: ":id/edit",
+    loadComponent: () =>
+      import("./customer-create/customer-create.component").then(
+        (m) => m.CustomerCreateComponent,
+      ),
+  },
 ];

@@ -22,4 +22,12 @@ export const WAREHOUSES_ROUTES: Routes = [
         (m) => m.WarehouseDetailComponent,
       ),
   },
+  {
+    path: ":id/edit",
+    loadComponent: () =>
+      import("./warehouse-create/warehouse-create.component").then(
+        (m) => m.WarehouseCreateComponent,
+      ),
+    data: { title: "Edit Warehouse" },
+  },
 ];

@@ -1,7 +1,7 @@
-import { Component, signal, inject } from "@angular/core";
+import { Component, signal, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
   InventoryDataService,
   Warehouse,
@@ -35,7 +35,31 @@ import {
             stroke-linejoin="round"
           />
         </svg>
-        <span class="text-slate-900 dark:text-white">New Facility</span>
+        @if (isEditMode()) {
+          <a
+            [routerLink]="['/inventory/warehouses', warehouseId]"
+            class="hover:text-primary transition-colors"
+            >{{ formData.name || "Facility" }}</a
+          >
+          <svg
+            class="w-3 h-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M9 5l7 7-7 7"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <span class="text-slate-900 dark:text-white"
+            >Adjust Specifications</span
+          >
+        } @else {
+          <span class="text-slate-900 dark:text-white">New Facility</span>
+        }
       </nav>
 
       <div class="card-premium p-8">
@@ -51,24 +75,41 @@ import {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-              />
+              @if (isEditMode()) {
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              } @else {
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
+              }
             </svg>
           </div>
           <div>
             <h2
               class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight"
             >
-              Register New Logistics Node
+              {{
+                isEditMode()
+                  ? "Modify Logistics Node"
+                  : "Register New Logistics Node"
+              }}
             </h2>
             <p
               class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1"
             >
-              Spatial Asset Initialization
+              {{
+                isEditMode()
+                  ? "Updating Infrastructure: " + warehouseId
+                  : "Spatial Asset Initialization"
+              }}
             </p>
           </div>
         </div>
@@ -136,6 +177,24 @@ import {
                 >Operational Lead / Manager</label
               >
             </div>
+
+            <!-- Last Audit (Edit Mode only) -->
+            @if (isEditMode()) {
+              <div class="floating-input-group md:col-span-2">
+                <input
+                  type="date"
+                  id="lastAudit"
+                  name="lastAudit"
+                  [(ngModel)]="formData.lastAudit"
+                  placeholder=" "
+                  class="floating-input"
+                  required
+                />
+                <label for="lastAudit" class="floating-label"
+                  >Last Safety & Inventory Audit</label
+                >
+              </div>
+            }
           </div>
 
           <div
@@ -143,7 +202,11 @@ import {
           >
             <button
               type="button"
-              routerLink="/inventory/warehouses"
+              [routerLink]="
+                isEditMode()
+                  ? ['/inventory/warehouses', warehouseId]
+                  : ['/inventory/warehouses']
+              "
               class="btn-secondary-premium"
             >
               Cancel
@@ -154,7 +217,7 @@ import {
               [class.btn-loading]="isSubmitting()"
               class="btn-primary-premium min-w-[160px]"
             >
-              Initialize Facility
+              {{ isEditMode() ? "Save Changes" : "Initialize Facility" }}
             </button>
           </div>
         </form>
@@ -169,11 +232,14 @@ import {
     `,
   ],
 })
-export class WarehouseCreateComponent {
+export class WarehouseCreateComponent implements OnInit {
   private dataService = inject(InventoryDataService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
+  isEditMode = signal(false);
+  warehouseId: string = "";
   isSubmitting = signal(false);
 
   formData = {
@@ -181,7 +247,39 @@ export class WarehouseCreateComponent {
     location: "",
     totalCapacity: 50000,
     manager: "",
+    lastAudit: "",
   };
+
+  ngOnInit() {
+    this.route.params.subscribe((params) => {
+      if (params["id"]) {
+        this.isEditMode.set(true);
+        this.warehouseId = params["id"];
+        this.loadWarehouse();
+      }
+    });
+  }
+
+  loadWarehouse() {
+    const warehouse = this.dataService
+      .warehouses()
+      .find((w) => w.id === this.warehouseId);
+    if (warehouse) {
+      this.formData = {
+        name: warehouse.name,
+        location: warehouse.location,
+        totalCapacity: warehouse.totalCapacity,
+        manager: warehouse.manager || "",
+        lastAudit: warehouse.lastAudit || "",
+      };
+    } else {
+      this.notificationService.error(
+        "Facility Not Found",
+        "The logistics node could not be found.",
+      );
+      this.router.navigate(["/inventory/warehouses"]);
+    }
+  }
 
   isValid(): boolean {
     return !!(
@@ -196,41 +294,60 @@ export class WarehouseCreateComponent {
 
     this.isSubmitting.set(true);
 
-    const newWarehouse: Warehouse = {
-      id: "WH-" + Math.floor(100 + Math.random() * 900),
-      ...this.formData,
-      currentStock: 0,
-      utilization: 0,
-      zones: [
-        {
-          id: "Z1",
-          name: "Zone Alpha",
-          description: "Primary high-capacity storage area",
-          capacity: Math.floor(this.formData.totalCapacity * 0.4),
-          currentStock: 0,
-          category: "General",
-        },
-        {
-          id: "Z2",
-          name: "Zone Beta",
-          description: "Secondary logistics and sorting bay",
-          capacity: Math.floor(this.formData.totalCapacity * 0.6),
-          currentStock: 0,
-          category: "High Priority",
-        },
-      ],
-      lastAudit: new Date().toISOString().split("T")[0],
-    };
+    if (this.isEditMode()) {
+      const existingWarehouse = this.dataService
+        .warehouses()
+        .find((w) => w.id === this.warehouseId);
+      const updatedWarehouse: Warehouse = {
+        ...existingWarehouse!,
+        ...this.formData,
+      };
 
-    // Simulate backend call
-    setTimeout(() => {
-      this.dataService.addWarehouse(newWarehouse);
-      this.notificationService.success(
-        "Facility Registered",
-        `${newWarehouse.name} is now active in the logistics network.`,
-      );
-      this.isSubmitting.set(false);
-      this.router.navigate(["/inventory/warehouses", newWarehouse.id]);
-    }, 1500);
+      setTimeout(() => {
+        this.dataService.updateWarehouse(updatedWarehouse);
+        this.notificationService.success(
+          "Update Successful",
+          `${updatedWarehouse.name} specifications have been updated.`,
+        );
+        this.isSubmitting.set(false);
+        this.router.navigate(["/inventory/warehouses", this.warehouseId]);
+      }, 1200);
+    } else {
+      const newWarehouse: Warehouse = {
+        id: "WH-" + Math.floor(100 + Math.random() * 900),
+        ...this.formData,
+        currentStock: 0,
+        utilization: 0,
+        zones: [
+          {
+            id: "Z1",
+            name: "Zone Alpha",
+            description: "Primary high-capacity storage area",
+            capacity: Math.floor(this.formData.totalCapacity * 0.4),
+            currentStock: 0,
+            category: "General",
+          },
+          {
+            id: "Z2",
+            name: "Zone Beta",
+            description: "Secondary logistics and sorting bay",
+            capacity: Math.floor(this.formData.totalCapacity * 0.6),
+            currentStock: 0,
+            category: "High Priority",
+          },
+        ],
+        lastAudit: new Date().toISOString().split("T")[0],
+      };
+
+      setTimeout(() => {
+        this.dataService.addWarehouse(newWarehouse);
+        this.notificationService.success(
+          "Facility Registered",
+          `${newWarehouse.name} is now active in the logistics network.`,
+        );
+        this.isSubmitting.set(false);
+        this.router.navigate(["/inventory/warehouses", newWarehouse.id]);
+      }, 1500);
+    }
   }
 }

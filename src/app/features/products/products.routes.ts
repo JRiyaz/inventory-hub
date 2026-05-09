@@ -23,4 +23,12 @@ export const PRODUCTS_ROUTES: Routes = [
       ),
     data: { title: "Product Details" },
   },
+  {
+    path: ":id/edit",
+    loadComponent: () =>
+      import("./product-create/product-create.component").then(
+        (m) => m.ProductCreateComponent,
+      ),
+    data: { title: "Edit Product" },
+  },
 ];

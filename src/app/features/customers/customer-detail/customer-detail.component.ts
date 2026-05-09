@@ -1,7 +1,7 @@
 import { Component, signal, computed, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
   InventoryDataService,
   DetailLayoutComponent,
@@ -28,8 +28,13 @@ import {
       backLink="/inventory/customers"
       backLabel="Customer Directory"
       actionLabel="Create Invoice"
+      editLabel="Edit Profile"
       [tabs]="['Profile', 'Order History', 'Financials', 'Notes']"
+      [loading]="isActionLoading()"
       (tabChanged)="activeTab.set($event)"
+      (action)="handleAction()"
+      (edit)="goToEdit()"
+      loaderType="bloom"
     >
       <div header-icon>
         <div
@@ -380,8 +385,10 @@ import {
 export class CustomerDetailComponent implements OnInit {
   private dataService = inject(InventoryDataService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   activeTab = signal(0);
 
   customerId = computed(() => this.route.snapshot.paramMap.get("id"));
@@ -410,5 +417,19 @@ export class CustomerDetailComponent implements OnInit {
 
   ngOnInit(): void {
     setTimeout(() => this.isLoading.set(false), 800);
+  }
+
+  goToEdit() {
+    const id = this.customerId();
+    if (id) {
+      this.router.navigate(["/inventory/customers", id, "edit"]);
+    }
+  }
+
+  handleAction() {
+    this.isActionLoading.set(true);
+    setTimeout(() => {
+      this.isActionLoading.set(false);
+    }, 2000);
   }
 }

@@ -23,4 +23,12 @@ export const SUPPLIERS_ROUTES: Routes = [
       ),
     data: { title: "Supplier Profile" },
   },
+  {
+    path: ":id/edit",
+    loadComponent: () =>
+      import("./supplier-create/supplier-create.component").then(
+        (m) => m.SupplierCreateComponent,
+      ),
+    data: { title: "Edit Supplier" },
+  },
 ];

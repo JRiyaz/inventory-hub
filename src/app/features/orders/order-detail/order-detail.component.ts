@@ -1,7 +1,7 @@
 import { Component, signal, OnInit, inject, computed } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
   InventoryDataService,
   DetailLayoutComponent,
@@ -30,10 +30,13 @@ import {
       backLink="/inventory/orders"
       backLabel="Back to Tracking"
       actionLabel="Print Invoice"
+      editLabel="Edit Order"
       [tabs]="['Items', 'Customer Info', 'Payment Details', 'Shipping']"
       [loading]="isActionLoading()"
       (tabChanged)="activeTab.set($event)"
       (action)="handleAction()"
+      (edit)="goToEdit()"
+      loaderType="bloom"
     >
       <div top-content>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -547,6 +550,7 @@ import {
 })
 export class OrderDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private dataService = inject(InventoryDataService);
 
   isLoading = signal(true);
@@ -598,6 +602,13 @@ export class OrderDetailComponent implements OnInit {
     setTimeout(() => {
       this.isLoading.set(false);
     }, 1500);
+  }
+
+  goToEdit() {
+    const id = this.orderId();
+    if (id) {
+      this.router.navigate(["/inventory/orders", id, "edit"]);
+    }
   }
 
   handleAction() {
