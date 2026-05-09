@@ -60,6 +60,13 @@ export const INVENTORY_ROUTES: Routes = [
             (m) => m.OffersComponent,
           ),
       },
+      {
+        path: "analytics",
+        loadChildren: () =>
+          import("./features/analytics/analytics.routes").then(
+            (m) => m.ANALYTICS_ROUTES,
+          ),
+      },
     ],
   },
 ];

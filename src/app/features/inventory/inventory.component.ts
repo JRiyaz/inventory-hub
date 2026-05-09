@@ -144,7 +144,10 @@ import {
             "Your warehouse in Asia Pacific is reaching 91% capacity. Consider
             rerouting upcoming shipments to Europe Node B."
           </p>
-          <button class="btn-primary-premium mx-auto">
+          <button
+            [routerLink]="['/inventory/analytics']"
+            class="btn-primary-premium mx-auto"
+          >
             Optimize Logistics
           </button>
         </div>
@@ -244,6 +247,16 @@ export class InventoryComponent implements OnInit {
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5a2 2 0 10-2 2h2zm0 0H4v13a2 2 0 002 2h12a2 2 0 002-2V8h-8z"></path></svg>',
       bgClass: "bg-violet-500/10",
       count: computed(() => this.dataService.offers().length),
+    },
+    {
+      name: "Intelligence",
+      subtitle: "Advanced Analytics",
+      path: "analytics",
+      description:
+        "Deep dive into business trends, predictive stock analysis, and multi-dimensional performance metrics.",
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
+      bgClass: "bg-indigo-500/10",
+      count: () => "Live",
     },
   ];
 
