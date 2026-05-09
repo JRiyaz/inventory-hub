@@ -3,10 +3,10 @@ import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import {
+  Breadcrumb,
   DetailLayoutComponent,
   InventoryDataService,
   StatusBadgeComponent,
-  Breadcrumb,
 } from "ui-shared";
 
 @Component({
@@ -32,6 +32,7 @@ import {
       [loading]="isActionLoading()"
       (tabChanged)="activeTab.set($event)"
       (action)="handleAction()"
+      loaderType="flower"
     >
       <div top-content>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

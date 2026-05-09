@@ -53,6 +53,13 @@ export const INVENTORY_ROUTES: Routes = [
             (m) => m.PAYMENTS_ROUTES,
           ),
       },
+      {
+        path: "offers",
+        loadComponent: () =>
+          import("./features/offers/offers.component").then(
+            (m) => m.OffersComponent,
+          ),
+      },
     ],
   },
 ];

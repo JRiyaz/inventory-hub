@@ -402,7 +402,10 @@ export class CustomerDetailComponent implements OnInit {
   });
 
   lifetimeSpend = computed(() => {
-    return this.relatedOrders().reduce((acc, order) => acc + order.amount, 0);
+    return this.relatedOrders().reduce(
+      (acc: number, order: any) => acc + (order.amount || 0),
+      0,
+    );
   });
 
   ngOnInit(): void {
