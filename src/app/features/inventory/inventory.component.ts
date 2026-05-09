@@ -1,13 +1,17 @@
-import { Component, computed, inject, signal, OnInit } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { RouterModule } from "@angular/router";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import { InventoryDataService, PageHeaderComponent } from "ui-shared";
+import { RouterModule } from "@angular/router";
+import {
+  InventoryDataService,
+  PageHeaderComponent,
+  UiChartComponent,
+} from "ui-shared";
 
 @Component({
   selector: "app-inventory-overview",
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHeaderComponent],
+  imports: [CommonModule, RouterModule, PageHeaderComponent, UiChartComponent],
   template: `
     <div class="p-3 sm:p-5 max-w-7xl mx-auto animate-fade-in">
       <lib-page-header
@@ -111,56 +115,38 @@ import { InventoryDataService, PageHeaderComponent } from "ui-shared";
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="card-premium p-6">
-            <h4
-              class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4"
-            >
-              Stock Utilization
-            </h4>
-            <div class="space-y-4">
-              @for (
-                region of ["North America", "Europe", "Asia Pacific"];
-                track region
-              ) {
-                <div class="space-y-2">
-                  <div
-                    class="flex justify-between text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <span class="text-slate-600 dark:text-slate-300">{{
-                      region
-                    }}</span>
-                    <span class="text-primary">{{ 75 + $index * 8 }}%</span>
-                  </div>
-                  <div
-                    class="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden"
-                  >
-                    <div
-                      class="h-full bg-primary"
-                      [style.width.%]="75 + $index * 8"
-                    ></div>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-          <div
-            class="card-premium p-6 flex flex-col justify-center text-center bg-primary/5 border-primary/20"
+          <ui-chart
+            type="area"
+            title="Regional Fulfillment Trends"
+            subtitle="Global order processing volume across major hubs (Last 6 Months)"
+            [data]="fulfillmentData"
+          ></ui-chart>
+
+          <ui-chart
+            type="bar"
+            title="Warehouse Utilization"
+            subtitle="Current stock capacity by regional node"
+            [data]="utilizationData"
+          ></ui-chart>
+        </div>
+
+        <div
+          class="mt-6 card-premium p-6 flex flex-col justify-center text-center bg-primary/5 border-primary/20"
+        >
+          <p
+            class="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-2"
           >
-            <p
-              class="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-2"
-            >
-              Automated Insights
-            </p>
-            <p
-              class="text-slate-700 dark:text-slate-200 text-sm font-medium italic mb-4"
-            >
-              "Your warehouse in Asia Pacific is reaching 91% capacity. Consider
-              rerouting upcoming shipments to Europe Node B."
-            </p>
-            <button class="btn-primary-premium mx-auto">
-              Optimize Logistics
-            </button>
-          </div>
+            Automated Insights
+          </p>
+          <p
+            class="text-slate-700 dark:text-slate-200 text-sm font-medium italic mb-4"
+          >
+            "Your warehouse in Asia Pacific is reaching 91% capacity. Consider
+            rerouting upcoming shipments to Europe Node B."
+          </p>
+          <button class="btn-primary-premium mx-auto">
+            Optimize Logistics
+          </button>
         </div>
       </div>
     </div>
@@ -281,6 +267,23 @@ export class InventoryComponent implements OnInit {
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>',
     },
   ]);
+
+  fulfillmentData = [
+    { label: "Jan", value: 450 },
+    { label: "Feb", value: 680 },
+    { label: "Mar", value: 520 },
+    { label: "Apr", value: 890 },
+    { label: "May", value: 740 },
+    { label: "Jun", value: 920 },
+  ];
+
+  utilizationData = [
+    { label: "NA East", value: 85 },
+    { label: "EU West", value: 62 },
+    { label: "APAC", value: 91 },
+    { label: "LATAM", value: 48 },
+    { label: "MENA", value: 77 },
+  ];
 
   ngOnInit(): void {
     setTimeout(() => this.isLoading.set(false), 800);
