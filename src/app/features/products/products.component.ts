@@ -9,6 +9,7 @@ import {
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
+  EmptyStateComponent,
 } from "ui-shared";
 
 @Component({
@@ -21,6 +22,7 @@ import {
     SkeletonComponent,
     CustomDropdownComponent,
     PageHeaderComponent,
+    EmptyStateComponent,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
@@ -100,6 +102,7 @@ import {
             [class.dark:bg-white/10]="viewType() === 'grid'"
             [class.shadow-sm]="viewType() === 'grid'"
             [class.text-primary]="viewType() === 'grid'"
+            aria-label="Switch to Grid View"
             class="p-2 rounded-lg transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
           >
             <svg
@@ -122,6 +125,7 @@ import {
             [class.dark:bg-white/10]="viewType() === 'list'"
             [class.shadow-sm]="viewType() === 'list'"
             [class.text-primary]="viewType() === 'list'"
+            aria-label="Switch to List View"
             class="p-2 rounded-lg transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
           >
             <svg
@@ -157,235 +161,245 @@ import {
         </div>
       } @else {
         <div class="animate-fade-in">
-          @if (viewType() === "grid") {
-            <div
-              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-            >
-              @for (product of paginatedProducts(); track product.id) {
-                <div
-                  [routerLink]="[product.id]"
-                  class="card-premium p-4 hover:border-primary/50 transition-all group cursor-pointer flex flex-col relative overflow-hidden"
-                >
+          @if (allFilteredProducts().length > 0) {
+            @if (viewType() === "grid") {
+              <div
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              >
+                @for (product of paginatedProducts(); track product.id) {
                   <div
-                    class="w-full aspect-video bg-slate-50 dark:bg-white/5 rounded-xl mb-3 flex items-center justify-center text-slate-200 dark:text-white/5 relative overflow-hidden transition-colors border border-slate-100 dark:border-white/10"
+                    [routerLink]="[product.id]"
+                    class="card-premium p-4 hover:border-primary/50 transition-all group cursor-pointer flex flex-col relative overflow-hidden"
                   >
-                    <svg
-                      class="w-10 h-10 transition-transform duration-700 group-hover:scale-110"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <div
+                      class="w-full aspect-video bg-slate-50 dark:bg-white/5 rounded-xl mb-3 flex items-center justify-center text-slate-200 dark:text-white/5 relative overflow-hidden transition-colors border border-slate-100 dark:border-white/10"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                      ></path>
-                    </svg>
-                    <div class="absolute top-2 left-2">
-                      <span
-                        class="px-1.5 py-0.5 bg-white/90 dark:bg-black/40 backdrop-blur-md rounded text-[8px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/10 shadow-sm"
+                      <svg
+                        class="w-10 h-10 transition-transform duration-700 group-hover:scale-110"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        {{ product.category }}
-                      </span>
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1"
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        ></path>
+                      </svg>
+                      <div class="absolute top-2 left-2">
+                        <span
+                          class="px-1.5 py-0.5 bg-white/90 dark:bg-black/40 backdrop-blur-md rounded text-[8px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/10 shadow-sm"
+                        >
+                          {{ product.category }}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div class="flex-1">
-                    <h3
-                      class="text-xs font-black text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors truncate"
-                    >
-                      {{ product.name }}
-                    </h3>
-                    <div class="flex items-center gap-2 mb-4">
-                      <span
-                        class="text-[9px] font-black text-slate-400 uppercase tracking-widest"
-                        >Stock:</span
-                      >
-                      <span
-                        [class]="
-                          product.stock < 20
-                            ? 'text-rose-500'
-                            : 'text-emerald-500'
-                        "
-                        class="text-[9px] font-black uppercase tracking-widest"
-                        >{{ product.stock }} Units</span
-                      >
-                    </div>
-                  </div>
-
-                  <div
-                    class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5 mt-auto"
-                  >
-                    <div class="flex flex-col">
-                      <span
-                        class="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1"
-                        >MSRP</span
-                      >
-                      <span
-                        class="text-base font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-none"
-                        >{{ product.price | currency }}</span
-                      >
-                    </div>
-                    <svg
-                      class="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2.5"
-                        d="M9 5l7 7-7 7"
-                      ></path>
-                    </svg>
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <div class="space-y-2">
-              @for (product of paginatedProducts(); track product.id) {
-                <div
-                  class="card-premium p-3 flex items-center gap-4 hover:border-primary/50 transition-all group cursor-pointer"
-                  [routerLink]="[product.id]"
-                >
-                  <div
-                    class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-lg flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5 group-hover:bg-primary/10 transition-all border border-slate-100 dark:border-white/10"
-                  >
-                    <svg
-                      class="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1"
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                      ></path>
-                    </svg>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-0.5">
+                    <div class="flex-1">
                       <h3
-                        class="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate"
+                        class="text-xs font-black text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors truncate"
                       >
                         {{ product.name }}
                       </h3>
-                      <span
-                        class="px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[8px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400"
-                      >
-                        {{ product.category }}
-                      </span>
+                      <div class="flex items-center gap-2 mb-4">
+                        <span
+                          class="text-[9px] font-black text-slate-400 uppercase tracking-widest"
+                          >Stock:</span
+                        >
+                        <span
+                          [class]="
+                            product.stock < 20
+                              ? 'text-rose-500'
+                              : 'text-emerald-500'
+                          "
+                          class="text-[9px] font-black uppercase tracking-widest"
+                          >{{ product.stock }} Units</span
+                        >
+                      </div>
                     </div>
-                    <p
-                      class="text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 truncate"
-                    >
-                      {{ product.description }}
-                    </p>
-                  </div>
-                  <div class="flex items-center gap-8 pr-4">
-                    <div class="text-right">
-                      <p
-                        class="text-base font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-none"
-                      >
-                        {{ product.price | currency }}
-                      </p>
-                    </div>
-                    <div class="text-right w-20">
-                      <p
-                        [class]="
-                          product.stock < 20
-                            ? 'text-rose-500'
-                            : 'text-emerald-500'
-                        "
-                        class="text-[10px] font-black uppercase tracking-widest"
-                      >
-                        {{ product.stock }} Units
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
 
-          <!-- Pagination (Compact) -->
-          <div
-            *ngIf="allFilteredProducts().length > 0"
-            class="mt-8 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-sm shadow-sm"
-          >
-            <div class="flex items-center gap-4">
-              <span
-                class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
-              >
-                Records:
-                <span class="text-slate-900 dark:text-white">{{
-                  paginatedProducts().length
-                }}</span>
-                / {{ allFilteredProducts().length }}
-              </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                [disabled]="currentPage() === 1"
-                (click)="setPage(currentPage() - 1)"
-                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M15 19l-7-7 7-7"
-                  ></path>
-                </svg>
-              </button>
-
-              <div class="flex items-center gap-1">
-                @for (p of [].constructor(totalPages()); track $index) {
-                  @if ($index < 5 || $index === totalPages() - 1) {
-                    <button
-                      (click)="setPage($index + 1)"
-                      [class.bg-primary]="currentPage() === $index + 1"
-                      [class.text-white]="currentPage() === $index + 1"
-                      class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
+                    <div
+                      class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/5 mt-auto"
                     >
-                      {{ $index + 1 }}
-                    </button>
-                  }
+                      <div class="flex flex-col">
+                        <span
+                          class="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1"
+                          >MSRP</span
+                        >
+                        <span
+                          class="text-base font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-none"
+                          >{{ product.price | currency }}</span
+                        >
+                      </div>
+                      <svg
+                        class="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2.5"
+                          d="M9 5l7 7-7 7"
+                        ></path>
+                      </svg>
+                    </div>
+                  </div>
                 }
               </div>
+            } @else {
+              <div class="space-y-2">
+                @for (product of paginatedProducts(); track product.id) {
+                  <div
+                    class="card-premium p-3 flex items-center gap-4 hover:border-primary/50 transition-all group cursor-pointer"
+                    [routerLink]="[product.id]"
+                  >
+                    <div
+                      class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-lg flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5 group-hover:bg-primary/10 transition-all border border-slate-100 dark:border-white/10"
+                    >
+                      <svg
+                        class="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="1"
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        ></path>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-0.5">
+                        <h3
+                          class="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate"
+                        >
+                          {{ product.name }}
+                        </h3>
+                        <span
+                          class="px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[8px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400"
+                        >
+                          {{ product.category }}
+                        </span>
+                      </div>
+                      <p
+                        class="text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 truncate"
+                      >
+                        {{ product.description }}
+                      </p>
+                    </div>
+                    <div class="flex items-center gap-8 pr-4">
+                      <div class="text-right">
+                        <p
+                          class="text-base font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-none"
+                        >
+                          {{ product.price | currency }}
+                        </p>
+                      </div>
+                      <div class="text-right w-20">
+                        <p
+                          [class]="
+                            product.stock < 20
+                              ? 'text-rose-500'
+                              : 'text-emerald-500'
+                          "
+                          class="text-[10px] font-black uppercase tracking-widest"
+                        >
+                          {{ product.stock }} Units
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
 
-              <button
-                [disabled]="currentPage() === totalPages()"
-                (click)="setPage(currentPage() + 1)"
-                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <!-- Pagination (Compact) -->
+            <div
+              class="mt-8 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-sm shadow-sm"
+            >
+              <div class="flex items-center gap-4">
+                <span
+                  class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M9 5l7 7-7 7"
-                  ></path>
-                </svg>
-              </button>
+                  Records:
+                  <span class="text-slate-900 dark:text-white">{{
+                    paginatedProducts().length
+                  }}</span>
+                  / {{ allFilteredProducts().length }}
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  [disabled]="currentPage() === 1"
+                  (click)="setPage(currentPage() - 1)"
+                  aria-label="Previous Page"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M15 19l-7-7 7-7"
+                    ></path>
+                  </svg>
+                </button>
+
+                <div class="flex items-center gap-1">
+                  @for (p of [].constructor(totalPages()); track $index) {
+                    @if ($index < 5 || $index === totalPages() - 1) {
+                      <button
+                        (click)="setPage($index + 1)"
+                        [class.bg-primary]="currentPage() === $index + 1"
+                        [class.text-white]="currentPage() === $index + 1"
+                        class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
+                      >
+                        {{ $index + 1 }}
+                      </button>
+                    }
+                  }
+                </div>
+
+                <button
+                  [disabled]="currentPage() === totalPages()"
+                  (click)="setPage(currentPage() + 1)"
+                  aria-label="Next Page"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M9 5l7 7-7 7"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
+          } @else {
+            <lib-empty-state
+              title="No Products Found"
+              message="We couldn't find any items matching your current filters or search criteria."
+              actionLabel="Reset Search"
+              (action)="searchQuery.set(''); selectedCategory.set('All')"
+            ></lib-empty-state>
+          }
         </div>
       }
     </div>

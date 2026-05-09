@@ -8,6 +8,7 @@ import {
   InventoryDataService,
   PageHeaderComponent,
   SkeletonComponent,
+  EmptyStateComponent,
 } from "ui-shared";
 
 @Component({
@@ -20,6 +21,7 @@ import {
     SkeletonComponent,
     PageHeaderComponent,
     CustomDropdownComponent,
+    EmptyStateComponent,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
@@ -212,6 +214,15 @@ import {
                 </div>
               </div>
             </div>
+          } @empty {
+            <lib-empty-state
+              title="No Facilities Found"
+              message="Your search for '{{
+                searchQuery()
+              }}' did not match any registered warehouses or locations."
+              actionLabel="Reset Search"
+              (action)="searchQuery.set('')"
+            ></lib-empty-state>
           }
         </div>
       }

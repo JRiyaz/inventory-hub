@@ -9,6 +9,7 @@ import {
   SearchService,
   SkeletonComponent,
   PageHeaderComponent,
+  EmptyStateComponent,
 } from "ui-shared";
 
 @Component({
@@ -21,6 +22,7 @@ import {
     SkeletonComponent,
     CustomDropdownComponent,
     PageHeaderComponent,
+    EmptyStateComponent,
   ],
   template: `
     <div class="p-3 sm:p-5 max-w-7xl mx-auto animate-fade-in">
@@ -354,15 +356,15 @@ import {
                 </button>
 
                 <div class="flex items-center gap-1">
-                  @for (p of [].constructor(totalPages()); track $index) {
-                    @if ($index < 5 || $index === totalPages() - 1) {
+                  @for (p of pages(); track p) {
+                    @if (p <= 5 || p === totalPages()) {
                       <button
-                        (click)="setPage($index + 1)"
-                        [class.bg-primary]="currentPage() === $index + 1"
-                        [class.text-white]="currentPage() === $index + 1"
+                        (click)="setPage(p)"
+                        [class.bg-primary]="currentPage() === p"
+                        [class.text-white]="currentPage() === p"
                         class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
                       >
-                        {{ $index + 1 }}
+                        {{ p }}
                       </button>
                     }
                   }
@@ -389,6 +391,13 @@ import {
                 </button>
               </div>
             </div>
+          } @else {
+            <lib-empty-state
+              title="No Suppliers Found"
+              message="We couldn't find any vendors matching your current search or status filter."
+              actionLabel="Clear Filters"
+              (action)="searchQuery.set(''); selectedStatus.set('All')"
+            ></lib-empty-state>
           }
         </div>
       } @placeholder {
@@ -493,6 +502,10 @@ export class SuppliersComponent implements OnInit {
 
   totalPages = computed(() =>
     Math.ceil(this.allFilteredSuppliers().length / this.pageSize()),
+  );
+
+  pages = computed(() =>
+    Array.from({ length: this.totalPages() }, (_, i) => i + 1),
   );
 
   selectStatus(status: string) {
