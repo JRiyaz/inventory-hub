@@ -33,6 +33,7 @@ import {
         [breadcrumbs]="breadcrumbs"
         [count]="allFilteredProducts().length"
         [loading]="isLoading()"
+        [isActionLoading]="isActionLoading()"
         actionLabel="Add New Product"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/products/create'])"
@@ -418,6 +419,7 @@ export class ProductsComponent implements OnInit {
   public router = inject(Router);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   viewType = signal<"grid" | "list">("grid");
   searchQuery = signal("");
   selectedCategory = signal("All");

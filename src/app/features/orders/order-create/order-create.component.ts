@@ -20,12 +20,19 @@ import {
   Customer,
   CustomDropdownComponent,
   DropdownOption,
+  LoaderComponent,
 } from "ui-shared";
 
 @Component({
   selector: "app-order-create",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CustomDropdownComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    CustomDropdownComponent,
+    LoaderComponent,
+  ],
   template: `
     <div
       class="p-3 sm:p-5 max-w-6xl mx-auto animate-fade-in"
@@ -280,10 +287,12 @@ import {
               <button
                 (click)="submitOrder()"
                 [disabled]="!canSubmit() || isSubmitting()"
-                [class.btn-loading]="isSubmitting()"
                 class="w-full xl:w-48 btn-primary-premium !py-2.5"
               >
-                {{ isEditMode() ? "Save Changes" : "Create Order" }}
+                <lib-loader
+                  [loading]="isSubmitting()"
+                  [label]="isEditMode() ? 'Save Changes' : 'Create Order'"
+                ></lib-loader>
               </button>
             </div>
           </div>

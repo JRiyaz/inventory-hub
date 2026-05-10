@@ -8,12 +8,19 @@ import {
   NotificationService,
   CustomDropdownComponent,
   DropdownOption,
+  LoaderComponent,
 } from "ui-shared";
 
 @Component({
   selector: "app-product-create",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CustomDropdownComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    CustomDropdownComponent,
+    LoaderComponent,
+  ],
   template: `
     <div class="p-3 sm:p-6 max-w-4xl mx-auto animate-fade-in">
       <nav
@@ -239,10 +246,12 @@ import {
             <button
               type="submit"
               [disabled]="isSubmitting() || !isValid()"
-              [class.btn-loading]="isSubmitting()"
               class="btn-primary-premium min-w-[160px]"
             >
-              {{ isEditMode() ? "Save Changes" : "Initialize SKU" }}
+              <lib-loader
+                [loading]="isSubmitting()"
+                [label]="isEditMode() ? 'Save Changes' : 'Initialize SKU'"
+              ></lib-loader>
             </button>
           </div>
         </form>

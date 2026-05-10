@@ -4,6 +4,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { RouterModule } from "@angular/router";
 import {
   InventoryDataService,
+  LoaderComponent,
   PageHeaderComponent,
   UiChartComponent,
 } from "ui-shared";
@@ -11,7 +12,13 @@ import {
 @Component({
   selector: "app-inventory-overview",
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHeaderComponent, UiChartComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    PageHeaderComponent,
+    UiChartComponent,
+    LoaderComponent,
+  ],
   template: `
     <div class="p-3 sm:p-5 max-w-7xl mx-auto animate-fade-in">
       <lib-page-header
@@ -146,9 +153,13 @@ import {
           </p>
           <button
             [routerLink]="['/inventory/analytics']"
-            class="btn-primary-premium mx-auto"
+            [disabled]="isActionLoading()"
+            class="btn-primary-premium mx-auto min-w-[160px]"
           >
-            Optimize Logistics
+            <lib-loader
+              [loading]="isActionLoading()"
+              label="Optimize Logistics"
+            ></lib-loader>
           </button>
         </div>
       </div>
@@ -167,6 +178,7 @@ export class InventoryComponent implements OnInit {
   private sanitizer = inject(DomSanitizer);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
 
   sanitize(html: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(html);

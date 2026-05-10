@@ -34,6 +34,7 @@ import {
         [breadcrumbs]="breadcrumbs"
         [count]="allFilteredCustomers().length"
         [loading]="isLoading()"
+        [isActionLoading]="isActionLoading()"
         actionLabel="Add New Customer"
         backLink="/inventory"
         (action)="router.navigate(['/inventory/customers/create'])"
@@ -309,6 +310,7 @@ export class CustomersComponent implements OnInit {
   public router = inject(Router);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   searchQuery = signal("");
   filterStatus = signal("All");
   currentPage = signal(1);

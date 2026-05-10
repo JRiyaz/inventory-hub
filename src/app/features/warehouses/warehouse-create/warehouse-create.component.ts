@@ -6,12 +6,13 @@ import {
   InventoryDataService,
   Warehouse,
   NotificationService,
+  LoaderComponent,
 } from "ui-shared";
 
 @Component({
   selector: "app-warehouse-create",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   template: `
     <div class="p-3 sm:p-6 max-w-4xl mx-auto animate-fade-in">
       <nav
@@ -214,10 +215,12 @@ import {
             <button
               type="submit"
               [disabled]="isSubmitting() || !isValid()"
-              [class.btn-loading]="isSubmitting()"
               class="btn-primary-premium min-w-[160px]"
             >
-              {{ isEditMode() ? "Save Changes" : "Initialize Facility" }}
+              <lib-loader
+                [loading]="isSubmitting()"
+                [label]="isEditMode() ? 'Save Changes' : 'Initialize Facility'"
+              ></lib-loader>
             </button>
           </div>
         </form>

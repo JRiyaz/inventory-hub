@@ -33,6 +33,7 @@ import {
         [breadcrumbs]="breadcrumbs"
         [count]="allFilteredSuppliers().length"
         [loading]="isLoading()"
+        [isActionLoading]="isActionLoading()"
         actionLabel="Add New Supplier"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/suppliers/create'])"
@@ -432,6 +433,7 @@ export class SuppliersComponent implements OnInit {
   public router = inject(Router);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   viewType = signal<"grid" | "list">("grid");
   searchQuery = signal("");
   selectedStatus = signal("All");

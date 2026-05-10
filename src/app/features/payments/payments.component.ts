@@ -33,6 +33,7 @@ import {
         [breadcrumbs]="breadcrumbs"
         [count]="allFilteredPayments().length"
         [loading]="isLoading()"
+        [isActionLoading]="isActionLoading()"
         actionLabel="Process Refund"
         backLink="/dashboard"
         (action)="initiateRefund()"
@@ -426,6 +427,7 @@ export class PaymentsComponent implements OnInit {
   private notificationService = inject(NotificationService);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   searchQuery = signal("");
   filterMethod = signal("All");
   sortField = signal<string>("id");

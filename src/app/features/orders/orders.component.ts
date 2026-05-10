@@ -34,6 +34,7 @@ import {
         [breadcrumbs]="breadcrumbs"
         [count]="allFilteredOrders().length"
         [loading]="isLoading()"
+        [isActionLoading]="isActionLoading()"
         actionLabel="Create New Order"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/orders/create'])"
@@ -414,6 +415,7 @@ export class OrdersComponent implements OnInit {
   public router = inject(Router);
 
   isLoading = signal(true);
+  isActionLoading = signal(false);
   searchQuery = signal("");
   selectedStatus = signal("All Statuses");
   sortField = signal<string>("id");

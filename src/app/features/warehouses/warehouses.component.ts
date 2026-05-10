@@ -32,6 +32,7 @@ import {
         [breadcrumbs]="breadcrumbs"
         [count]="filteredWarehouses().length"
         [loading]="isLoading()"
+        [isActionLoading]="isActionLoading()"
         actionLabel="Register New Warehouse"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/warehouses/create'])"
@@ -234,6 +235,7 @@ export class WarehousesComponent implements OnInit {
   public dataService = inject(InventoryDataService);
   public router = inject(Router);
   isLoading = signal(true);
+  isActionLoading = signal(false);
   searchQuery = signal("");
   pageSize = signal(12);
 
