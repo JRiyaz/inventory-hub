@@ -420,10 +420,10 @@ import {
 
         <!-- Modal Content -->
         <div
-          class="relative bg-white dark:bg-slate-900 w-full max-w-4xl h-[85vh] rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden animate-slide-up flex flex-col z-10"
+          class="relative bg-white dark:bg-dark-base w-full max-w-4xl h-[85vh] rounded-[2.5rem] shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden animate-slide-up flex flex-col z-10"
         >
           <div
-            class="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-white/5"
+            class="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50/50 dark:bg-dark-elevated"
           >
             <div class="flex items-center gap-4">
               <div class="p-3 rounded-2xl bg-primary/10 text-primary">
@@ -541,6 +541,15 @@ import {
   `,
   styles: [
     `
+      @reference "tailwindcss";
+      @custom-variant dark (&:where(.dark, .dark *));
+      @theme {
+        --color-primary: var(--theme-primary);
+        --color-dark-base: var(--theme-dark-base);
+        --color-dark-surface: var(--theme-dark-surface);
+        --color-dark-elevated: var(--theme-dark-elevated);
+        --color-dark-card: var(--theme-dark-card);
+      }
       .animate-chart-fill {
         animation: fillChart 2s ease-out forwards;
       }
@@ -573,15 +582,16 @@ import {
         }
       }
       .card-premium {
-        background: rgba(255, 255, 255, 0.7);
+        @apply bg-white dark:bg-dark-surface border border-slate-200 dark:border-white/10 transition-all duration-300;
         backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 2rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      :host-context(.dark) .card-premium {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+      :root[data-theme="glass"] .card-premium {
+        @apply border-none shadow-none;
+        background: var(--glass-bg-light) !important;
+      }
+      :root[data-theme="glass"].dark .card-premium {
+        background: var(--glass-bg-dark) !important;
       }
       .animate-slide-up {
         animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;

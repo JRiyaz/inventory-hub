@@ -1,26 +1,25 @@
+import { CommonModule } from "@angular/common";
 import {
   Component,
-  signal,
   computed,
-  inject,
-  OnInit,
-  viewChild,
+  effect,
   ElementRef,
   HostListener,
-  effect,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
 } from "@angular/core";
-import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
-  Product,
-  Order,
-  OrderItem,
-  Customer,
   CustomDropdownComponent,
   DropdownOption,
+  InventoryDataService,
   LoaderComponent,
+  Order,
+  OrderItem,
+  Product,
 } from "ui-shared";
 
 @Component({
@@ -88,7 +87,7 @@ import {
       <div class="space-y-4">
         <!-- Top Dashboard Header (Summary + Customer + Priority) -->
         <div
-          class="card-premium p-3 border-b-2 border-b-primary sticky top-0 z-[100] animate-fade-in"
+          class="card-premium p-5 pb-3 border-b-2 border-b-primary sticky top-0 z-[100] animate-fade-in"
         >
           <div
             class="flex flex-col xl:flex-row items-center justify-between gap-6"
