@@ -2,19 +2,19 @@ import { CommonModule } from "@angular/common";
 import {
   Component,
   computed,
+  effect,
   inject,
   OnInit,
-  signal,
-  effect,
   Renderer2,
+  signal,
   ViewEncapsulation,
 } from "@angular/core";
 import { RouterModule } from "@angular/router";
 import {
+  CustomDatePickerComponent,
   InventoryDataService,
   PageHeaderComponent,
   SkeletonComponent,
-  CustomDatePickerComponent,
 } from "ui-shared";
 
 @Component({

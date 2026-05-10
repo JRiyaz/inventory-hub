@@ -7,7 +7,8 @@ module.exports = withNativeFederation({
   name: "inventory-hub",
 
   exposes: {
-    "./INVENTORY_ROUTES": "./projects/inventory-hub/src/app/app.routes.ts",
+    "./INVENTORY_ROUTES":
+      "./projects/inventory-hub/frontend/src/app/app.routes.ts",
   },
 
   shared: {

@@ -1,7 +1,7 @@
 /* Global project styles */
 @import "tailwindcss";
-@import "../../ui-shared/src/theme-base.css";
-@import "../../ui-shared/src/design-system.css";
+@import "../../../ui-shared/src/theme-base.css";
+@import "../../../ui-shared/src/design-system.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
