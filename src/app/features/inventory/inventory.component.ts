@@ -7,6 +7,7 @@ import {
   LoaderComponent,
   PageHeaderComponent,
   UiChartComponent,
+  TypewriterComponent,
 } from "ui-shared";
 
 @Component({
@@ -18,6 +19,7 @@ import {
     PageHeaderComponent,
     UiChartComponent,
     LoaderComponent,
+    TypewriterComponent,
   ],
   template: `
     <div class="p-3 sm:p-5 max-w-7xl mx-auto animate-fade-in">
@@ -146,10 +148,19 @@ import {
             Automated Insights
           </p>
           <p
-            class="text-slate-700 dark:text-slate-200 text-sm font-medium italic mb-4"
+            class="text-slate-700 dark:text-slate-200 text-sm font-medium italic mb-4 h-10 flex items-center justify-center"
           >
-            "Your warehouse in Asia Pacific is reaching 91% capacity. Consider
-            rerouting upcoming shipments to Europe Node B."
+            <lib-typewriter
+              [words]="[
+                'Your warehouse in Asia Pacific is reaching 91% capacity.',
+                'Consider rerouting upcoming shipments to Europe Node B.',
+                'Demand for Electronics is projected to spike by 15% next month.',
+                'Supplier reliability in NA East has improved by 8% this quarter.',
+              ]"
+              [typeSpeed]="40"
+              [deleteSpeed]="20"
+              [delayBetweenWords]="4000"
+            ></lib-typewriter>
           </p>
           <button
             [routerLink]="['/inventory/analytics']"
