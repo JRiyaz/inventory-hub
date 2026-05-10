@@ -14,12 +14,19 @@ import {
   InventoryDataService,
   PageHeaderComponent,
   SkeletonComponent,
+  CustomDatePickerComponent,
 } from "ui-shared";
 
 @Component({
   selector: "app-analytics",
   standalone: true,
-  imports: [CommonModule, RouterModule, PageHeaderComponent, SkeletonComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    PageHeaderComponent,
+    SkeletonComponent,
+    CustomDatePickerComponent,
+  ],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div
@@ -144,31 +151,13 @@ import {
                   </button>
                 </div>
 
-                <!-- Date Picker Placeholder -->
-                <div class="relative group">
-                  <input
-                    type="date"
+                <!-- Modernized Date Picker -->
+                <div class="relative min-w-[140px]">
+                  <lib-custom-datepicker
                     [value]="selectedDate()"
-                    (change)="onDateChange($event)"
-                    class="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
-                  />
-                  <div
-                    class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-primary transition-colors"
-                  >
-                    <svg
-                      class="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      ></path>
-                    </svg>
-                  </div>
+                    (dateChange)="selectedDate.set($event)"
+                    placeholder="Filter Date"
+                  ></lib-custom-datepicker>
                 </div>
               </div>
             </div>

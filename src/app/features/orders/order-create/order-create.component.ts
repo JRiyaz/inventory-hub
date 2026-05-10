@@ -13,6 +13,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
+  CustomDatePickerComponent,
   CustomDropdownComponent,
   DropdownOption,
   InventoryDataService,
@@ -31,6 +32,7 @@ import {
     RouterModule,
     CustomDropdownComponent,
     LoaderComponent,
+    CustomDatePickerComponent,
   ],
   template: `
     <div
@@ -330,12 +332,11 @@ import {
                   class="text-[8px] font-black uppercase text-slate-400 mb-1 block"
                   >Fulfillment Date</label
                 >
-                <input
-                  type="date"
-                  [ngModel]="orderDate()"
-                  (ngModelChange)="orderDate.set($event)"
-                  class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-900 dark:text-white outline-none focus:border-primary transition-all"
-                />
+                <lib-custom-datepicker
+                  [value]="orderDate()"
+                  (dateChange)="orderDate.set($event)"
+                  placeholder="Select Date"
+                ></lib-custom-datepicker>
               </div>
 
               <div class="flex-1"></div>
