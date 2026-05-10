@@ -799,21 +799,15 @@ export class OrderCreateComponent implements OnInit {
   );
 
   constructor() {
-    effect(
-      () => {
-        this.customerSearchQuery();
-        this.activeCustomerIndex.set(0);
-      },
-      { allowSignalWrites: true },
-    );
+    effect(() => {
+      this.customerSearchQuery();
+      this.activeCustomerIndex.set(0);
+    });
 
-    effect(
-      () => {
-        this.productSearchQuery();
-        this.activeProductIndex.set(0);
-      },
-      { allowSignalWrites: true },
-    );
+    effect(() => {
+      this.productSearchQuery();
+      this.activeProductIndex.set(0);
+    });
   }
 
   ngOnInit() {
