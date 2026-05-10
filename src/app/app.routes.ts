@@ -67,6 +67,13 @@ export const INVENTORY_ROUTES: Routes = [
             (m) => m.ANALYTICS_ROUTES,
           ),
       },
+      {
+        path: "support",
+        loadComponent: () =>
+          import("./features/support/support.component").then(
+            (m) => m.SupportComponent,
+          ),
+      },
     ],
   },
 ];
