@@ -36,7 +36,7 @@ import { ProcurementService } from "./procurement.service";
         [loading]="service.isLoading()"
         [isActionLoading]="service.isActionLoading()"
         actionLabel="Create Stock Order"
-        backLink="/dashboard"
+        backLink="/inventory"
         (action)="
           router.navigate(['/inventory/procurement/stock-order/create'])
         "
@@ -282,6 +282,7 @@ import { ProcurementService } from "./procurement.service";
                 >
                   @for (order of service.paginatedOrders(); track order.id) {
                     <tr
+                      [routerLink]="['/inventory/procurement', order.id]"
                       class="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-all group cursor-pointer"
                     >
                       <td class="px-6 py-3">
@@ -428,7 +429,6 @@ export class ProcurementComponent implements OnInit {
   public router = inject(Router);
 
   breadcrumbs = [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Procurement" },
   ];

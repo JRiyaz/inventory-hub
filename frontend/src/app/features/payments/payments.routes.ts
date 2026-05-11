@@ -5,6 +5,19 @@ export const PAYMENTS_ROUTES: Routes = [
     path: "",
     loadComponent: () =>
       import("./payments.component").then((m) => m.PaymentsComponent),
+    data: { type: "global" },
+  },
+  {
+    path: "sales",
+    loadComponent: () =>
+      import("./payments.component").then((m) => m.PaymentsComponent),
+    data: { type: "sales" },
+  },
+  {
+    path: "procurement",
+    loadComponent: () =>
+      import("./payments.component").then((m) => m.PaymentsComponent),
+    data: { type: "procurement" },
   },
   {
     path: ":id",

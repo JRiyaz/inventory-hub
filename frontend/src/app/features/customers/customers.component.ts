@@ -295,7 +295,6 @@ export class CustomersComponent implements OnInit {
   public router = inject(Router);
 
   breadcrumbs = [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Customers" },
   ];

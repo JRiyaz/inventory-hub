@@ -89,7 +89,7 @@ import { OrdersService } from "../orders.service";
       </nav>
 
       <div class="space-y-4">
-        <!-- Top Dashboard Header (Summary + Customer + Priority) -->
+        <!-- Top Inventory Header (Summary + Customer + Priority) -->
         <div
           class="card-premium p-5 pb-3 border-b-2 border-b-primary sticky top-0 z-[100] animate-fade-in"
         >

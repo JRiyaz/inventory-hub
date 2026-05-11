@@ -5,5 +5,16 @@ export const ANALYTICS_ROUTES: Routes = [
   {
     path: "",
     component: AnalyticsComponent,
+    data: { type: "global" },
+  },
+  {
+    path: "sales",
+    component: AnalyticsComponent,
+    data: { type: "sales" },
+  },
+  {
+    path: "procurement",
+    component: AnalyticsComponent,
+    data: { type: "procurement" },
   },
 ];

@@ -335,7 +335,6 @@ export class SupplierDetailComponent implements OnInit {
   supplier = computed(() => this.service.getSupplier(this.supplierId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Suppliers", link: "/inventory/suppliers" },
     { label: this.supplier()?.name || "Detail" },

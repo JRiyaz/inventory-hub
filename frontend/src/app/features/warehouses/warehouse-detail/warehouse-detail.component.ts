@@ -652,7 +652,6 @@ export class WarehouseDetailComponent implements OnInit {
   warehouse = computed(() => this.service.getWarehouse(this.warehouseId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Warehouses", link: "/inventory/warehouses" },
     { label: this.warehouse()?.name || "Detail" },

@@ -304,7 +304,11 @@ import { OrdersService } from "../orders.service";
                             </div>
                             <div>
                               <p
-                                class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors"
+                                class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors cursor-pointer"
+                                [routerLink]="[
+                                  '/inventory/products',
+                                  item.productId,
+                                ]"
                               >
                                 {{ item.name }}
                               </p>
@@ -631,7 +635,7 @@ export class OrderDetailComponent implements OnInit {
   });
 
   breadcrumbs = computed(() => [
-    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
     { label: "Orders", link: "/inventory/orders" },
     { label: this.order() ? `Order #${this.order()?.id}` : "Details" },
   ]);

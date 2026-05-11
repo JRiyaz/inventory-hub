@@ -1,15 +1,15 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { RouterModule } from "@angular/router";
+import { ActivatedRoute, RouterModule } from "@angular/router";
 import {
   CustomDropdownComponent,
   DropdownOption,
   NotificationService,
   PageHeaderComponent,
+  SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
-  SearchService,
 } from "ui-shared";
 import { PaymentsService } from "./payments.service";
 
@@ -28,15 +28,15 @@ import { PaymentsService } from "./payments.service";
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
       <lib-page-header
-        title="Financial Ledger"
-        subtitle="Monitor all inbound and outbound transactions across the organization."
+        [title]="headerInfo().title"
+        [subtitle]="headerInfo().subtitle"
         [stats]="service.headerStats()"
-        [breadcrumbs]="breadcrumbs"
+        [breadcrumbs]="breadcrumbs()"
         [count]="service.allFilteredPayments().length"
         [loading]="service.isLoading()"
         [isActionLoading]="service.isActionLoading()"
         actionLabel="Process Refund"
-        backLink="/dashboard"
+        backLink="/inventory"
         (action)="initiateRefund()"
       ></lib-page-header>
 
@@ -54,7 +54,9 @@ import { PaymentsService } from "./payments.service";
               placeholder=" "
               class="floating-input"
             />
-            <label for="pay-search" class="floating-label">Filter Ledger</label>
+            <label for="pay-search" class="floating-label"
+              >Filter {{ headerInfo().title }}</label
+            >
             <div class="absolute right-1 top-6">
               <svg
                 class="w-3.5 h-3.5 text-slate-400"
@@ -251,7 +253,7 @@ import { PaymentsService } from "./payments.service";
                 ) {
                   <tr
                     class="group hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer"
-                    [routerLink]="[payment.id]"
+                    [routerLink]="['/inventory/payments', payment.id]"
                   >
                     <td class="px-6 py-2.5">
                       <p
@@ -434,17 +436,41 @@ import { PaymentsService } from "./payments.service";
 })
 export class PaymentsComponent implements OnInit {
   public service = inject(PaymentsService);
+  private route = inject(ActivatedRoute);
   private searchService = inject(SearchService);
   private notificationService = inject(NotificationService);
 
   sortField = signal<string>("id");
   sortOrder = signal<"asc" | "desc">("desc");
 
-  breadcrumbs = [
-    { label: "Dashboard", link: "/dashboard" },
+  headerInfo = computed(() => {
+    const type = this.route.snapshot.data["type"] || "global";
+    switch (type) {
+      case "sales":
+        return {
+          title: "Sales Ledger",
+          subtitle:
+            "Monitor all inbound payments and revenue streams from customers.",
+        };
+      case "procurement":
+        return {
+          title: "Procurement Ledger",
+          subtitle:
+            "Track outbound transactions and expenditures for stock and supplies.",
+        };
+      default:
+        return {
+          title: "Unified Ledger",
+          subtitle:
+            "Consolidated financial records across the entire organization.",
+        };
+    }
+  });
+
+  breadcrumbs = computed(() => [
     { label: "Inventory", link: "/inventory" },
-    { label: "Payments" },
-  ];
+    { label: this.headerInfo().title },
+  ]);
 
   pageSizeOptions: DropdownOption[] = [
     { value: 12, label: "12 Per Page" },

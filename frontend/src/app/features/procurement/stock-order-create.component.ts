@@ -35,22 +35,6 @@ import { ProcurementService } from "./procurement.service";
       <nav
         class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-5"
       >
-        <a routerLink="/dashboard" class="hover:text-primary transition-colors"
-          >Dashboard</a
-        >
-        <svg
-          class="w-3 h-3"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            d="M9 5l7 7-7 7"
-            stroke-width="3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
         @for (crumb of dynamicBreadcrumbs(); track crumb.label) {
           @if (crumb.link) {
             <a

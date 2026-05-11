@@ -393,7 +393,6 @@ export class CustomerDetailComponent implements OnInit {
   customer = computed(() => this.service.getCustomer(this.customerId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Customers", link: "/inventory/customers" },
     { label: this.customer()?.name || "Detail" },

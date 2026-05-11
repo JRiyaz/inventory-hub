@@ -37,7 +37,7 @@ import { SuppliersService } from "./suppliers.service";
         [loading]="service.isLoading()"
         [isActionLoading]="service.isActionLoading()"
         actionLabel="Add New Supplier"
-        backLink="/dashboard"
+        backLink="/inventory"
         (action)="router.navigate(['/inventory/suppliers/create'])"
       ></lib-page-header>
 
@@ -446,7 +446,6 @@ export class SuppliersComponent implements OnInit {
   viewType = signal<"grid" | "list">("grid");
 
   breadcrumbs = [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Suppliers" },
   ];

@@ -30,7 +30,7 @@ import { InventoryService } from "./inventory.service";
         [breadcrumbs]="breadcrumbs"
         [loading]="service.isLoading()"
         actionLabel="Manage Settings"
-        backLink="/dashboard"
+        backLink="/inventory"
       ></lib-page-header>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -197,10 +197,7 @@ export class InventoryComponent implements OnInit {
     return Array.isArray(value) ? value.length : value;
   }
 
-  breadcrumbs = [
-    { label: "Dashboard", link: "/dashboard" },
-    { label: "Inventory" },
-  ];
+  breadcrumbs = [{ label: "Inventory" }];
 
   modules = [
     {

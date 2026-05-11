@@ -567,7 +567,6 @@ export class ProductDetailComponent implements OnInit {
   product = computed(() => this.service.getProduct(this.productId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Products", link: "/inventory/products" },
     { label: this.product()?.name || "Detail" },

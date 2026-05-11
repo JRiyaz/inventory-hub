@@ -325,7 +325,6 @@ export class PaymentDetailComponent implements OnInit {
   payment = computed(() => this.service.getPayment(this.paymentId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Payments", link: "/inventory/payments" },
     { label: this.payment()?.id || "Detail" },

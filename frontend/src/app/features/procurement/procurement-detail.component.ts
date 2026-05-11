@@ -347,7 +347,7 @@ export class ProcurementDetailComponent implements OnInit {
   });
 
   breadcrumbs = computed(() => [
-    { label: "Dashboard", link: "/dashboard" },
+    { label: "Inventory", link: "/inventory" },
     { label: "Procurement", link: "/inventory/procurement" },
     { label: this.order() ? `PO #${this.order()?.id}` : "Details" },
   ]);

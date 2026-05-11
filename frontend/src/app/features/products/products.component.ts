@@ -35,7 +35,7 @@ import { ProductsService } from "./products.service";
         [loading]="service.isLoading()"
         [isActionLoading]="service.isActionLoading()"
         actionLabel="Add New Product"
-        backLink="/dashboard"
+        backLink="/inventory"
         (action)="router.navigate(['/inventory/products/create'])"
       ></lib-page-header>
 
@@ -436,7 +436,6 @@ export class ProductsComponent implements OnInit {
   public router = inject(Router);
 
   breadcrumbs = [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Products" },
   ];

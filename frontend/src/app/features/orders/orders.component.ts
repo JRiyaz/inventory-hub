@@ -37,7 +37,7 @@ import { OrdersService } from "./orders.service";
         [loading]="service.isLoading()"
         [isActionLoading]="service.isActionLoading()"
         actionLabel="Create New Order"
-        backLink="/dashboard"
+        backLink="/inventory"
         (action)="router.navigate(['/inventory/orders/create'])"
       ></lib-page-header>
 
@@ -441,7 +441,6 @@ export class OrdersComponent implements OnInit {
   private searchService = inject(SearchService);
 
   breadcrumbs = [
-    { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
     { label: "Orders" },
   ];

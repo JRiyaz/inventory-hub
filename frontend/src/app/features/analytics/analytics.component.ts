@@ -10,7 +10,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import { RouterModule } from "@angular/router";
+import { ActivatedRoute, RouterModule } from "@angular/router";
 import {
   CustomDatePickerComponent,
   PageHeaderComponent,
@@ -32,13 +32,13 @@ import { AnalyticsService } from "./analytics.service";
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in pb-20">
       <lib-page-header
-        title="Inventory Analytics"
-        subtitle="Real-time analytics and performance metrics across the inventory ecosystem."
+        [title]="headerInfo().title"
+        [subtitle]="headerInfo().subtitle"
         [stats]="service.summaryStats()"
-        [breadcrumbs]="breadcrumbs"
+        [breadcrumbs]="breadcrumbs()"
         [loading]="service.isLoading()"
         actionLabel="Export Report"
-        backLink="/dashboard"
+        backLink="/inventory"
       ></lib-page-header>
 
       @if (service.isLoading()) {
@@ -67,7 +67,7 @@ import { AnalyticsService } from "./analytics.service";
                 <h3
                   class="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter"
                 >
-                  Revenue Analysis
+                  {{ headerInfo().chartTitle }}
                 </h3>
                 <p
                   class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest"
@@ -614,6 +614,7 @@ import { AnalyticsService } from "./analytics.service";
 })
 export class AnalyticsComponent implements OnInit {
   public service = inject(AnalyticsService);
+  private route = inject(ActivatedRoute);
   private renderer = inject(Renderer2);
   private sanitizer = inject(DomSanitizer);
 
@@ -635,11 +636,37 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
-  breadcrumbs = [
-    { label: "Dashboard", link: "/dashboard" },
+  headerInfo = computed(() => {
+    const type = this.route.snapshot.data["type"] || "global";
+    switch (type) {
+      case "sales":
+        return {
+          title: "Sales & CRM Analytics",
+          subtitle:
+            "Detailed breakdown of customer orders, revenue, and promotional impact.",
+          chartTitle: "Sales Revenue Analysis",
+        };
+      case "procurement":
+        return {
+          title: "Supply Chain Analytics",
+          subtitle:
+            "Monitoring stock orders, supplier performance, and warehouse efficiency.",
+          chartTitle: "Procurement Expenditure Analysis",
+        };
+      default:
+        return {
+          title: "Global Ecosystem Analytics",
+          subtitle:
+            "Consolidated performance metrics across both sales and procurement streams.",
+          chartTitle: "Consolidated Revenue Analysis",
+        };
+    }
+  });
+
+  breadcrumbs = computed(() => [
     { label: "Inventory", link: "/inventory" },
-    { label: "Analytics" },
-  ];
+    { label: this.headerInfo().title },
+  ]);
 
   activeDetailStats = computed(() => {
     const section = this.activeSection();
