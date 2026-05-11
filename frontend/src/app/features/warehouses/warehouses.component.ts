@@ -23,7 +23,7 @@ import { WarehousesService } from "./warehouses.service";
     EmptyStateComponent,
   ],
   template: `
-    <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
+    <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
       <lib-page-header
         title="Warehouses & Logistics"
         subtitle="Monitor spatial capacity and stock distribution across your facilities."

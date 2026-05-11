@@ -19,25 +19,118 @@ import { OrdersService } from "../orders.service";
     EmptyStateComponent,
   ],
   template: `
-    <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
+    <div class="p-3 sm:p-6 min-h-screen animate-fade-in">
       @if (service.isLoading()) {
-        <div class="space-y-6">
+        <div class="space-y-8 animate-pulse">
+          <!-- Header Skeleton -->
           <div class="flex items-center gap-4 mb-8">
             <lib-skeleton
-              width="40px"
-              height="40px"
-              shape="circle"
+              width="48px"
+              height="48px"
+              shape="rounded"
             ></lib-skeleton>
             <div class="space-y-2">
-              <lib-skeleton width="200px" height="1.5rem"></lib-skeleton>
-              <lib-skeleton width="120px" height="0.75rem"></lib-skeleton>
+              <lib-skeleton width="240px" height="2rem"></lib-skeleton>
+              <lib-skeleton width="140px" height="0.875rem"></lib-skeleton>
             </div>
           </div>
+
+          <!-- Top Stats Skeleton -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <lib-skeleton
+              width="100%"
+              height="80px"
+              shape="rounded"
+            ></lib-skeleton>
+            <lib-skeleton
+              width="100%"
+              height="80px"
+              shape="rounded"
+            ></lib-skeleton>
+            <lib-skeleton
+              width="100%"
+              height="80px"
+              shape="rounded"
+            ></lib-skeleton>
+          </div>
+
+          <!-- Main Layout Skeleton -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
             <div class="lg:col-span-2 space-y-6">
-              <lib-skeleton width="100%" height="400px"></lib-skeleton>
+              <div class="card-premium p-6">
+                <lib-skeleton
+                  width="150px"
+                  height="1rem"
+                  class="mb-6"
+                ></lib-skeleton>
+                <div class="space-y-4">
+                  @for (i of [1, 2, 3]; track i) {
+                    <div
+                      class="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5"
+                    >
+                      <div class="flex items-center gap-3">
+                        <lib-skeleton
+                          width="32px"
+                          height="32px"
+                          shape="rounded"
+                        ></lib-skeleton>
+                        <div class="space-y-1">
+                          <lib-skeleton
+                            width="180px"
+                            height="0.75rem"
+                          ></lib-skeleton>
+                          <lib-skeleton
+                            width="100px"
+                            height="0.5rem"
+                          ></lib-skeleton>
+                        </div>
+                      </div>
+                      <lib-skeleton
+                        width="60px"
+                        height="0.75rem"
+                      ></lib-skeleton>
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
-            <lib-skeleton width="100%" height="400px"></lib-skeleton>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+              <div class="card-premium p-6">
+                <lib-skeleton
+                  width="100px"
+                  height="0.75rem"
+                  class="mb-4"
+                ></lib-skeleton>
+                <div class="flex items-center gap-3 mb-6">
+                  <lib-skeleton
+                    width="40px"
+                    height="40px"
+                    shape="circle"
+                  ></lib-skeleton>
+                  <div class="space-y-1">
+                    <lib-skeleton width="120px" height="0.75rem"></lib-skeleton>
+                    <lib-skeleton width="80px" height="0.5rem"></lib-skeleton>
+                  </div>
+                </div>
+                <lib-skeleton
+                  width="100%"
+                  height="1px"
+                  class="mb-4"
+                ></lib-skeleton>
+                <div class="space-y-3">
+                  <lib-skeleton width="100%" height="0.5rem"></lib-skeleton>
+                  <lib-skeleton width="80%" height="0.5rem"></lib-skeleton>
+                </div>
+              </div>
+              <lib-skeleton
+                width="100%"
+                height="120px"
+                shape="rounded"
+              ></lib-skeleton>
+            </div>
           </div>
         </div>
       } @else if (order()) {
@@ -53,16 +146,17 @@ import { OrdersService } from "../orders.service";
           actionLabel="Edit Order"
           (action)="editOrder()"
         >
-          <!-- Top Stats Header Slots -->
-          <div top-content class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div
-              class="card-premium p-4 border-l-4 border-l-primary flex items-center gap-4"
-            >
+          <!-- Refined Stats Header -->
+          <div
+            top-content
+            class="card-premium p-6 flex flex-wrap items-center justify-between gap-8 border-b-4 border-b-primary shadow-xl"
+          >
+            <div class="flex items-center gap-4">
               <div
-                class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
+                class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary"
               >
                 <svg
-                  class="w-5 h-5"
+                  class="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -76,23 +170,27 @@ import { OrdersService } from "../orders.service";
                 </svg>
               </div>
               <div>
-                <p class="text-[10px] font-black uppercase text-slate-400">
-                  Total Amount
+                <p
+                  class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+                >
+                  Total Value
                 </p>
-                <p class="text-lg font-black text-slate-900 dark:text-white">
+                <p class="text-xl font-black text-slate-900 dark:text-white">
                   {{ order()?.amount | currency }}
                 </p>
               </div>
             </div>
 
             <div
-              class="card-premium p-4 border-l-4 border-l-amber-500 flex items-center gap-4"
-            >
+              class="h-8 w-px bg-slate-100 dark:bg-white/10 hidden md:block"
+            ></div>
+
+            <div class="flex items-center gap-4">
               <div
-                class="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500"
+                class="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500"
               >
                 <svg
-                  class="w-5 h-5"
+                  class="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -106,23 +204,27 @@ import { OrdersService } from "../orders.service";
                 </svg>
               </div>
               <div>
-                <p class="text-[10px] font-black uppercase text-slate-400">
-                  Total Items
+                <p
+                  class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+                >
+                  Order Size
                 </p>
-                <p class="text-lg font-black text-slate-900 dark:text-white">
-                  {{ getTotalItems() }} Units
+                <p class="text-xl font-black text-slate-900 dark:text-white">
+                  {{ getTotalItems() }} Items
                 </p>
               </div>
             </div>
 
             <div
-              class="card-premium p-4 border-l-4 border-l-emerald-500 flex items-center gap-4"
-            >
+              class="h-8 w-px bg-slate-100 dark:bg-white/10 hidden md:block"
+            ></div>
+
+            <div class="flex items-center gap-4">
               <div
-                class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"
+                class="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500"
               >
                 <svg
-                  class="w-5 h-5"
+                  class="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -136,11 +238,13 @@ import { OrdersService } from "../orders.service";
                 </svg>
               </div>
               <div>
-                <p class="text-[10px] font-black uppercase text-slate-400">
-                  Payment Status
+                <p
+                  class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
+                >
+                  Payment
                 </p>
-                <p class="text-lg font-black text-slate-900 dark:text-white">
-                  {{ isPaid() ? "Fully Paid" : "Balance Due" }}
+                <p class="text-xl font-black text-slate-900 dark:text-white">
+                  {{ isPaid() ? "Cleared" : "Pending" }}
                 </p>
               </div>
             </div>
@@ -166,20 +270,20 @@ import { OrdersService } from "../orders.service";
                 <table class="w-full text-left border-collapse">
                   <thead>
                     <tr
-                      class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-white/5"
+                      class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-white/5"
                     >
-                      <th class="px-6 py-4">Product</th>
-                      <th class="px-6 py-4 text-center">Quantity</th>
-                      <th class="px-6 py-4 text-right">Unit Price</th>
-                      <th class="px-6 py-4 text-right">Total</th>
+                      <th class="px-6 py-3">Product</th>
+                      <th class="px-6 py-3 text-center">Qty</th>
+                      <th class="px-6 py-3 text-right">Unit Price</th>
+                      <th class="px-6 py-3 text-right">Total</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100 dark:divide-white/5">
                     @for (item of order()?.items; track item.productId) {
                       <tr
-                        class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
+                        class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors group"
                       >
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-3">
                           <div class="flex items-center gap-3">
                             <div
                               class="w-8 h-8 bg-slate-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors"
@@ -212,17 +316,17 @@ import { OrdersService } from "../orders.service";
                             </div>
                           </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-6 py-3 text-center">
                           <span
                             class="text-xs font-black text-slate-700 dark:text-slate-300"
                             >{{ item.qty }}</span
                           >
                         </td>
-                        <td class="px-6 py-4 text-right text-xs font-bold">
+                        <td class="px-6 py-3 text-right text-xs font-bold">
                           {{ item.price | currency }}
                         </td>
                         <td
-                          class="px-6 py-4 text-right text-xs font-black text-primary"
+                          class="px-6 py-3 text-right text-xs font-black text-primary"
                         >
                           {{ item.price * item.qty | currency }}
                         </td>
@@ -233,10 +337,13 @@ import { OrdersService } from "../orders.service";
                     <tr
                       class="bg-slate-50/50 dark:bg-white/5 font-black text-slate-900 dark:text-white"
                     >
-                      <td colspan="3" class="px-6 py-4 text-right text-xs">
-                        Grand Total
+                      <td
+                        colspan="3"
+                        class="px-6 py-5 text-right text-xs uppercase tracking-widest text-slate-400"
+                      >
+                        Order Grand Total
                       </td>
-                      <td class="px-6 py-4 text-right text-base text-primary">
+                      <td class="px-6 py-5 text-right text-xl text-primary">
                         {{ order()?.amount | currency }}
                       </td>
                     </tr>
@@ -379,15 +486,17 @@ import { OrdersService } from "../orders.service";
               }
             </div>
 
-            <!-- Shipping Details -->
+            <!-- Logistics & Operations -->
             <div class="card-premium p-6">
               <h3
                 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6"
               >
-                Logistics & Shipping
+                Logistics & Operations
               </h3>
               <div class="space-y-4">
-                <div class="flex items-center justify-between">
+                <div
+                  class="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5"
+                >
                   <div class="flex items-center gap-2">
                     <svg
                       class="w-4 h-4 text-slate-400"
@@ -411,13 +520,16 @@ import { OrdersService } from "../orders.service";
                     [class]="
                       order()?.priority
                         ? 'bg-amber-500/10 text-amber-500'
-                        : 'bg-slate-100 dark:bg-white/10 text-slate-500'
+                        : 'bg-slate-200 dark:bg-white/10 text-slate-500'
                     "
                   >
                     {{ order()?.priority ? "Express" : "Standard" }}
                   </span>
                 </div>
-                <div class="flex items-center justify-between">
+
+                <div
+                  class="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5"
+                >
                   <div class="flex items-center gap-2">
                     <svg
                       class="w-4 h-4 text-slate-400"
@@ -429,7 +541,7 @@ import { OrdersService } from "../orders.service";
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                       ></path>
                     </svg>
                     <span class="text-[10px] font-bold text-slate-400"

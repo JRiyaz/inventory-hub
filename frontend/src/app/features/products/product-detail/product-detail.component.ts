@@ -605,11 +605,9 @@ export class ProductDetailComponent implements OnInit {
   }
 
   handleAction() {
-    // Placeholder logic for "Order More Stock"
-    this.service.isActionLoading.set(true);
-    setTimeout(() => {
-      this.service.isActionLoading.set(false);
-    }, 2000);
+    this.router.navigate(["/inventory/procurement/stock-order/create"], {
+      queryParams: { productId: this.productId() },
+    });
   }
 
   getQuantityInOrder(orderId: string): number {

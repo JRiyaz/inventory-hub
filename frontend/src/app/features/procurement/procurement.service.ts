@@ -1,0 +1,146 @@
+import { Injectable, inject, signal, computed } from "@angular/core";
+import {
+  InventoryDataService,
+  PurchaseOrder,
+  PurchaseOrderItem,
+  Product,
+  Supplier,
+} from "ui-shared";
+import { delay, of, tap } from "rxjs";
+
+@Injectable({
+  providedIn: "root",
+})
+export class ProcurementService {
+  private dataService = inject(InventoryDataService);
+
+  // State
+  isLoading = signal(false);
+  isActionLoading = signal(false);
+  searchQuery = signal("");
+  statusFilter = signal("All Statuses");
+  currentPage = signal(1);
+  pageSize = signal(10);
+  sortField = signal<string>("date");
+  sortOrder = signal<"asc" | "desc">("desc");
+
+  // Purchase Orders State
+  purchaseOrders = signal<PurchaseOrder[]>([]);
+
+  // Derived Data
+  allFilteredOrders = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    const status = this.statusFilter();
+    const all = [
+      ...this.dataService.purchaseOrders(),
+      ...this.purchaseOrders(),
+    ];
+
+    let filtered = all.filter((o) => {
+      const matchesSearch =
+        o.id.toLowerCase().includes(query) ||
+        o.supplierName.toLowerCase().includes(query);
+      const matchesStatus = status === "All Statuses" || o.status === status;
+      return matchesSearch && matchesStatus;
+    });
+
+    const field = this.sortField();
+    const order = this.sortOrder();
+
+    return filtered.sort((a: any, b: any) => {
+      const valA = a[field];
+      const valB = b[field];
+      if (valA < valB) return order === "asc" ? -1 : 1;
+      if (valA > valB) return order === "asc" ? 1 : -1;
+      return 0;
+    });
+  });
+
+  paginatedOrders = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.allFilteredOrders().slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() =>
+    Math.ceil(this.allFilteredOrders().length / this.pageSize()),
+  );
+
+  headerStats = computed(() => [
+    {
+      label: "Total Orders",
+      value: this.allFilteredOrders().length,
+      color: "primary" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>',
+    },
+    {
+      label: "Total Amount",
+      value:
+        "$" +
+        this.allFilteredOrders()
+          .reduce((sum, o) => sum + o.amount, 0)
+          .toLocaleString(),
+      color: "success" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+    },
+    {
+      label: "Pending",
+      value: this.allFilteredOrders().filter((o) => o.status === "Ordered")
+        .length,
+      color: "warning" as const,
+      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+    },
+  ]);
+
+  // Helpers
+  loadOrders() {
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 800);
+  }
+
+  setPage(page: number) {
+    this.currentPage.set(page);
+  }
+
+  toggleSort(field: string) {
+    if (this.sortField() === field) {
+      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
+    } else {
+      this.sortField.set(field);
+      this.sortOrder.set("asc");
+    }
+  }
+  getProducts() {
+    return this.dataService.products();
+  }
+
+  getSuppliers() {
+    return this.dataService.suppliers();
+  }
+
+  getProductById(id: number) {
+    return this.dataService.products().find((p) => p.id === id);
+  }
+
+  getSupplierById(id: string) {
+    return this.dataService.suppliers().find((s) => s.id === id);
+  }
+
+  addPurchaseOrder(order: PurchaseOrder) {
+    this.isActionLoading.set(true);
+    return of(order).pipe(
+      delay(1500),
+      tap((newOrder) => {
+        this.purchaseOrders.update((orders) => [newOrder, ...orders]);
+        this.isActionLoading.set(false);
+      }),
+    );
+  }
+
+  getPurchaseOrder(id: string) {
+    const all = [
+      ...this.dataService.purchaseOrders(),
+      ...this.purchaseOrders(),
+    ];
+    return all.find((o) => o.id === id);
+  }
+}

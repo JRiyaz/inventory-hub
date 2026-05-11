@@ -26,7 +26,7 @@ import { PaymentsService } from "./payments.service";
     CustomDropdownComponent,
   ],
   template: `
-    <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
+    <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
       <lib-page-header
         title="Financial Ledger"
         subtitle="Monitor all inbound and outbound transactions across the organization."

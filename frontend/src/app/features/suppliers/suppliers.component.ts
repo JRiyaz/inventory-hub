@@ -27,7 +27,7 @@ import { SuppliersService } from "./suppliers.service";
     StatusBadgeComponent,
   ],
   template: `
-    <div class="p-3 sm:p-5 max-w-7xl mx-auto animate-fade-in">
+    <div class="p-3 sm:p-5  animate-fade-in">
       <lib-page-header
         title="Suppliers Network"
         subtitle="Manage your global vendor relationships and procurement sources."

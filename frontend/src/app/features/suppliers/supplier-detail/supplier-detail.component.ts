@@ -357,9 +357,8 @@ export class SupplierDetailComponent implements OnInit {
   }
 
   handleAction() {
-    this.service.isActionLoading.set(true);
-    setTimeout(() => {
-      this.service.isActionLoading.set(false);
-    }, 2000);
+    this.router.navigate(["/inventory/procurement/stock-order/create"], {
+      queryParams: { supplierId: this.supplierId() },
+    });
   }
 }

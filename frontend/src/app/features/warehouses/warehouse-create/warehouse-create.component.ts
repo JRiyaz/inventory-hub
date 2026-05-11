@@ -7,6 +7,7 @@ import {
   LoaderComponent,
   FormValidationDirective,
   ValidationErrorPipe,
+  Warehouse,
 } from "ui-shared";
 import { WarehousesService } from "../warehouses.service";
 
@@ -320,17 +321,35 @@ export class WarehouseCreateComponent implements OnInit {
   }
 
   submitForm() {
-    this.service.isActionLoading.set(true);
+    const warehouse: Warehouse = {
+      id: this.isEditMode()
+        ? this.warehouseId
+        : "WH-" + Math.floor(100 + Math.random() * 900),
+      ...this.formData,
+      status: "Active",
+      utilization: this.isEditMode()
+        ? this.service.getWarehouse(this.warehouseId)?.utilization || 0
+        : 0,
+      currentStock: this.isEditMode()
+        ? this.service.getWarehouse(this.warehouseId)?.currentStock || 0
+        : 0,
+      zones: this.isEditMode()
+        ? this.service.getWarehouse(this.warehouseId)?.zones || []
+        : [],
+    };
 
-    setTimeout(() => {
-      this.service.isActionLoading.set(false);
+    const action = this.isEditMode()
+      ? this.service.updateWarehouse(warehouse)
+      : this.service.addWarehouse(warehouse);
+
+    action.subscribe(() => {
       this.notificationService.success(
         this.isEditMode() ? "Update Successful" : "Facility Registered",
         this.isEditMode()
-          ? `${this.formData.name} specifications have been updated.`
-          : `${this.formData.name} is now active in the logistics network.`,
+          ? `${warehouse.name} specifications have been updated.`
+          : `${warehouse.name} is now active in the logistics network.`,
       );
-      this.router.navigate(["/inventory/warehouses"]);
-    }, 1500);
+      this.router.navigate(["/inventory/warehouses", warehouse.id]);
+    });
   }
 }

@@ -30,9 +30,7 @@ import { AnalyticsService } from "./analytics.service";
   ],
   encapsulation: ViewEncapsulation.None,
   template: `
-    <div
-      class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in pb-20"
-    >
+    <div class="p-3 sm:p-6  min-h-screen animate-fade-in pb-20">
       <lib-page-header
         title="Inventory Analytics"
         subtitle="Real-time analytics and performance metrics across the inventory ecosystem."

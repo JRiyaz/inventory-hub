@@ -21,6 +21,7 @@ import {
   LoaderComponent,
   OrderItem,
   Product,
+  Order,
 } from "ui-shared";
 import { OrdersService } from "../orders.service";
 
@@ -1018,12 +1019,27 @@ export class OrderCreateComponent implements OnInit {
   submitOrder() {
     if (!this.canSubmit()) return;
 
-    this.service.isActionLoading.set(true);
+    const order: Order = {
+      id: (this.isEditMode()
+        ? this.orderId
+        : "ORD-" + Math.floor(1000 + Math.random() * 9000)) as string,
+      customer: this.selectedCustomerName() || "",
+      customerName: this.selectedCustomerName() || undefined,
+      status: this.isEditMode() ? this.selectedStatus() : "Pending",
+      priority: this.isPriority(),
+      date: this.orderDate(),
+      items: this.orderItems(),
+      totalAmount: this.subtotal(),
+      amount: this.subtotal(),
+    };
 
-    setTimeout(() => {
-      this.service.isActionLoading.set(false);
-      this.router.navigate(["/inventory/orders"]);
-    }, 1500);
+    const action = this.isEditMode()
+      ? this.service.updateOrder(order)
+      : this.service.addOrder(order);
+
+    action.subscribe(() => {
+      this.router.navigate(["/inventory/orders", order.id]);
+    });
   }
 
   private scrollToActiveItem(

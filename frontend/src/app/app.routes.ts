@@ -74,6 +74,13 @@ export const INVENTORY_ROUTES: Routes = [
             (m) => m.SupportComponent,
           ),
       },
+      {
+        path: "procurement",
+        loadChildren: () =>
+          import("./features/procurement/procurement.routes").then(
+            (m) => m.PROCUREMENT_ROUTES,
+          ),
+      },
     ],
   },
 ];

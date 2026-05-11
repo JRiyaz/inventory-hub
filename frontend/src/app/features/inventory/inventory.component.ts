@@ -22,7 +22,7 @@ import { InventoryService } from "./inventory.service";
     TypewriterComponent,
   ],
   template: `
-    <div class="p-3 sm:p-5 max-w-7xl mx-auto animate-fade-in">
+    <div class="p-3 sm:p-5  animate-fade-in">
       <lib-page-header
         title="Inventory Hub"
         subtitle="Global overview of your supply chain, orders, and fulfillment operations."

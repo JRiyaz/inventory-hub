@@ -25,7 +25,7 @@ import { ProductsService } from "./products.service";
     EmptyStateComponent,
   ],
   template: `
-    <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
+    <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
       <lib-page-header
         title="Products"
         subtitle="Manage and monitor your industrial inventory levels across all nodes."

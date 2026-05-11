@@ -47,4 +47,15 @@ export class OffersService {
       }),
     );
   }
+
+  updateOffer(offer: Offer) {
+    this.isActionLoading.set(true);
+    return of(offer).pipe(
+      delay(1200),
+      tap((updated) => {
+        this.dataService.updateOffer(updated);
+        this.isActionLoading.set(false);
+      }),
+    );
+  }
 }

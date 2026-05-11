@@ -75,6 +75,23 @@ export class WarehousesService {
       .filter((p) => (p as any).warehouseId === warehouseId);
   }
 
+  getAvailableProducts() {
+    return this.dataService.products().filter((p) => !(p as any).warehouseId);
+  }
+
+  addProductToWarehouse(productId: number, warehouseId: string) {
+    this.isActionLoading.set(true);
+    const product = this.dataService.products().find((p) => p.id === productId);
+    if (product) {
+      const updatedProduct = { ...product, warehouseId };
+      this.dataService.updateProduct(updatedProduct);
+    }
+    return of(true).pipe(
+      delay(1000),
+      tap(() => this.isActionLoading.set(false)),
+    );
+  }
+
   getMovementsByWarehouseId(warehouseId: string) {
     return this.dataService
       .movements()

@@ -6,15 +6,14 @@ import {
   CustomDropdownComponent,
   DropdownOption,
   PageHeaderComponent,
-  SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
   EmptyStateComponent,
 } from "ui-shared";
-import { OrdersService } from "./orders.service";
+import { ProcurementService } from "./procurement.service";
 
 @Component({
-  selector: "app-orders",
+  selector: "app-procurement",
   standalone: true,
   imports: [
     CommonModule,
@@ -29,19 +28,21 @@ import { OrdersService } from "./orders.service";
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
       <lib-page-header
-        title="Order Tracking"
-        subtitle="Monitor and manage all incoming industrial orders in real-time."
+        title="Stock Procurement"
+        subtitle="Manage and track all purchase orders sent to industrial suppliers."
         [stats]="service.headerStats()"
         [breadcrumbs]="breadcrumbs"
         [count]="service.allFilteredOrders().length"
         [loading]="service.isLoading()"
         [isActionLoading]="service.isActionLoading()"
-        actionLabel="Create New Order"
+        actionLabel="Create Stock Order"
         backLink="/dashboard"
-        (action)="router.navigate(['/inventory/orders/create'])"
+        (action)="
+          router.navigate(['/inventory/procurement/stock-order/create'])
+        "
       ></lib-page-header>
 
-      <!-- Filters Bar (Ultra Compact) -->
+      <!-- Filters Bar -->
       <div
         class="mb-3 flex flex-col lg:flex-row justify-between items-end gap-3 bg-white dark:bg-white/5 p-2 rounded-xl"
       >
@@ -53,10 +54,10 @@ import { OrdersService } from "./orders.service";
               (ngModelChange)="service.searchQuery.set($event)"
               placeholder=" "
               class="floating-input"
-              id="order-search"
+              id="po-search"
             />
-            <label class="floating-label" for="order-search"
-              >Search Orders</label
+            <label class="floating-label" for="po-search"
+              >Search PO / Supplier</label
             >
             <div class="absolute right-1 top-6">
               @if (!service.searchQuery()) {
@@ -106,32 +107,21 @@ import { OrdersService } from "./orders.service";
               "
             ></lib-custom-dropdown>
           </div>
-
-          <div class="w-full sm:w-40">
-            <lib-custom-dropdown
-              [options]="pageSizeOptions"
-              [value]="service.pageSize()"
-              [placeholder]="'Per Page'"
-              (valueChange)="
-                service.pageSize.set($event); service.currentPage.set(1)
-              "
-            ></lib-custom-dropdown>
-          </div>
         </div>
       </div>
 
       @if (service.isLoading()) {
         <div class="card-premium p-6 space-y-4">
-          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          @for (i of [1, 2, 3, 4, 5]; track i) {
             <div
               class="flex justify-between items-center py-4 border-b border-slate-50 dark:border-white/5 last:border-0"
             >
               <div class="flex gap-10">
-                <lib-skeleton width="80px" height="20px"></lib-skeleton>
-                <lib-skeleton width="180px" height="20px"></lib-skeleton>
+                <lib-skeleton width="100px" height="20px"></lib-skeleton>
+                <lib-skeleton width="200px" height="20px"></lib-skeleton>
               </div>
               <lib-skeleton
-                width="100px"
+                width="120px"
                 height="30px"
                 shape="rounded"
               ></lib-skeleton>
@@ -156,7 +146,7 @@ import { OrdersService } from "./orders.service";
                       <div class="flex items-center gap-2">
                         <span
                           class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
-                          >ID</span
+                          >PO #</span
                         >
                         <svg
                           class="w-2.5 h-2.5 transition-all duration-300"
@@ -180,24 +170,24 @@ import { OrdersService } from "./orders.service";
                       </div>
                     </th>
                     <th
-                      (click)="service.toggleSort('customerName')"
+                      (click)="service.toggleSort('supplierName')"
                       class="px-6 py-4 cursor-pointer group"
                     >
                       <div class="flex items-center gap-2">
                         <span
                           class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
-                          >Client</span
+                          >Supplier</span
                         >
                         <svg
                           class="w-2.5 h-2.5 transition-all duration-300"
                           [class.text-primary]="
-                            service.sortField() === 'customerName'
+                            service.sortField() === 'supplierName'
                           "
                           [class.text-slate-200]="
-                            service.sortField() !== 'customerName'
+                            service.sortField() !== 'supplierName'
                           "
                           [class.rotate-180]="
-                            service.sortField() === 'customerName' &&
+                            service.sortField() === 'supplierName' &&
                             service.sortOrder() === 'desc'
                           "
                           fill="none"
@@ -252,24 +242,24 @@ import { OrdersService } from "./orders.service";
                       </div>
                     </th>
                     <th
-                      (click)="service.toggleSort('totalAmount')"
+                      (click)="service.toggleSort('amount')"
                       class="px-6 py-4 text-right cursor-pointer group"
                     >
                       <div class="flex items-center justify-end gap-2">
                         <span
                           class="text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors"
-                          >Amount</span
+                          >Total Amount</span
                         >
                         <svg
                           class="w-2.5 h-2.5 transition-all duration-300"
                           [class.text-primary]="
-                            service.sortField() === 'totalAmount'
+                            service.sortField() === 'amount'
                           "
                           [class.text-slate-200]="
-                            service.sortField() !== 'totalAmount'
+                            service.sortField() !== 'amount'
                           "
                           [class.rotate-180]="
-                            service.sortField() === 'totalAmount' &&
+                            service.sortField() === 'amount' &&
                             service.sortOrder() === 'desc'
                           "
                           fill="none"
@@ -292,7 +282,6 @@ import { OrdersService } from "./orders.service";
                 >
                   @for (order of service.paginatedOrders(); track order.id) {
                     <tr
-                      [routerLink]="[order.id]"
                       class="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-all group cursor-pointer"
                     >
                       <td class="px-6 py-3">
@@ -305,12 +294,12 @@ import { OrdersService } from "./orders.service";
                           <p
                             class="text-xs font-bold text-slate-900 dark:text-white"
                           >
-                            {{ order.customerName }}
+                            {{ order.supplierName }}
                           </p>
                           <p
                             class="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none"
                           >
-                            Industrial Sector
+                            Primary Vendor
                           </p>
                         </div>
                       </td>
@@ -322,13 +311,13 @@ import { OrdersService } from "./orders.service";
                       </td>
                       <td class="px-6 py-3">
                         <span class="text-[10px] font-bold text-slate-500">{{
-                          order.date
+                          order.date | date: "mediumDate"
                         }}</span>
                       </td>
                       <td class="px-6 py-3 text-right">
                         <span
                           class="text-sm font-black text-slate-900 dark:text-white"
-                          >{{ order.totalAmount | currency }}</span
+                          >{{ order.amount | currency }}</span
                         >
                       </td>
                     </tr>
@@ -414,12 +403,11 @@ import { OrdersService } from "./orders.service";
             </div>
           } @else {
             <lib-empty-state
-              title="No Orders Located"
-              message="Adjust your search query or status filter to refine your order tracking."
-              actionLabel="Reset Filters"
+              title="No Purchase Orders"
+              message="No stock orders match your current search criteria."
+              actionLabel="Create First Order"
               (action)="
-                service.searchQuery.set('');
-                service.statusFilter.set('All Statuses')
+                router.navigate(['/inventory/procurement/stock-order/create'])
               "
             ></lib-empty-state>
           }
@@ -435,46 +423,25 @@ import { OrdersService } from "./orders.service";
     `,
   ],
 })
-export class OrdersComponent implements OnInit {
-  public service = inject(OrdersService);
+export class ProcurementComponent implements OnInit {
+  public service = inject(ProcurementService);
   public router = inject(Router);
-  private searchService = inject(SearchService);
 
   breadcrumbs = [
     { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
-    { label: "Orders" },
-  ];
-
-  pageSizeOptions: DropdownOption[] = [
-    { value: 10, label: "10 Per Page" },
-    { value: 25, label: "25 Per Page" },
-    { value: 50, label: "50 Per Page" },
-    { value: 100, label: "100 Per Page" },
+    { label: "Procurement" },
   ];
 
   statusOptions: DropdownOption[] = [
     { value: "All Statuses", label: "All Statuses" },
-    { value: "Pending", label: "Pending" },
-    { value: "Processing", label: "Processing" },
-    { value: "Shipped", label: "Shipped" },
-    { value: "Delivered", label: "Delivered" },
+    { value: "Draft", label: "Draft" },
+    { value: "Ordered", label: "Ordered" },
+    { value: "Received", label: "Received" },
     { value: "Cancelled", label: "Cancelled" },
   ];
 
   ngOnInit(): void {
     this.service.loadOrders();
-    this.registerSearchItems();
-  }
-
-  private registerSearchItems(): void {
-    const items = this.service.orders().map((o) => ({
-      id: `order-${o.id}`,
-      title: `Order #${o.id}`,
-      path: `/inventory/orders/${o.id}`,
-      category: "Order",
-      keywords: [o.customerName || o.customer, o.status],
-    }));
-    this.searchService.register(items);
   }
 }

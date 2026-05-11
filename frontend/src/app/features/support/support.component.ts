@@ -12,7 +12,7 @@ import {
   standalone: true,
   imports: [CommonModule, PageHeaderComponent, ChatViewComponent],
   template: `
-    <div class="p-3 max-w-7xl mx-auto h-[calc(100vh-64px)] flex flex-col gap-3">
+    <div class="p-3  h-[calc(100vh-64px)] flex flex-col gap-3">
       <lib-page-header
         title="Support Terminal"
         subtitle="Manage live customer sessions"

@@ -1,4 +1,12 @@
-import { Component, signal, OnInit, inject, computed } from "@angular/core";
+import {
+  Component,
+  signal,
+  OnInit,
+  inject,
+  computed,
+  ElementRef,
+  HostListener,
+} from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
@@ -327,6 +335,63 @@ import { WarehousesService } from "../warehouses.service";
           </div>
         } @else if (activeTab() === 2) {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="col-span-full flex justify-between items-center mb-2">
+              <h4
+                class="text-xs font-black uppercase tracking-widest text-slate-400"
+              >
+                In-Stock Inventory
+              </h4>
+              <div class="relative">
+                <button
+                  (click)="showProductSearch.set(!showProductSearch())"
+                  class="px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-primary transition-all hover:text-white"
+                >
+                  Add Product
+                </button>
+
+                @if (showProductSearch()) {
+                  <div
+                    class="absolute top-full right-0 mt-2 w-72 card-premium z-50 p-4 shadow-2xl animate-fade-in"
+                  >
+                    <input
+                      type="text"
+                      [ngModel]="productSearchQuery()"
+                      (ngModelChange)="productSearchQuery.set($event)"
+                      placeholder="Search unassigned products..."
+                      class="w-full bg-transparent border-b-2 border-slate-200 dark:border-white/10 py-2 text-xs font-bold outline-none focus:border-primary transition-all mb-4"
+                    />
+                    <div
+                      class="max-h-48 overflow-y-auto custom-scrollbar space-y-1"
+                    >
+                      @for (p of availableProducts(); track p.id) {
+                        <button
+                          (click)="addProduct(p.id)"
+                          class="w-full text-left p-2 rounded hover:bg-primary/10 group transition-all"
+                        >
+                          <p
+                            class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary"
+                          >
+                            {{ p.name }}
+                          </p>
+                          <p
+                            class="text-[8px] font-black uppercase text-slate-400"
+                          >
+                            {{ p.category }}
+                          </p>
+                        </button>
+                      } @empty {
+                        <p
+                          class="text-[10px] text-slate-400 italic text-center"
+                        >
+                          No unassigned products found
+                        </p>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
             @for (prod of storedProducts(); track prod.id) {
               <div
                 [routerLink]="['/inventory/products', prod.id]"
@@ -574,10 +639,14 @@ export class WarehouseDetailComponent implements OnInit {
   public service = inject(WarehousesService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private eRef = inject(ElementRef);
 
   activeTab = signal(0);
   sortField = signal<string>("date");
   sortOrder = signal<"asc" | "desc">("desc");
+
+  showProductSearch = signal(false);
+  productSearchQuery = signal("");
 
   warehouseId = computed(() => this.route.snapshot.paramMap.get("id") || "");
   warehouse = computed(() => this.service.getWarehouse(this.warehouseId()));
@@ -591,6 +660,13 @@ export class WarehouseDetailComponent implements OnInit {
 
   storedProducts = computed(() => {
     return this.service.getProductsByWarehouseId(this.warehouseId());
+  });
+
+  availableProducts = computed(() => {
+    const query = this.productSearchQuery().toLowerCase().trim();
+    const available = this.service.getAvailableProducts();
+    if (!query) return available;
+    return available.filter((p) => p.name.toLowerCase().includes(query));
   });
 
   movements = computed(() => {
@@ -614,6 +690,13 @@ export class WarehouseDetailComponent implements OnInit {
     if (u > 70) return "Heavy Load";
     return "Optimal";
   });
+
+  @HostListener("document:click", ["$event"])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.eRef.nativeElement.contains(event.target)) {
+      this.showProductSearch.set(false);
+    }
+  }
 
   toggleSort(field: string) {
     if (this.sortField() === field) {
@@ -646,5 +729,14 @@ export class WarehouseDetailComponent implements OnInit {
     if (u > 90) return "bg-rose-500";
     if (u > 70) return "bg-amber-500";
     return "bg-primary";
+  }
+
+  addProduct(productId: number) {
+    this.service
+      .addProductToWarehouse(productId, this.warehouseId())
+      .subscribe(() => {
+        this.showProductSearch.set(false);
+        this.productSearchQuery.set("");
+      });
   }
 }
