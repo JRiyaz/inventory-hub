@@ -1,16 +1,17 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterModule } from "@angular/router";
 import {
   CustomDropdownComponent,
   DropdownOption,
-  InventoryDataService,
   PageHeaderComponent,
+  SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
   EmptyStateComponent,
 } from "ui-shared";
+import { OrdersService } from "./orders.service";
 
 @Component({
   selector: "app-orders",
@@ -30,11 +31,11 @@ import {
       <lib-page-header
         title="Order Tracking"
         subtitle="Monitor and manage all incoming industrial orders in real-time."
-        [stats]="headerStats()"
+        [stats]="service.headerStats()"
         [breadcrumbs]="breadcrumbs"
-        [count]="allFilteredOrders().length"
-        [loading]="isLoading()"
-        [isActionLoading]="isActionLoading()"
+        [count]="service.allFilteredOrders().length"
+        [loading]="service.isLoading()"
+        [isActionLoading]="service.isActionLoading()"
         actionLabel="Create New Order"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/orders/create'])"
@@ -48,8 +49,8 @@ import {
           <div class="floating-input-group w-full sm:w-60">
             <input
               type="text"
-              [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event)"
+              [ngModel]="service.searchQuery()"
+              (ngModelChange)="service.searchQuery.set($event)"
               placeholder=" "
               class="floating-input"
               id="order-search"
@@ -58,7 +59,7 @@ import {
               >Search Orders</label
             >
             <div class="absolute right-1 top-6">
-              @if (!searchQuery()) {
+              @if (!service.searchQuery()) {
                 <svg
                   class="w-3.5 h-3.5 text-slate-400"
                   fill="none"
@@ -74,7 +75,7 @@ import {
                 </svg>
               } @else {
                 <button
-                  (click)="searchQuery.set('')"
+                  (click)="service.searchQuery.set('')"
                   class="p-1 text-slate-400 hover:text-rose-500 transition-colors"
                 >
                   <svg
@@ -98,24 +99,28 @@ import {
           <div class="w-full sm:w-48">
             <lib-custom-dropdown
               [options]="statusOptions"
-              [value]="selectedStatus()"
+              [value]="service.statusFilter()"
               [placeholder]="'Order Status'"
-              (valueChange)="selectStatus($event)"
+              (valueChange)="
+                service.statusFilter.set($event); service.currentPage.set(1)
+              "
             ></lib-custom-dropdown>
           </div>
 
           <div class="w-full sm:w-40">
             <lib-custom-dropdown
               [options]="pageSizeOptions"
-              [value]="pageSize()"
+              [value]="service.pageSize()"
               [placeholder]="'Per Page'"
-              (valueChange)="pageSize.set($event); currentPage.set(1)"
+              (valueChange)="
+                service.pageSize.set($event); service.currentPage.set(1)
+              "
             ></lib-custom-dropdown>
           </div>
         </div>
       </div>
 
-      @if (isLoading()) {
+      @if (service.isLoading()) {
         <div class="card-premium p-6 space-y-4">
           @for (i of [1, 2, 3, 4, 5, 6]; track i) {
             <div
@@ -137,7 +142,7 @@ import {
         <div
           class="card-premium overflow-hidden animate-fade-in shadow-xl shadow-slate-200/50 dark:shadow-none"
         >
-          @if (allFilteredOrders().length > 0) {
+          @if (service.allFilteredOrders().length > 0) {
             <div class="overflow-x-auto custom-scrollbar">
               <table class="w-full text-left border-collapse min-w-[900px]">
                 <thead>
@@ -145,7 +150,7 @@ import {
                     class="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
                   >
                     <th
-                      (click)="toggleSort('id')"
+                      (click)="service.toggleSort('id')"
                       class="px-6 py-4 cursor-pointer group"
                     >
                       <div class="flex items-center gap-2">
@@ -155,10 +160,11 @@ import {
                         >
                         <svg
                           class="w-2.5 h-2.5 transition-all duration-300"
-                          [class.text-primary]="sortField() === 'id'"
-                          [class.text-slate-200]="sortField() !== 'id'"
+                          [class.text-primary]="service.sortField() === 'id'"
+                          [class.text-slate-200]="service.sortField() !== 'id'"
                           [class.rotate-180]="
-                            sortField() === 'id' && sortOrder() === 'desc'
+                            service.sortField() === 'id' &&
+                            service.sortOrder() === 'desc'
                           "
                           fill="none"
                           stroke="currentColor"
@@ -174,7 +180,7 @@ import {
                       </div>
                     </th>
                     <th
-                      (click)="toggleSort('customerName')"
+                      (click)="service.toggleSort('customerName')"
                       class="px-6 py-4 cursor-pointer group"
                     >
                       <div class="flex items-center gap-2">
@@ -184,13 +190,15 @@ import {
                         >
                         <svg
                           class="w-2.5 h-2.5 transition-all duration-300"
-                          [class.text-primary]="sortField() === 'customerName'"
+                          [class.text-primary]="
+                            service.sortField() === 'customerName'
+                          "
                           [class.text-slate-200]="
-                            sortField() !== 'customerName'
+                            service.sortField() !== 'customerName'
                           "
                           [class.rotate-180]="
-                            sortField() === 'customerName' &&
-                            sortOrder() === 'desc'
+                            service.sortField() === 'customerName' &&
+                            service.sortOrder() === 'desc'
                           "
                           fill="none"
                           stroke="currentColor"
@@ -212,7 +220,7 @@ import {
                       >
                     </th>
                     <th
-                      (click)="toggleSort('date')"
+                      (click)="service.toggleSort('date')"
                       class="px-6 py-4 cursor-pointer group"
                     >
                       <div class="flex items-center gap-2">
@@ -222,10 +230,13 @@ import {
                         >
                         <svg
                           class="w-2.5 h-2.5 transition-all duration-300"
-                          [class.text-primary]="sortField() === 'date'"
-                          [class.text-slate-200]="sortField() !== 'date'"
+                          [class.text-primary]="service.sortField() === 'date'"
+                          [class.text-slate-200]="
+                            service.sortField() !== 'date'
+                          "
                           [class.rotate-180]="
-                            sortField() === 'date' && sortOrder() === 'desc'
+                            service.sortField() === 'date' &&
+                            service.sortOrder() === 'desc'
                           "
                           fill="none"
                           stroke="currentColor"
@@ -241,7 +252,7 @@ import {
                       </div>
                     </th>
                     <th
-                      (click)="toggleSort('totalAmount')"
+                      (click)="service.toggleSort('totalAmount')"
                       class="px-6 py-4 text-right cursor-pointer group"
                     >
                       <div class="flex items-center justify-end gap-2">
@@ -251,11 +262,15 @@ import {
                         >
                         <svg
                           class="w-2.5 h-2.5 transition-all duration-300"
-                          [class.text-primary]="sortField() === 'totalAmount'"
-                          [class.text-slate-200]="sortField() !== 'totalAmount'"
+                          [class.text-primary]="
+                            service.sortField() === 'totalAmount'
+                          "
+                          [class.text-slate-200]="
+                            service.sortField() !== 'totalAmount'
+                          "
                           [class.rotate-180]="
-                            sortField() === 'totalAmount' &&
-                            sortOrder() === 'desc'
+                            service.sortField() === 'totalAmount' &&
+                            service.sortOrder() === 'desc'
                           "
                           fill="none"
                           stroke="currentColor"
@@ -275,7 +290,7 @@ import {
                 <tbody
                   class="divide-y divide-slate-100 dark:divide-white/[0.04]"
                 >
-                  @for (order of paginatedOrders(); track order.id) {
+                  @for (order of service.paginatedOrders(); track order.id) {
                     <tr
                       [routerLink]="[order.id]"
                       class="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-all group cursor-pointer"
@@ -331,14 +346,14 @@ import {
               >
                 Records:
                 <span class="text-slate-900 dark:text-white">{{
-                  paginatedOrders().length
+                  service.paginatedOrders().length
                 }}</span>
-                / {{ allFilteredOrders().length }}
+                / {{ service.allFilteredOrders().length }}
               </span>
               <div class="flex items-center gap-2">
                 <button
-                  [disabled]="currentPage() === 1"
-                  (click)="setPage(currentPage() - 1)"
+                  [disabled]="service.currentPage() === 1"
+                  (click)="service.setPage(service.currentPage() - 1)"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20 text-slate-600 dark:text-slate-400"
                 >
                   <svg
@@ -356,12 +371,19 @@ import {
                   </svg>
                 </button>
                 <div class="flex items-center gap-1">
-                  @for (p of [].constructor(totalPages()); track $index) {
-                    @if ($index < 5 || $index === totalPages() - 1) {
+                  @for (
+                    p of [].constructor(service.totalPages());
+                    track $index
+                  ) {
+                    @if ($index < 5 || $index === service.totalPages() - 1) {
                       <button
-                        (click)="setPage($index + 1)"
-                        [class.bg-primary]="$index + 1 === currentPage()"
-                        [class.text-white]="$index + 1 === currentPage()"
+                        (click)="service.setPage($index + 1)"
+                        [class.bg-primary]="
+                          $index + 1 === service.currentPage()
+                        "
+                        [class.text-white]="
+                          $index + 1 === service.currentPage()
+                        "
                         class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
                       >
                         {{ $index + 1 }}
@@ -370,8 +392,8 @@ import {
                   }
                 </div>
                 <button
-                  [disabled]="currentPage() === totalPages()"
-                  (click)="setPage(currentPage() + 1)"
+                  [disabled]="service.currentPage() === service.totalPages()"
+                  (click)="service.setPage(service.currentPage() + 1)"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20 text-slate-600 dark:text-slate-400"
                 >
                   <svg
@@ -395,7 +417,10 @@ import {
               title="No Orders Located"
               message="Adjust your search query or status filter to refine your order tracking."
               actionLabel="Reset Filters"
-              (action)="searchQuery.set(''); selectedStatus.set('All Statuses')"
+              (action)="
+                service.searchQuery.set('');
+                service.statusFilter.set('All Statuses')
+              "
             ></lib-empty-state>
           }
         </div>
@@ -411,17 +436,9 @@ import {
   ],
 })
 export class OrdersComponent implements OnInit {
-  public dataService = inject(InventoryDataService);
+  public service = inject(OrdersService);
   public router = inject(Router);
-
-  isLoading = signal(true);
-  isActionLoading = signal(false);
-  searchQuery = signal("");
-  selectedStatus = signal("All Statuses");
-  sortField = signal<string>("id");
-  sortOrder = signal<"asc" | "desc">("desc");
-  currentPage = signal(1);
-  pageSize = signal(10);
+  private searchService = inject(SearchService);
 
   breadcrumbs = [
     { label: "Dashboard", link: "/dashboard" },
@@ -445,87 +462,19 @@ export class OrdersComponent implements OnInit {
     { value: "Cancelled", label: "Cancelled" },
   ];
 
-  orders = this.dataService.orders;
-
-  headerStats = computed(() => [
-    {
-      label: "Total Orders",
-      value: this.orders().length,
-      color: "primary" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>',
-    },
-    {
-      label: "Pending",
-      value: this.orders().filter((o) => o.status === "Pending").length,
-      color: "warning" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    },
-    {
-      label: "Revenue",
-      value:
-        "$" +
-        this.orders()
-          .reduce((acc, o) => acc + (o.totalAmount || 0), 0)
-          .toLocaleString(),
-      color: "success" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    },
-  ]);
-
   ngOnInit(): void {
-    setTimeout(() => this.isLoading.set(false), 1000);
+    this.service.loadOrders();
+    this.registerSearchItems();
   }
 
-  allFilteredOrders = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const status = this.selectedStatus();
-    const field = this.sortField();
-    const order = this.sortOrder();
-
-    let result = this.orders().filter((o) => {
-      const matchesSearch =
-        o.id.toLowerCase().includes(query) ||
-        (o.customerName || "").toLowerCase().includes(query);
-      const matchesStatus = status === "All Statuses" || o.status === status;
-      return matchesSearch && matchesStatus;
-    });
-
-    return result.sort((a: any, b: any) => {
-      const valA = a[field];
-      const valB = b[field];
-      if (valA < valB) return order === "asc" ? -1 : 1;
-      if (valA > valB) return order === "asc" ? 1 : -1;
-      return 0;
-    });
-  });
-
-  paginatedOrders = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredOrders().slice(start, start + this.pageSize());
-  });
-
-  totalPages = computed(() =>
-    Math.ceil(this.allFilteredOrders().length / this.pageSize()),
-  );
-
-  selectStatus(status: string) {
-    this.selectedStatus.set(status);
-    this.currentPage.set(1);
-  }
-
-  toggleSort(field: string) {
-    if (this.sortField() === field) {
-      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
-    } else {
-      this.sortField.set(field);
-      this.sortOrder.set("asc");
-    }
-    this.currentPage.set(1);
-  }
-
-  setPage(page: number) {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-    }
+  private registerSearchItems(): void {
+    const items = this.service.orders().map((o) => ({
+      id: `order-${o.id}`,
+      title: `Order #${o.id}`,
+      path: `/inventory/orders/${o.id}`,
+      category: "Order",
+      keywords: [o.customerName || o.customer, o.status],
+    }));
+    this.searchService.register(items);
   }
 }

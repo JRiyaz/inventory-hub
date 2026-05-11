@@ -1,16 +1,16 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterModule } from "@angular/router";
 import {
   CustomDropdownComponent,
   DropdownOption,
-  InventoryDataService,
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
   EmptyStateComponent,
 } from "ui-shared";
+import { ProductsService } from "./products.service";
 
 @Component({
   selector: "app-products",
@@ -29,11 +29,11 @@ import {
       <lib-page-header
         title="Products"
         subtitle="Manage and monitor your industrial inventory levels across all nodes."
-        [stats]="headerStats()"
+        [stats]="service.headerStats()"
         [breadcrumbs]="breadcrumbs"
-        [count]="allFilteredProducts().length"
-        [loading]="isLoading()"
-        [isActionLoading]="isActionLoading()"
+        [count]="service.allFilteredProducts().length"
+        [loading]="service.isLoading()"
+        [isActionLoading]="service.isActionLoading()"
         actionLabel="Add New Product"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/products/create'])"
@@ -49,8 +49,8 @@ import {
           <div class="floating-input-group w-full sm:w-64">
             <input
               type="text"
-              [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event)"
+              [ngModel]="service.searchQuery()"
+              (ngModelChange)="service.searchQuery.set($event)"
               placeholder=" "
               class="floating-input"
               id="prod-search"
@@ -78,18 +78,20 @@ import {
           <div class="w-full sm:w-48">
             <lib-custom-dropdown
               [options]="categoryOptions"
-              [value]="selectedCategory()"
+              [value]="service.selectedCategory()"
               [placeholder]="'Category'"
-              (valueChange)="selectCategory($event)"
+              (valueChange)="service.setCategory($event)"
             ></lib-custom-dropdown>
           </div>
 
           <div class="w-full sm:w-40">
             <lib-custom-dropdown
               [options]="pageSizeOptions"
-              [value]="pageSize()"
+              [value]="service.pageSize()"
               [placeholder]="'Per Page'"
-              (valueChange)="pageSize.set($event); currentPage.set(1)"
+              (valueChange)="
+                service.pageSize.set($event); service.currentPage.set(1)
+              "
             ></lib-custom-dropdown>
           </div>
         </div>
@@ -98,11 +100,11 @@ import {
           class="flex bg-slate-100 dark:bg-white/[0.05] p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-inner"
         >
           <button
-            (click)="viewType.set('grid')"
-            [class.bg-white]="viewType() === 'grid'"
-            [class.dark:bg-white/10]="viewType() === 'grid'"
-            [class.shadow-sm]="viewType() === 'grid'"
-            [class.text-primary]="viewType() === 'grid'"
+            (click)="service.viewType.set('grid')"
+            [class.bg-white]="service.viewType() === 'grid'"
+            [class.dark:bg-white/10]="service.viewType() === 'grid'"
+            [class.shadow-sm]="service.viewType() === 'grid'"
+            [class.text-primary]="service.viewType() === 'grid'"
             aria-label="Switch to Grid View"
             class="p-2 rounded-lg transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
           >
@@ -121,11 +123,11 @@ import {
             </svg>
           </button>
           <button
-            (click)="viewType.set('list')"
-            [class.bg-white]="viewType() === 'list'"
-            [class.dark:bg-white/10]="viewType() === 'list'"
-            [class.shadow-sm]="viewType() === 'list'"
-            [class.text-primary]="viewType() === 'list'"
+            (click)="service.viewType.set('list')"
+            [class.bg-white]="service.viewType() === 'list'"
+            [class.dark:bg-white/10]="service.viewType() === 'list'"
+            [class.shadow-sm]="service.viewType() === 'list'"
+            [class.text-primary]="service.viewType() === 'list'"
             aria-label="Switch to List View"
             class="p-2 rounded-lg transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
           >
@@ -146,7 +148,7 @@ import {
         </div>
       </div>
 
-      @if (isLoading()) {
+      @if (service.isLoading()) {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
             <div class="card-premium p-6 space-y-4">
@@ -162,12 +164,15 @@ import {
         </div>
       } @else {
         <div class="animate-fade-in">
-          @if (allFilteredProducts().length > 0) {
-            @if (viewType() === "grid") {
+          @if (service.allFilteredProducts().length > 0) {
+            @if (service.viewType() === "grid") {
               <div
                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               >
-                @for (product of paginatedProducts(); track product.id) {
+                @for (
+                  product of service.paginatedProducts();
+                  track product.id
+                ) {
                   <div
                     [routerLink]="[product.id]"
                     class="card-premium p-4 hover:border-primary/50 transition-all group cursor-pointer flex flex-col relative overflow-hidden"
@@ -252,7 +257,10 @@ import {
               </div>
             } @else {
               <div class="space-y-2">
-                @for (product of paginatedProducts(); track product.id) {
+                @for (
+                  product of service.paginatedProducts();
+                  track product.id
+                ) {
                   <div
                     class="card-premium p-3 flex items-center gap-4 hover:border-primary/50 transition-all group cursor-pointer"
                     [routerLink]="[product.id]"
@@ -329,15 +337,15 @@ import {
                 >
                   Records:
                   <span class="text-slate-900 dark:text-white">{{
-                    paginatedProducts().length
+                    service.paginatedProducts().length
                   }}</span>
-                  / {{ allFilteredProducts().length }}
+                  / {{ service.allFilteredProducts().length }}
                 </span>
               </div>
               <div class="flex items-center gap-2">
                 <button
-                  [disabled]="currentPage() === 1"
-                  (click)="setPage(currentPage() - 1)"
+                  [disabled]="service.currentPage() === 1"
+                  (click)="service.setPage(service.currentPage() - 1)"
                   aria-label="Previous Page"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
@@ -357,12 +365,19 @@ import {
                 </button>
 
                 <div class="flex items-center gap-1">
-                  @for (p of [].constructor(totalPages()); track $index) {
-                    @if ($index < 5 || $index === totalPages() - 1) {
+                  @for (
+                    p of [].constructor(service.totalPages());
+                    track $index
+                  ) {
+                    @if ($index < 5 || $index === service.totalPages() - 1) {
                       <button
-                        (click)="setPage($index + 1)"
-                        [class.bg-primary]="currentPage() === $index + 1"
-                        [class.text-white]="currentPage() === $index + 1"
+                        (click)="service.setPage($index + 1)"
+                        [class.bg-primary]="
+                          service.currentPage() === $index + 1
+                        "
+                        [class.text-white]="
+                          service.currentPage() === $index + 1
+                        "
                         class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
                       >
                         {{ $index + 1 }}
@@ -372,8 +387,8 @@ import {
                 </div>
 
                 <button
-                  [disabled]="currentPage() === totalPages()"
-                  (click)="setPage(currentPage() + 1)"
+                  [disabled]="service.currentPage() === service.totalPages()"
+                  (click)="service.setPage(service.currentPage() + 1)"
                   aria-label="Next Page"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
@@ -398,7 +413,9 @@ import {
               title="No Products Found"
               message="We couldn't find any items matching your current filters or search criteria."
               actionLabel="Reset Search"
-              (action)="searchQuery.set(''); selectedCategory.set('All')"
+              (action)="
+                service.searchQuery.set(''); service.selectedCategory.set('All')
+              "
             ></lib-empty-state>
           }
         </div>
@@ -414,17 +431,9 @@ import {
   ],
 })
 export class ProductsComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(ProductsService);
   private searchService = inject(SearchService);
   public router = inject(Router);
-
-  isLoading = signal(true);
-  isActionLoading = signal(false);
-  viewType = signal<"grid" | "list">("grid");
-  searchQuery = signal("");
-  selectedCategory = signal("All");
-  currentPage = signal(1);
-  pageSize = signal(8);
 
   breadcrumbs = [
     { label: "Dashboard", link: "/dashboard" },
@@ -445,75 +454,13 @@ export class ProductsComponent implements OnInit {
     label: c,
   }));
 
-  products = this.dataService.products;
-
-  headerStats = computed(() => [
-    {
-      label: "Live Inventory",
-      value: this.products().length,
-      color: "primary" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
-    },
-    {
-      label: "Shortage Alerts",
-      value: this.products().filter((p) => p.stock < 20).length,
-      color: "danger" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
-    },
-    {
-      label: "Global Valuation",
-      value:
-        "$" +
-        (
-          this.products().reduce((acc, p) => acc + p.price * p.stock, 0) /
-          1000000
-        ).toFixed(2) +
-        "M",
-      color: "success" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    },
-  ]);
-
   ngOnInit(): void {
+    this.service.loadProducts();
     this.registerSearchItems();
-    setTimeout(() => this.isLoading.set(false), 800);
-  }
-
-  allFilteredProducts = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const cat = this.selectedCategory();
-
-    return this.products().filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query);
-      const matchesCat = cat === "All" || p.category === cat;
-      return matchesSearch && matchesCat;
-    });
-  });
-
-  paginatedProducts = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredProducts().slice(start, start + this.pageSize());
-  });
-
-  totalPages = computed(() =>
-    Math.ceil(this.allFilteredProducts().length / this.pageSize()),
-  );
-
-  selectCategory(cat: string) {
-    this.selectedCategory.set(cat);
-    this.currentPage.set(1);
-  }
-
-  setPage(page: number) {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-    }
   }
 
   private registerSearchItems(): void {
-    const items = this.products().map((p) => ({
+    const items = this.service.products().map((p) => ({
       id: `prod-${p.id}`,
       title: p.name,
       path: `/inventory/products/${p.id}`,

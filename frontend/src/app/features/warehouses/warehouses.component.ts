@@ -1,15 +1,15 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterModule } from "@angular/router";
 import {
-  CustomDropdownComponent,
   DropdownOption,
-  InventoryDataService,
   PageHeaderComponent,
+  SearchService,
   SkeletonComponent,
   EmptyStateComponent,
 } from "ui-shared";
+import { WarehousesService } from "./warehouses.service";
 
 @Component({
   selector: "app-warehouses",
@@ -20,7 +20,6 @@ import {
     RouterModule,
     SkeletonComponent,
     PageHeaderComponent,
-    CustomDropdownComponent,
     EmptyStateComponent,
   ],
   template: `
@@ -28,11 +27,11 @@ import {
       <lib-page-header
         title="Warehouses & Logistics"
         subtitle="Monitor spatial capacity and stock distribution across your facilities."
-        [stats]="headerStats()"
+        [stats]="service.headerStats()"
         [breadcrumbs]="breadcrumbs"
-        [count]="filteredWarehouses().length"
-        [loading]="isLoading()"
-        [isActionLoading]="isActionLoading()"
+        [count]="service.allFilteredWarehouses().length"
+        [loading]="service.isLoading()"
+        [isActionLoading]="service.isActionLoading()"
         actionLabel="Register New Warehouse"
         backLink="/dashboard"
         (action)="router.navigate(['/inventory/warehouses/create'])"
@@ -47,8 +46,8 @@ import {
             <input
               type="text"
               id="wh-search"
-              [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event)"
+              [ngModel]="service.searchQuery()"
+              (ngModelChange)="service.searchQuery.set($event)"
               placeholder=" "
               class="floating-input"
             />
@@ -72,18 +71,9 @@ import {
             </div>
           </div>
         </div>
-
-        <div class="w-full md:w-48">
-          <lib-custom-dropdown
-            [options]="pageSizeOptions"
-            [value]="pageSize()"
-            [placeholder]="'Per Page'"
-            (valueChange)="pageSize.set($event)"
-          ></lib-custom-dropdown>
-        </div>
       </div>
 
-      @if (isLoading()) {
+      @if (service.isLoading()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           @for (i of [1, 2, 3]; track i) {
             <div class="card-premium p-6 space-y-5">
@@ -101,7 +91,7 @@ import {
         <div
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in"
         >
-          @for (wh of filteredWarehouses(); track wh.id) {
+          @for (wh of service.allFilteredWarehouses(); track wh.id) {
             <div
               [routerLink]="[wh.id]"
               class="card-premium p-4 group hover:border-primary/50 transition-all cursor-pointer relative overflow-hidden"
@@ -196,7 +186,7 @@ import {
                     </div>
                     <span
                       class="text-[8px] font-black text-slate-400 uppercase tracking-widest"
-                      >{{ wh.zones.length }} Zones</span
+                      >{{ wh.zones.length || 0 }} Zones</span
                     >
                   </div>
                   <svg
@@ -219,10 +209,10 @@ import {
             <lib-empty-state
               title="No Facilities Found"
               message="Your search for '{{
-                searchQuery()
+                service.searchQuery()
               }}' did not match any registered warehouses or locations."
               actionLabel="Reset Search"
-              (action)="searchQuery.set('')"
+              (action)="service.searchQuery.set('')"
             ></lib-empty-state>
           }
         </div>
@@ -232,12 +222,9 @@ import {
   styles: [],
 })
 export class WarehousesComponent implements OnInit {
-  public dataService = inject(InventoryDataService);
+  public service = inject(WarehousesService);
+  private searchService = inject(SearchService);
   public router = inject(Router);
-  isLoading = signal(true);
-  isActionLoading = signal(false);
-  searchQuery = signal("");
-  pageSize = signal(12);
 
   breadcrumbs = [
     { label: "Dashboard", link: "/dashboard" },
@@ -245,53 +232,20 @@ export class WarehousesComponent implements OnInit {
     { label: "Warehouses" },
   ];
 
-  pageSizeOptions: DropdownOption[] = [
-    { value: 6, label: "6 Per Page" },
-    { value: 12, label: "12 Per Page" },
-    { value: 24, label: "24 Per Page" },
-    { value: 48, label: "48 Per Page" },
-  ];
-
-  warehouses = this.dataService.warehouses;
-
-  filteredWarehouses = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    if (!query) return this.warehouses();
-    return this.warehouses().filter(
-      (w) =>
-        w.name.toLowerCase().includes(query) ||
-        w.location.toLowerCase().includes(query),
-    );
-  });
-
-  headerStats = computed(() => [
-    {
-      label: "Total Capacity",
-      value: this.warehouses()
-        .reduce((acc, w) => acc + w.totalCapacity, 0)
-        .toLocaleString(),
-      color: "primary" as const,
-    },
-    {
-      label: "Active Facilities",
-      value: this.warehouses().length,
-      color: "info" as const,
-    },
-    {
-      label: "Avg. Utilization",
-      value:
-        (this.warehouses().length
-          ? Math.round(
-              this.warehouses().reduce((acc, w) => acc + w.utilization, 0) /
-                this.warehouses().length,
-            )
-          : 0) + "%",
-      color: "warning" as const,
-    },
-  ]);
-
   ngOnInit(): void {
-    setTimeout(() => this.isLoading.set(false), 1000);
+    this.service.loadWarehouses();
+    this.registerSearchItems();
+  }
+
+  private registerSearchItems(): void {
+    const items = this.service.warehouses().map((w) => ({
+      id: `warehouse-${w.id}`,
+      title: w.name,
+      path: `/inventory/warehouses/${w.id}`,
+      category: "Warehouse",
+      keywords: [w.location, w.status],
+    }));
+    this.searchService.register(items);
   }
 
   getCapacityClass(utilization: number) {

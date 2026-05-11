@@ -3,11 +3,11 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   DetailLayoutComponent,
   StatusBadgeComponent,
   Breadcrumb,
 } from "ui-shared";
+import { CustomersService } from "../customers.service";
 
 @Component({
   selector: "app-customer-detail",
@@ -30,7 +30,7 @@ import {
       actionLabel="Create Invoice"
       editLabel="Edit Profile"
       [tabs]="['Profile', 'Order History', 'Financials', 'Notes']"
-      [loading]="isActionLoading()"
+      [loading]="service.isActionLoading()"
       (tabChanged)="activeTab.set($event)"
       (action)="handleAction()"
       (edit)="goToEdit()"
@@ -383,18 +383,14 @@ import {
   ],
 })
 export class CustomerDetailComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(CustomersService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  isLoading = signal(true);
-  isActionLoading = signal(false);
   activeTab = signal(0);
 
-  customerId = computed(() => this.route.snapshot.paramMap.get("id"));
-  customer = computed(() =>
-    this.dataService.customers().find((c) => c.id === this.customerId()),
-  );
+  customerId = computed(() => this.route.snapshot.paramMap.get("id") || "");
+  customer = computed(() => this.service.getCustomer(this.customerId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
     { label: "Dashboard", link: "/dashboard" },
@@ -405,7 +401,7 @@ export class CustomerDetailComponent implements OnInit {
 
   relatedOrders = computed(() => {
     const c = this.customer();
-    return c ? this.dataService.getOrdersForCustomer(c.name) : [];
+    return c ? this.service.getOrdersForCustomer(c.name) : [];
   });
 
   lifetimeSpend = computed(() => {
@@ -416,7 +412,7 @@ export class CustomerDetailComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    setTimeout(() => this.isLoading.set(false), 800);
+    this.service.loadCustomers();
   }
 
   goToEdit() {
@@ -427,9 +423,9 @@ export class CustomerDetailComponent implements OnInit {
   }
 
   handleAction() {
-    this.isActionLoading.set(true);
+    this.service.isActionLoading.set(true);
     setTimeout(() => {
-      this.isActionLoading.set(false);
+      this.service.isActionLoading.set(false);
     }, 2000);
   }
 }

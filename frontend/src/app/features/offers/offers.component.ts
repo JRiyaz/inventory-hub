@@ -1,7 +1,8 @@
-import { Component, inject, signal } from "@angular/core";
+import { Component, inject, signal, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormBuilder, Validators, ReactiveFormsModule } from "@angular/forms";
-import { InventoryDataService, Offer, NotificationService } from "ui-shared";
+import { Offer, NotificationService } from "ui-shared";
+import { OffersService } from "./offers.service";
 
 @Component({
   selector: "app-offers-admin",
@@ -29,157 +30,186 @@ import { InventoryDataService, Offer, NotificationService } from "ui-shared";
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Offers List -->
         <div class="lg:col-span-2 space-y-4">
-          <div
-            *ngFor="let offer of inventory.offers()"
-            class="bg-white dark:bg-dark-card border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center gap-6 shadow-sm hover:shadow-md transition-all"
-          >
-            <div
-              class="w-16 h-16 rounded-xl flex items-center justify-center text-2xl"
-              [style.background]="offer.color + '22'"
-              [style.color]="offer.color"
-            >
-              🎁
+          @if (service.isLoading()) {
+            <div class="py-20 text-center">
+              <div class="dots-wave mx-auto">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <span
-                  class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
+          } @else {
+            @for (offer of service.offers(); track offer.id) {
+              <div
+                class="bg-white dark:bg-dark-card border border-slate-100 dark:border-white/5 rounded-2xl p-5 flex items-center gap-6 shadow-sm hover:shadow-md transition-all"
+              >
+                <div
+                  class="w-16 h-16 rounded-xl flex items-center justify-center text-2xl"
                   [style.background]="offer.color + '22'"
                   [style.color]="offer.color"
                 >
-                  {{ offer.discount }}% OFF
-                </span>
-                <span
-                  class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-                  *ngIf="offer.category"
-                  >Category: {{ offer.category }}</span
-                >
-                <span
-                  class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-                  *ngIf="offer.productId"
-                  >Product ID: {{ offer.productId }}</span
-                >
+                  🎁
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span
+                      class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded"
+                      [style.background]="offer.color + '22'"
+                      [style.color]="offer.color"
+                    >
+                      {{ offer.discount }}% OFF
+                    </span>
+                    @if (offer.category) {
+                      <span
+                        class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                        >Category: {{ offer.category }}</span
+                      >
+                    }
+                    @if (offer.productId) {
+                      <span
+                        class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                        >Product ID: {{ offer.productId }}</span
+                      >
+                    }
+                  </div>
+                  <h3 class="font-bold text-slate-900 dark:text-white">
+                    {{ offer.title }}
+                  </h3>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">
+                    {{ offer.description }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <span
+                    class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2"
+                    >Expires: {{ offer.expiryDate }}</span
+                  >
+                  <button
+                    (click)="deleteOffer(offer.id)"
+                    class="text-rose-500 text-[10px] font-black uppercase tracking-widest hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-              <h3 class="font-bold text-slate-900 dark:text-white">
-                {{ offer.title }}
-              </h3>
-              <p class="text-sm text-slate-500 dark:text-slate-400">
-                {{ offer.description }}
-              </p>
-            </div>
-            <div class="text-right">
-              <span
-                class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2"
-                >Expires: {{ offer.expiryDate }}</span
+            } @empty {
+              <div
+                class="py-20 text-center bg-white/50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-200 dark:border-white/10"
               >
-              <button
-                class="text-rose-500 text-[10px] font-black uppercase tracking-widest hover:underline"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+                <p class="text-slate-400 italic">No active promotions found.</p>
+              </div>
+            }
+          }
         </div>
 
         <!-- Create Form Sidebar/Modal -->
-        <div
-          *ngIf="showForm()"
-          class="bg-white dark:bg-dark-card border border-slate-100 dark:border-white/5 rounded-2xl p-6 shadow-2xl sticky top-6"
-        >
-          <div class="flex justify-between items-center mb-6">
-            <h2
-              class="font-black text-slate-900 dark:text-white uppercase tracking-tight"
-            >
-              New Promotion
-            </h2>
-            <button
-              (click)="showForm.set(false)"
-              class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl"
-            >
-              ✕
-            </button>
-          </div>
-
-          <form
-            [formGroup]="offerForm"
-            (ngSubmit)="saveOffer()"
-            class="space-y-5"
+        @if (showForm()) {
+          <div
+            class="bg-white dark:bg-dark-card border border-slate-100 dark:border-white/5 rounded-2xl p-6 shadow-2xl sticky top-6 animate-slide-up"
           >
-            <div>
-              <label
-                class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
-                >Offer Title</label
+            <div class="flex justify-between items-center mb-6">
+              <h2
+                class="font-black text-slate-900 dark:text-white uppercase tracking-tight"
               >
-              <input
-                type="text"
-                formControlName="title"
-                placeholder="e.g. Summer Sale"
-                class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
-              />
+                New Promotion
+              </h2>
+              <button
+                (click)="showForm.set(false)"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl"
+              >
+                ✕
+              </button>
             </div>
 
-            <div>
-              <label
-                class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
-                >Description</label
-              >
-              <textarea
-                formControlName="description"
-                rows="3"
-                placeholder="Tell users about this offer..."
-                class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
-              ></textarea>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
+            <form
+              [formGroup]="offerForm"
+              (ngSubmit)="saveOffer()"
+              class="space-y-5"
+            >
               <div>
                 <label
                   class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
-                  >Discount %</label
-                >
-                <input
-                  type="number"
-                  formControlName="discount"
-                  class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
-                />
-              </div>
-              <div>
-                <label
-                  class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
-                  >Color (HEX)</label
+                  >Offer Title</label
                 >
                 <input
                   type="text"
-                  formControlName="color"
-                  placeholder="#4f46e5"
+                  formControlName="title"
+                  placeholder="e.g. Summer Sale"
                   class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
                 />
               </div>
-            </div>
 
-            <div>
-              <label
-                class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
-                >Expiry Date</label
-              >
-              <input
-                type="date"
-                formControlName="expiryDate"
-                class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
-              />
-            </div>
+              <div>
+                <label
+                  class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
+                  >Description</label
+                >
+                <textarea
+                  formControlName="description"
+                  rows="3"
+                  placeholder="Tell users about this offer..."
+                  class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
+                ></textarea>
+              </div>
 
-            <div class="pt-4">
-              <button
-                type="submit"
-                [disabled]="offerForm.invalid"
-                class="w-full bg-primary text-white py-3.5 rounded-xl font-black text-sm hover:opacity-90 disabled:opacity-50 shadow-lg shadow-primary/25 transition-all"
-              >
-                Publish Promotion
-              </button>
-            </div>
-          </form>
-        </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
+                    >Discount %</label
+                  >
+                  <input
+                    type="number"
+                    formControlName="discount"
+                    class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label
+                    class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
+                    >Color (HEX)</label
+                  >
+                  <input
+                    type="text"
+                    formControlName="color"
+                    placeholder="#4f46e5"
+                    class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5"
+                  >Expiry Date</label
+                >
+                <input
+                  type="date"
+                  formControlName="expiryDate"
+                  class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-3 text-sm outline-none focus:border-primary transition-all dark:text-white"
+                />
+              </div>
+
+              <div class="pt-4">
+                <button
+                  type="submit"
+                  [disabled]="offerForm.invalid || service.isActionLoading()"
+                  class="w-full bg-primary text-white py-3.5 rounded-xl font-black text-sm hover:opacity-90 disabled:opacity-50 shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2"
+                >
+                  @if (service.isActionLoading()) {
+                    <div class="dots-wave dots-white scale-50">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  } @else {
+                    Publish Promotion
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        }
       </div>
     </div>
   `,
@@ -192,8 +222,8 @@ import { InventoryDataService, Offer, NotificationService } from "ui-shared";
     `,
   ],
 })
-export class OffersComponent {
-  inventory = inject(InventoryDataService);
+export class OffersComponent implements OnInit {
+  public service = inject(OffersService);
   private notify = inject(NotificationService);
   private fb = inject(FormBuilder);
 
@@ -209,6 +239,10 @@ export class OffersComponent {
     productId: [null],
   });
 
+  ngOnInit() {
+    this.service.loadOffers();
+  }
+
   saveOffer() {
     if (this.offerForm.invalid) return;
 
@@ -217,12 +251,21 @@ export class OffersComponent {
       ...this.offerForm.value,
     } as Offer;
 
-    this.inventory.addOffer(newOffer);
-    this.notify.success(
-      "Offer Created",
-      `"${newOffer.title}" is now live on the storefront.`,
-    );
-    this.offerForm.reset({ color: "#4f46e5", discount: 10 });
-    this.showForm.set(false);
+    this.service.addOffer(newOffer).subscribe(() => {
+      this.notify.success(
+        "Offer Created",
+        `"${newOffer.title}" is now live on the storefront.`,
+      );
+      this.offerForm.reset({ color: "#4f46e5", discount: 10 });
+      this.showForm.set(false);
+    });
+  }
+
+  deleteOffer(id: string) {
+    if (confirm("Are you sure you want to delete this offer?")) {
+      this.service.deleteOffer(id).subscribe(() => {
+        this.notify.info("Offer Deleted", "The promotion has been removed.");
+      });
+    }
   }
 }

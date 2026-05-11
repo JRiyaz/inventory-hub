@@ -3,16 +3,24 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
-  Warehouse,
   NotificationService,
   LoaderComponent,
+  FormValidationDirective,
+  ValidationErrorPipe,
 } from "ui-shared";
+import { WarehousesService } from "../warehouses.service";
 
 @Component({
   selector: "app-warehouse-create",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    LoaderComponent,
+    FormValidationDirective,
+    ValidationErrorPipe,
+  ],
   template: `
     <div class="p-3 sm:p-6 max-w-4xl mx-auto animate-fade-in">
       <nav
@@ -115,7 +123,12 @@ import {
           </div>
         </div>
 
-        <form (ngSubmit)="submitForm()" class="space-y-8">
+        <form
+          (ngSubmit)="submitForm()"
+          class="space-y-8"
+          #f="ngForm"
+          libFormValidation
+        >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
             <!-- Name -->
             <div class="floating-input-group md:col-span-2">
@@ -127,8 +140,14 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #name="ngModel"
               />
               <label for="name" class="floating-label">Facility Name</label>
+              @if (name.invalid && name.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ name.errors | libValidationError: "Name" }}
+                </p>
+              }
             </div>
 
             <!-- Location -->
@@ -141,10 +160,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #location="ngModel"
               />
               <label for="location" class="floating-label"
                 >Geographic Location</label
               >
+              @if (location.invalid && location.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ location.errors | libValidationError: "Location" }}
+                </p>
+              }
             </div>
 
             <!-- Capacity -->
@@ -157,10 +182,17 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                min="1000"
+                #capacity="ngModel"
               />
               <label for="capacity" class="floating-label"
                 >Total Unit Capacity</label
               >
+              @if (capacity.invalid && capacity.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ capacity.errors | libValidationError: "Capacity" }}
+                </p>
+              }
             </div>
 
             <!-- Manager -->
@@ -173,10 +205,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #manager="ngModel"
               />
               <label for="manager" class="floating-label"
                 >Operational Lead / Manager</label
               >
+              @if (manager.invalid && manager.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ manager.errors | libValidationError: "Manager" }}
+                </p>
+              }
             </div>
 
             <!-- Last Audit (Edit Mode only) -->
@@ -214,11 +252,11 @@ import {
             </button>
             <button
               type="submit"
-              [disabled]="isSubmitting() || !isValid()"
+              [disabled]="service.isActionLoading() || f.invalid"
               class="btn-primary-premium min-w-[160px]"
             >
               <lib-loader
-                [loading]="isSubmitting()"
+                [loading]="service.isActionLoading()"
                 [label]="isEditMode() ? 'Save Changes' : 'Initialize Facility'"
               ></lib-loader>
             </button>
@@ -236,14 +274,13 @@ import {
   ],
 })
 export class WarehouseCreateComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(WarehousesService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   isEditMode = signal(false);
   warehouseId: string = "";
-  isSubmitting = signal(false);
 
   formData = {
     name: "",
@@ -264,9 +301,7 @@ export class WarehouseCreateComponent implements OnInit {
   }
 
   loadWarehouse() {
-    const warehouse = this.dataService
-      .warehouses()
-      .find((w) => w.id === this.warehouseId);
+    const warehouse = this.service.getWarehouse(this.warehouseId);
     if (warehouse) {
       this.formData = {
         name: warehouse.name,
@@ -284,73 +319,18 @@ export class WarehouseCreateComponent implements OnInit {
     }
   }
 
-  isValid(): boolean {
-    return !!(
-      this.formData.name &&
-      this.formData.location &&
-      this.formData.totalCapacity > 0
-    );
-  }
-
   submitForm() {
-    if (!this.isValid()) return;
+    this.service.isActionLoading.set(true);
 
-    this.isSubmitting.set(true);
-
-    if (this.isEditMode()) {
-      const existingWarehouse = this.dataService
-        .warehouses()
-        .find((w) => w.id === this.warehouseId);
-      const updatedWarehouse: Warehouse = {
-        ...existingWarehouse!,
-        ...this.formData,
-      };
-
-      setTimeout(() => {
-        this.dataService.updateWarehouse(updatedWarehouse);
-        this.notificationService.success(
-          "Update Successful",
-          `${updatedWarehouse.name} specifications have been updated.`,
-        );
-        this.isSubmitting.set(false);
-        this.router.navigate(["/inventory/warehouses", this.warehouseId]);
-      }, 1200);
-    } else {
-      const newWarehouse: Warehouse = {
-        id: "WH-" + Math.floor(100 + Math.random() * 900),
-        ...this.formData,
-        currentStock: 0,
-        utilization: 0,
-        zones: [
-          {
-            id: "Z1",
-            name: "Zone Alpha",
-            description: "Primary high-capacity storage area",
-            capacity: Math.floor(this.formData.totalCapacity * 0.4),
-            currentStock: 0,
-            category: "General",
-          },
-          {
-            id: "Z2",
-            name: "Zone Beta",
-            description: "Secondary logistics and sorting bay",
-            capacity: Math.floor(this.formData.totalCapacity * 0.6),
-            currentStock: 0,
-            category: "High Priority",
-          },
-        ],
-        lastAudit: new Date().toISOString().split("T")[0],
-      };
-
-      setTimeout(() => {
-        this.dataService.addWarehouse(newWarehouse);
-        this.notificationService.success(
-          "Facility Registered",
-          `${newWarehouse.name} is now active in the logistics network.`,
-        );
-        this.isSubmitting.set(false);
-        this.router.navigate(["/inventory/warehouses", newWarehouse.id]);
-      }, 1500);
-    }
+    setTimeout(() => {
+      this.service.isActionLoading.set(false);
+      this.notificationService.success(
+        this.isEditMode() ? "Update Successful" : "Facility Registered",
+        this.isEditMode()
+          ? `${this.formData.name} specifications have been updated.`
+          : `${this.formData.name} is now active in the logistics network.`,
+      );
+      this.router.navigate(["/inventory/warehouses"]);
+    }, 1500);
   }
 }

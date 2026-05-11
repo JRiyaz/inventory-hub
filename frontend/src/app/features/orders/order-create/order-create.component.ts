@@ -15,13 +15,14 @@ import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
   CustomDatePickerComponent,
   CustomDropdownComponent,
+  Customer,
   DropdownOption,
   InventoryDataService,
   LoaderComponent,
-  Order,
   OrderItem,
   Product,
 } from "ui-shared";
+import { OrdersService } from "../orders.service";
 
 @Component({
   selector: "app-order-create",
@@ -171,7 +172,6 @@ import {
               </label>
 
               <!-- Customer Search Popover -->
-              <!-- Customer Search Popover -->
               @if (showCustomerSearch()) {
                 <div
                   (click)="$event.stopPropagation()"
@@ -287,11 +287,11 @@ import {
             <div class="w-full xl:w-auto">
               <button
                 (click)="submitOrder()"
-                [disabled]="!canSubmit() || isSubmitting()"
+                [disabled]="!canSubmit() || service.isActionLoading()"
                 class="w-full xl:w-48 btn-primary-premium !py-2.5"
               >
                 <lib-loader
-                  [loading]="isSubmitting()"
+                  [loading]="service.isActionLoading()"
                   [label]="isEditMode() ? 'Save Changes' : 'Create Order'"
                 ></lib-loader>
               </button>
@@ -707,13 +707,13 @@ import {
   ],
 })
 export class OrderCreateComponent implements OnInit {
+  public service = inject(OrdersService);
   private dataService = inject(InventoryDataService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   isEditMode = signal(false);
   orderId: string | null = null;
-  isSubmitting = signal(false);
 
   scanInput = "";
   productSearchQuery = signal("");
@@ -756,28 +756,23 @@ export class OrderCreateComponent implements OnInit {
     { value: "Express", label: "Express (High Priority)" },
   ];
 
-  customerOptions = computed(() =>
-    this.dataService.customers().map((c) => ({
-      id: c.id,
-      name: c.name,
-      status: c.status,
-    })),
-  );
-
   filteredCustomerOptions = computed(() => {
     const query = this.customerSearchQuery().toLowerCase().trim();
-    if (!query) return this.customerOptions();
-    return this.customerOptions().filter(
-      (c) =>
-        c.name.toLowerCase().includes(query) || c.id.toString().includes(query),
-    );
+    if (!query) return this.service.customerOptions();
+    return this.service
+      .customerOptions()
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(query) ||
+          c.id.toString().includes(query),
+      );
   });
 
   filteredProductOptions = computed(() => {
     const query = this.productSearchQuery().toLowerCase().trim();
-    if (!query) return this.dataService.products();
-    return this.dataService
-      .products()
+    if (!query) return this.service.productOptions();
+    return this.service
+      .productOptions()
       .filter(
         (p) =>
           p.name.toLowerCase().includes(query) ||
@@ -821,11 +816,13 @@ export class OrderCreateComponent implements OnInit {
   }
 
   loadOrder() {
-    const order = this.dataService.orders().find((o) => o.id === this.orderId);
+    const order = this.service.getOrder(this.orderId || "");
     if (order) {
       const customer = this.dataService
         .customers()
-        .find((c) => c.name === order.customer || c.id === order.customer);
+        .find(
+          (c: Customer) => c.name === order.customer || c.id === order.customer,
+        );
       this.selectedCustomerId.set(customer?.id || "manual");
       this.selectedCustomerName.set(order.customer);
       this.isPriority.set(order.priority);
@@ -966,7 +963,7 @@ export class OrderCreateComponent implements OnInit {
     const product = this.dataService
       .products()
       .find(
-        (p) =>
+        (p: Product) =>
           p.id.toString() === input ||
           p.name.toLowerCase().includes(input.toLowerCase()),
       );
@@ -1021,44 +1018,12 @@ export class OrderCreateComponent implements OnInit {
   submitOrder() {
     if (!this.canSubmit()) return;
 
-    this.isSubmitting.set(true);
+    this.service.isActionLoading.set(true);
 
-    if (this.isEditMode()) {
-      const existingOrder = this.dataService
-        .orders()
-        .find((o) => o.id === this.orderId);
-      const updatedOrder: Order = {
-        ...existingOrder!,
-        customer: this.selectedCustomerName()!,
-        items: this.orderItems(),
-        amount: this.subtotal(),
-        priority: this.isPriority(),
-        status: this.selectedStatus(),
-        date: this.orderDate(),
-      };
-
-      setTimeout(() => {
-        this.dataService.updateOrder(updatedOrder);
-        this.isSubmitting.set(false);
-        this.router.navigate(["/inventory/orders", this.orderId]);
-      }, 1200);
-    } else {
-      const newOrder: Order = {
-        id: "ORD-" + Math.floor(1000 + Math.random() * 9000),
-        customer: this.selectedCustomerName()!,
-        status: "Pending",
-        amount: this.subtotal(),
-        date: new Date().toISOString().split("T")[0],
-        priority: this.isPriority(),
-        items: this.orderItems(),
-      };
-
-      setTimeout(() => {
-        this.dataService.addOrder(newOrder);
-        this.isSubmitting.set(false);
-        this.router.navigate(["/inventory/orders", newOrder.id]);
-      }, 1500);
-    }
+    setTimeout(() => {
+      this.service.isActionLoading.set(false);
+      this.router.navigate(["/inventory/orders"]);
+    }, 1500);
   }
 
   private scrollToActiveItem(

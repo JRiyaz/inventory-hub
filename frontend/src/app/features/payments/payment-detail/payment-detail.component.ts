@@ -3,11 +3,11 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   DetailLayoutComponent,
   StatusBadgeComponent,
   Breadcrumb,
 } from "ui-shared";
+import { PaymentsService } from "../payments.service";
 
 @Component({
   selector: "app-payment-detail",
@@ -29,7 +29,9 @@ import {
       backLabel="Financial Ledger"
       actionLabel="Print Receipt"
       [tabs]="['Transaction Details', 'Related Order', 'Audit Log']"
+      [loading]="service.isActionLoading()"
       (tabChanged)="activeTab.set($event)"
+      (action)="handlePrint()"
     >
       <div header-icon>
         <div
@@ -314,16 +316,13 @@ import {
   ],
 })
 export class PaymentDetailComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(PaymentsService);
   private route = inject(ActivatedRoute);
 
-  isLoading = signal(true);
   activeTab = signal(0);
 
-  paymentId = computed(() => this.route.snapshot.paramMap.get("id"));
-  payment = computed(() =>
-    this.dataService.payments().find((p) => p.id === this.paymentId()),
-  );
+  paymentId = computed(() => this.route.snapshot.paramMap.get("id") || "");
+  payment = computed(() => this.service.getPayment(this.paymentId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
     { label: "Dashboard", link: "/dashboard" },
@@ -335,10 +334,18 @@ export class PaymentDetailComponent implements OnInit {
   relatedOrder = computed(() => {
     const p = this.payment();
     if (!p?.orderId) return null;
-    return this.dataService.orders().find((o) => o.id === p.orderId) || null;
+    return this.service.getOrderById(p.orderId);
   });
 
   ngOnInit(): void {
-    setTimeout(() => this.isLoading.set(false), 800);
+    this.service.loadPayments();
+  }
+
+  handlePrint(): void {
+    this.service.isActionLoading.set(true);
+    setTimeout(() => {
+      this.service.isActionLoading.set(false);
+      window.print();
+    }, 1500);
   }
 }

@@ -1,17 +1,16 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterModule } from "@angular/router";
 import {
   CustomDropdownComponent,
-  Customer,
   DropdownOption,
-  InventoryDataService,
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
 } from "ui-shared";
+import { CustomersService } from "./customers.service";
 
 @Component({
   selector: "app-customers",
@@ -30,11 +29,11 @@ import {
       <lib-page-header
         title="Customer Directory"
         subtitle="Manage your business relationships and client history."
-        [stats]="headerStats()"
+        [stats]="service.headerStats()"
         [breadcrumbs]="breadcrumbs"
-        [count]="allFilteredCustomers().length"
-        [loading]="isLoading()"
-        [isActionLoading]="isActionLoading()"
+        [count]="service.allFilteredCustomers().length"
+        [loading]="service.isLoading()"
+        [isActionLoading]="service.isActionLoading()"
         actionLabel="Add New Customer"
         backLink="/inventory"
         (action)="router.navigate(['/inventory/customers/create'])"
@@ -49,8 +48,8 @@ import {
             <input
               type="text"
               id="cust-search"
-              [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event)"
+              [ngModel]="service.searchQuery()"
+              (ngModelChange)="service.searchQuery.set($event)"
               placeholder=" "
               class="floating-input"
             />
@@ -78,31 +77,16 @@ import {
         <div class="w-full md:w-40">
           <lib-custom-dropdown
             [options]="pageSizeOptions"
-            [value]="pageSize()"
+            [value]="service.pageSize()"
             [placeholder]="'Per Page'"
-            (valueChange)="pageSize.set($event); currentPage.set(1)"
+            (valueChange)="
+              service.pageSize.set($event); service.currentPage.set(1)
+            "
           ></lib-custom-dropdown>
-        </div>
-
-        <div
-          class="flex bg-slate-100 dark:bg-white/[0.05] p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-inner"
-        >
-          @for (status of ["All", "Active", "Inactive"]; track status) {
-            <button
-              (click)="filterStatus.set(status)"
-              [class.bg-white]="filterStatus() === status"
-              [class.dark:bg-white/10]="filterStatus() === status"
-              [class.shadow-sm]="filterStatus() === status"
-              [class.text-primary]="filterStatus() === status"
-              class="px-4 py-1.5 text-[9px] font-black rounded-lg transition-all uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-white"
-            >
-              {{ status }}
-            </button>
-          }
         </div>
       </div>
 
-      @if (isLoading()) {
+      @if (service.isLoading()) {
         <div
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
         >
@@ -127,7 +111,7 @@ import {
         <div
           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in"
         >
-          @for (customer of paginatedCustomers(); track customer.id) {
+          @for (customer of service.paginatedCustomers(); track customer.id) {
             <div
               [routerLink]="[customer.id]"
               class="card-premium p-4 group hover:border-primary/50 transition-all cursor-pointer flex flex-col h-full relative overflow-hidden"
@@ -196,80 +180,81 @@ import {
         </div>
 
         <!-- Pagination (Compact) -->
-        <div
-          *ngIf="allFilteredCustomers().length > 0"
-          class="mt-8 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-sm shadow-sm"
-        >
-          <div class="flex items-center gap-4">
-            <span
-              class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
-            >
-              Records:
-              <span class="text-slate-900 dark:text-white">{{
-                paginatedCustomers().length
-              }}</span>
-              / {{ allFilteredCustomers().length }}
-            </span>
-          </div>
-          <div class="flex items-center gap-2">
-            <button
-              [disabled]="currentPage() === 1"
-              (click)="setPage(currentPage() - 1)"
-              class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
-            >
-              <svg
-                class="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        @if (service.allFilteredCustomers().length > 0) {
+          <div
+            class="mt-8 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-sm shadow-sm"
+          >
+            <div class="flex items-center gap-4">
+              <span
+                class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2.5"
-                  d="M15 19l-7-7 7-7"
-                ></path>
-              </svg>
-            </button>
-
-            <div class="flex items-center gap-1">
-              @for (p of [].constructor(totalPages()); track $index) {
-                @if ($index < 5 || $index === totalPages() - 1) {
-                  <button
-                    (click)="setPage($index + 1)"
-                    [class.bg-primary]="currentPage() === $index + 1"
-                    [class.text-white]="currentPage() === $index + 1"
-                    class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
-                  >
-                    {{ $index + 1 }}
-                  </button>
-                }
-              }
+                Records:
+                <span class="text-slate-900 dark:text-white">{{
+                  service.paginatedCustomers().length
+                }}</span>
+                / {{ service.allFilteredCustomers().length }}
+              </span>
             </div>
-
-            <button
-              [disabled]="currentPage() === totalPages()"
-              (click)="setPage(currentPage() + 1)"
-              class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
-            >
-              <svg
-                class="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div class="flex items-center gap-2">
+              <button
+                [disabled]="service.currentPage() === 1"
+                (click)="service.setPage(service.currentPage() - 1)"
+                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2.5"
-                  d="M9 5l7 7-7 7"
-                ></path>
-              </svg>
-            </button>
-          </div>
-        </div>
+                <svg
+                  class="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M15 19l-7-7 7-7"
+                  ></path>
+                </svg>
+              </button>
 
-        @if (allFilteredCustomers().length === 0) {
+              <div class="flex items-center gap-1">
+                @for (p of service.pages(); track p) {
+                  @if (p <= 5 || p === service.totalPages()) {
+                    <button
+                      (click)="service.setPage(p)"
+                      [class.bg-primary]="service.currentPage() === p"
+                      [class.text-white]="service.currentPage() === p"
+                      class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
+                    >
+                      {{ p }}
+                    </button>
+                  }
+                }
+              </div>
+
+              <button
+                [disabled]="service.currentPage() === service.totalPages()"
+                (click)="service.setPage(service.currentPage() + 1)"
+                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
+              >
+                <svg
+                  class="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M9 5l7 7-7 7"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (service.allFilteredCustomers().length === 0) {
           <div
             class="flex flex-col items-center justify-center py-32 bg-white/50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 animate-fade-in"
           >
@@ -305,16 +290,9 @@ import {
   styles: [],
 })
 export class CustomersComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(CustomersService);
   private searchService = inject(SearchService);
   public router = inject(Router);
-
-  isLoading = signal(true);
-  isActionLoading = signal(false);
-  searchQuery = signal("");
-  filterStatus = signal("All");
-  currentPage = signal(1);
-  pageSize = signal(12);
 
   breadcrumbs = [
     { label: "Dashboard", link: "/dashboard" },
@@ -329,63 +307,13 @@ export class CustomersComponent implements OnInit {
     { value: 100, label: "100 Per Page" },
   ];
 
-  customers = this.dataService.customers;
-
-  headerStats = computed(() => [
-    {
-      label: "Total Clients",
-      value: this.customers().length,
-      color: "primary" as const,
-    },
-    {
-      label: "Active Business",
-      value: this.customers().filter((c: Customer) => c.status === "Active")
-        .length,
-      color: "success" as const,
-    },
-    {
-      label: "Avg. Retention",
-      value: "94%",
-      color: "info" as const,
-    },
-  ]);
-
-  allFilteredCustomers = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const status = this.filterStatus();
-
-    return this.customers().filter((c: Customer) => {
-      const matchesSearch =
-        c.name.toLowerCase().includes(query) ||
-        c.company.toLowerCase().includes(query) ||
-        c.email.toLowerCase().includes(query);
-      const matchesStatus = status === "All" || c.status === status;
-      return matchesSearch && matchesStatus;
-    });
-  });
-
-  paginatedCustomers = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredCustomers().slice(start, start + this.pageSize());
-  });
-
-  totalPages = computed(() =>
-    Math.ceil(this.allFilteredCustomers().length / this.pageSize()),
-  );
-
   ngOnInit(): void {
+    this.service.loadCustomers();
     this.registerSearchItems();
-    setTimeout(() => this.isLoading.set(false), 800);
-  }
-
-  setPage(page: number) {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-    }
   }
 
   private registerSearchItems(): void {
-    const items = this.customers().map((c: Customer) => ({
+    const items = this.service.customers().map((c) => ({
       id: `cust-${c.id}`,
       title: c.name,
       path: `/inventory/customers/${c.id}`,

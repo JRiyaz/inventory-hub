@@ -1,14 +1,14 @@
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   LoaderComponent,
   PageHeaderComponent,
   UiChartComponent,
   TypewriterComponent,
 } from "ui-shared";
+import { InventoryService } from "./inventory.service";
 
 @Component({
   selector: "app-inventory-overview",
@@ -26,9 +26,9 @@ import {
       <lib-page-header
         title="Inventory Hub"
         subtitle="Global overview of your supply chain, orders, and fulfillment operations."
-        [stats]="headerStats()"
+        [stats]="service.headerStats()"
         [breadcrumbs]="breadcrumbs"
-        [loading]="isLoading()"
+        [loading]="service.isLoading()"
         actionLabel="Manage Settings"
         backLink="/dashboard"
       ></lib-page-header>
@@ -75,7 +75,7 @@ import {
                   >Live Count</span
                 >
                 <div class="h-6 flex items-center">
-                  @if (isLoading()) {
+                  @if (service.isLoading()) {
                     <div class="dots-wave scale-75 origin-left">
                       <span class="!bg-primary"></span>
                       <span class="!bg-primary"></span>
@@ -85,7 +85,7 @@ import {
                     <span
                       class="text-xl font-black text-slate-900 dark:text-white animate-scale-in"
                     >
-                      {{ module.count() }}
+                      {{ getCount(module.count) }}
                     </span>
                   }
                 </div>
@@ -163,12 +163,12 @@ import {
             ></lib-typewriter>
           </p>
           <button
-            [routerLink]="['/inventory/analytics']"
-            [disabled]="isActionLoading()"
+            (click)="handleOptimize()"
+            [disabled]="service.isActionLoading()"
             class="btn-primary-premium mx-auto min-w-[160px]"
           >
             <lib-loader
-              [loading]="isActionLoading()"
+              [loading]="service.isActionLoading()"
               label="Optimize Logistics"
             ></lib-loader>
           </button>
@@ -185,14 +185,16 @@ import {
   ],
 })
 export class InventoryComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(InventoryService);
   private sanitizer = inject(DomSanitizer);
-
-  isLoading = signal(true);
-  isActionLoading = signal(false);
 
   sanitize(html: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  getCount(countFn: any): string | number {
+    const value = countFn();
+    return Array.isArray(value) ? value.length : value;
   }
 
   breadcrumbs = [
@@ -209,7 +211,7 @@ export class InventoryComponent implements OnInit {
         "Manage your master item catalog, price lists, and global stock levels across all regions.",
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
       bgClass: "bg-blue-500/10",
-      count: computed(() => this.dataService.products().length),
+      count: this.service.products,
     },
     {
       name: "Orders",
@@ -219,7 +221,7 @@ export class InventoryComponent implements OnInit {
         "Track customer orders from placement to delivery. Monitor priority fulfillment and backorders.",
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>',
       bgClass: "bg-amber-500/10",
-      count: computed(() => this.dataService.orders().length),
+      count: this.service.orders,
     },
     {
       name: "Customers",
@@ -229,7 +231,7 @@ export class InventoryComponent implements OnInit {
         "Analyze customer buying patterns, manage account standings, and view lifetime purchase history.",
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m12-10a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>',
       bgClass: "bg-emerald-500/10",
-      count: computed(() => this.dataService.customers().length),
+      count: this.service.customers,
     },
     {
       name: "Suppliers",
@@ -239,7 +241,7 @@ export class InventoryComponent implements OnInit {
         "Coordinate with vendors, manage reliability scores, and monitor upstream supply chain health.",
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
       bgClass: "bg-rose-500/10",
-      count: computed(() => this.dataService.suppliers().length),
+      count: this.service.suppliers,
     },
     {
       name: "Warehouses",
@@ -249,7 +251,7 @@ export class InventoryComponent implements OnInit {
         "Optimize physical storage, manage zone allocation, and monitor warehouse utilization rates.",
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>',
       bgClass: "bg-purple-500/10",
-      count: computed(() => this.dataService.warehouses().length),
+      count: this.service.warehouses,
     },
     {
       name: "Payments",
@@ -259,7 +261,7 @@ export class InventoryComponent implements OnInit {
         "Consolidate financial transactions, monitor revenue flow, and track outstanding settlements.",
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-2 2a2 2 0 110 4h-2a2 2 0 110-4zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
       bgClass: "bg-sky-500/10",
-      count: computed(() => this.dataService.payments().length),
+      count: this.service.payments,
     },
     {
       name: "Offers",
@@ -269,11 +271,11 @@ export class InventoryComponent implements OnInit {
         "Create and manage storefront promotions, clearance sales, and highlighted product carousels.",
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5a2 2 0 10-2 2h2zm0 0H4v13a2 2 0 002 2h12a2 2 0 002-2V8h-8z"></path></svg>',
       bgClass: "bg-violet-500/10",
-      count: computed(() => this.dataService.offers().length),
+      count: this.service.offers,
     },
     {
-      name: "Intelligence",
-      subtitle: "Advanced Analytics",
+      name: "Analytics",
+      subtitle: "Insights & Trends",
       path: "analytics",
       description:
         "Deep dive into business trends, predictive stock analysis, and multi-dimensional performance metrics.",
@@ -282,27 +284,6 @@ export class InventoryComponent implements OnInit {
       count: () => "Live",
     },
   ];
-
-  headerStats = computed(() => [
-    {
-      label: "Total Inventory Value",
-      value: "$1.42M",
-      color: "success" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    },
-    {
-      label: "Global Node Count",
-      value: "12 Sites",
-      color: "info" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    },
-    {
-      label: "Avg. Stock Turn",
-      value: "4.2x",
-      color: "primary" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>',
-    },
-  ]);
 
   fulfillmentData = [
     { label: "Jan", value: 450 },
@@ -322,6 +303,10 @@ export class InventoryComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    setTimeout(() => this.isLoading.set(false), 800);
+    this.service.loadOverview();
+  }
+
+  handleOptimize() {
+    this.service.optimizeLogistics().subscribe();
   }
 }

@@ -3,11 +3,11 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   DetailLayoutComponent,
   StatusBadgeComponent,
   Breadcrumb,
 } from "ui-shared";
+import { WarehousesService } from "../warehouses.service";
 
 @Component({
   selector: "app-warehouse-detail",
@@ -24,7 +24,7 @@ import {
       actionLabel="Relocate Stock"
       editLabel="Edit Warehouse"
       [tabs]="['Overview', 'Zones & Capacity', 'Stored Products', 'Movements']"
-      [loading]="isActionLoading()"
+      [loading]="service.isActionLoading()"
       (tabChanged)="activeTab.set($event)"
       (action)="handleAction()"
       (edit)="goToEdit()"
@@ -129,7 +129,7 @@ import {
               <p
                 class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5"
               >
-                Node Class
+                Global Efficiency
               </p>
               <p class="text-xl font-black text-amber-500 uppercase">Tier A</p>
             </div>
@@ -571,20 +571,16 @@ import {
   ],
 })
 export class WarehouseDetailComponent implements OnInit {
+  public service = inject(WarehousesService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private dataService = inject(InventoryDataService);
 
-  isLoading = signal(true);
-  isActionLoading = signal(false);
   activeTab = signal(0);
   sortField = signal<string>("date");
   sortOrder = signal<"asc" | "desc">("desc");
 
-  warehouseId = computed(() => this.route.snapshot.paramMap.get("id"));
-  warehouse = computed(() =>
-    this.dataService.warehouses().find((w) => w.id === this.warehouseId()),
-  );
+  warehouseId = computed(() => this.route.snapshot.paramMap.get("id") || "");
+  warehouse = computed(() => this.service.getWarehouse(this.warehouseId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
     { label: "Dashboard", link: "/dashboard" },
@@ -594,25 +590,14 @@ export class WarehouseDetailComponent implements OnInit {
   ]);
 
   storedProducts = computed(() => {
-    const id = this.warehouseId();
-    // Assuming products have a warehouseId property based on your requirements
-    return this.dataService
-      .products()
-      .filter((p) => (p as any).warehouseId === id);
+    return this.service.getProductsByWarehouseId(this.warehouseId());
   });
 
   movements = computed(() => {
-    const id = this.warehouseId();
     const field = this.sortField();
     const order = this.sortOrder();
 
-    let result = this.dataService
-      .movements()
-      .filter(
-        (m) =>
-          m.fromLocation.startsWith(id || "") ||
-          m.toLocation.startsWith(id || ""),
-      );
+    let result = this.service.getMovementsByWarehouseId(this.warehouseId());
 
     return result.sort((a: any, b: any) => {
       const valA = a[field];
@@ -640,7 +625,7 @@ export class WarehouseDetailComponent implements OnInit {
   }
 
   ngOnInit() {
-    setTimeout(() => this.isLoading.set(false), 1500);
+    this.service.loadWarehouses();
   }
 
   goToEdit() {
@@ -651,9 +636,9 @@ export class WarehouseDetailComponent implements OnInit {
   }
 
   handleAction() {
-    this.isActionLoading.set(true);
+    this.service.isActionLoading.set(true);
     setTimeout(() => {
-      this.isActionLoading.set(false);
+      this.service.isActionLoading.set(false);
     }, 2000);
   }
 

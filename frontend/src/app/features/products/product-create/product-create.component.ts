@@ -3,13 +3,15 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   Product,
   NotificationService,
   CustomDropdownComponent,
   DropdownOption,
   LoaderComponent,
+  FormValidationDirective,
+  ValidationErrorPipe,
 } from "ui-shared";
+import { ProductsService } from "../products.service";
 
 @Component({
   selector: "app-product-create",
@@ -20,6 +22,8 @@ import {
     RouterModule,
     CustomDropdownComponent,
     LoaderComponent,
+    FormValidationDirective,
+    ValidationErrorPipe,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-4xl mx-auto animate-fade-in">
@@ -119,7 +123,12 @@ import {
           </div>
         </div>
 
-        <form (ngSubmit)="submitForm()" class="space-y-8">
+        <form
+          (ngSubmit)="submitForm()"
+          class="space-y-8"
+          #f="ngForm"
+          libFormValidation
+        >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
             <!-- Name -->
             <div class="floating-input-group md:col-span-2">
@@ -131,10 +140,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #name="ngModel"
               />
               <label for="name" class="floating-label"
                 >Product Name / Label</label
               >
+              @if (name.invalid && name.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ name.errors | libValidationError: "Name" }}
+                </p>
+              }
             </div>
 
             <!-- Price -->
@@ -147,8 +162,15 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                min="0.01"
+                #price="ngModel"
               />
               <label for="price" class="floating-label">Unit Price (USD)</label>
+              @if (price.invalid && price.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ price.errors | libValidationError: "Price" }}
+                </p>
+              }
             </div>
 
             <!-- Stock -->
@@ -161,10 +183,17 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                min="0"
+                #stock="ngModel"
               />
               <label for="stock" class="floating-label"
                 >Current Inventory Count</label
               >
+              @if (stock.invalid && stock.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ stock.errors | libValidationError: "Stock" }}
+                </p>
+              }
             </div>
 
             <!-- Category Dropdown -->
@@ -188,7 +217,7 @@ import {
                 >Primary Source</label
               >
               <lib-custom-dropdown
-                [options]="supplierOptions()"
+                [options]="service.supplierOptions()"
                 [value]="formData.supplierId"
                 [placeholder]="'Assign Supplier'"
                 (valueChange)="formData.supplierId = $event"
@@ -205,10 +234,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #desc="ngModel"
               />
               <label for="description" class="floating-label"
                 >Product Specifications / Description</label
               >
+              @if (desc.invalid && desc.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ desc.errors | libValidationError: "Description" }}
+                </p>
+              }
             </div>
 
             <!-- Discount (Edit Mode only) -->
@@ -245,11 +280,11 @@ import {
             </button>
             <button
               type="submit"
-              [disabled]="isSubmitting() || !isValid()"
+              [disabled]="service.isActionLoading() || f.invalid"
               class="btn-primary-premium min-w-[160px]"
             >
               <lib-loader
-                [loading]="isSubmitting()"
+                [loading]="service.isActionLoading()"
                 [label]="isEditMode() ? 'Save Changes' : 'Initialize SKU'"
               ></lib-loader>
             </button>
@@ -267,14 +302,13 @@ import {
   ],
 })
 export class ProductCreateComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(ProductsService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   isEditMode = signal(false);
   productId: number | null = null;
-  isSubmitting = signal(false);
 
   formData = {
     name: "",
@@ -293,10 +327,6 @@ export class ProductCreateComponent implements OnInit {
     { value: "Computing", label: "Computing" },
   ];
 
-  supplierOptions = computed(() =>
-    this.dataService.suppliers().map((s) => ({ value: s.id, label: s.name })),
-  );
-
   ngOnInit() {
     this.route.params.subscribe((params) => {
       if (params["id"]) {
@@ -308,9 +338,7 @@ export class ProductCreateComponent implements OnInit {
   }
 
   loadProduct() {
-    const product = this.dataService
-      .products()
-      .find((p) => p.id === this.productId);
+    const product = this.service.getProduct(this.productId!);
     if (product) {
       this.formData = {
         name: product.name,
@@ -330,49 +358,33 @@ export class ProductCreateComponent implements OnInit {
     }
   }
 
-  isValid(): boolean {
-    return !!(
-      this.formData.name &&
-      this.formData.price > 0 &&
-      this.formData.category
-    );
-  }
-
   submitForm() {
-    if (!this.isValid()) return;
-
-    this.isSubmitting.set(true);
-
     if (this.isEditMode()) {
       const updatedProduct: Product = {
         id: this.productId!,
         ...this.formData,
       };
 
-      setTimeout(() => {
-        this.dataService.updateProduct(updatedProduct);
+      this.service.updateProduct(updatedProduct).subscribe(() => {
         this.notificationService.success(
           "Update Successful",
           `${updatedProduct.name} has been modified in the catalog.`,
         );
-        this.isSubmitting.set(false);
         this.router.navigate(["/inventory/products", this.productId]);
-      }, 1200);
+      });
     } else {
       const newProduct: Product = {
         id: Math.floor(10000 + Math.random() * 90000),
         ...this.formData,
       };
 
-      setTimeout(() => {
-        this.dataService.addProduct(newProduct);
+      this.service.addProduct(newProduct).subscribe(() => {
         this.notificationService.success(
           "Product Initialized",
           `${newProduct.name} has been added to the master catalog.`,
         );
-        this.isSubmitting.set(false);
         this.router.navigate(["/inventory/products", newProduct.id]);
-      }, 1500);
+      });
     }
   }
 }

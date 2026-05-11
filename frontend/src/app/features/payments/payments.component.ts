@@ -1,16 +1,17 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnInit, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import {
   CustomDropdownComponent,
   DropdownOption,
-  InventoryDataService,
   NotificationService,
   PageHeaderComponent,
   SkeletonComponent,
   StatusBadgeComponent,
+  SearchService,
 } from "ui-shared";
+import { PaymentsService } from "./payments.service";
 
 @Component({
   selector: "app-payments",
@@ -29,11 +30,11 @@ import {
       <lib-page-header
         title="Financial Ledger"
         subtitle="Monitor all inbound and outbound transactions across the organization."
-        [stats]="headerStats()"
+        [stats]="service.headerStats()"
         [breadcrumbs]="breadcrumbs"
-        [count]="allFilteredPayments().length"
-        [loading]="isLoading()"
-        [isActionLoading]="isActionLoading()"
+        [count]="service.allFilteredPayments().length"
+        [loading]="service.isLoading()"
+        [isActionLoading]="service.isActionLoading()"
         actionLabel="Process Refund"
         backLink="/dashboard"
         (action)="initiateRefund()"
@@ -48,8 +49,8 @@ import {
             <input
               type="text"
               id="pay-search"
-              [ngModel]="searchQuery()"
-              (ngModelChange)="searchQuery.set($event)"
+              [ngModel]="service.searchQuery()"
+              (ngModelChange)="service.searchQuery.set($event)"
               placeholder=" "
               class="floating-input"
             />
@@ -75,22 +76,27 @@ import {
         <div class="w-full md:w-40">
           <lib-custom-dropdown
             [options]="pageSizeOptions"
-            [value]="pageSize()"
+            [value]="service.pageSize()"
             [placeholder]="'Per Page'"
-            (valueChange)="pageSize.set($event); currentPage.set(1)"
+            (valueChange)="
+              service.pageSize.set($event); service.currentPage.set(1)
+            "
           ></lib-custom-dropdown>
         </div>
 
         <div
           class="flex bg-slate-100 dark:bg-white/[0.05] p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-inner"
         >
-          @for (m of ["All", "Stripe", "PayPal", "Bank"]; track m) {
+          @for (
+            m of ["All Status", "Completed", "Pending", "Failed"];
+            track m
+          ) {
             <button
-              (click)="filterMethod.set(m)"
-              [class.bg-white]="filterMethod() === m"
-              [class.dark:bg-white/10]="filterMethod() === m"
-              [class.shadow-sm]="filterMethod() === m"
-              [class.text-primary]="filterMethod() === m"
+              (click)="service.statusFilter.set(m); service.currentPage.set(1)"
+              [class.bg-white]="service.statusFilter() === m"
+              [class.dark:bg-white/10]="service.statusFilter() === m"
+              [class.shadow-sm]="service.statusFilter() === m"
+              [class.text-primary]="service.statusFilter() === m"
               class="px-4 py-1.5 text-[9px] font-black rounded-lg transition-all uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:hover:text-white"
             >
               {{ m }}
@@ -99,7 +105,7 @@ import {
         </div>
       </div>
 
-      @if (isLoading()) {
+      @if (service.isLoading()) {
         <div class="card-premium overflow-hidden">
           <div class="p-6 space-y-4">
             @for (i of [1, 2, 3, 4, 5]; track i) {
@@ -239,7 +245,10 @@ import {
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-50 dark:divide-white/[0.04]">
-                @for (payment of paginatedPayments(); track payment.id) {
+                @for (
+                  payment of service.paginatedPayments();
+                  track payment.id
+                ) {
                   <tr
                     class="group hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors cursor-pointer"
                     [routerLink]="[payment.id]"
@@ -328,81 +337,82 @@ import {
           </div>
 
           <!-- Pagination (Compact) -->
-          <div
-            *ngIf="allFilteredPayments().length > 0"
-            class="px-5 py-3 bg-slate-50/50 dark:bg-white/[0.01] border-t border-slate-200 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4"
-          >
-            <div class="flex items-center gap-4">
-              <span
-                class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
-              >
-                Records:
-                <span class="text-slate-900 dark:text-white">{{
-                  paginatedPayments().length
-                }}</span>
-                / {{ allFilteredPayments().length }}
-              </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                [disabled]="currentPage() === 1"
-                (click)="setPage(currentPage() - 1)"
-                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          @if (service.allFilteredPayments().length > 0) {
+            <div
+              class="px-5 py-3 bg-slate-50/50 dark:bg-white/[0.01] border-t border-slate-200 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4"
+            >
+              <div class="flex items-center gap-4">
+                <span
+                  class="text-[10px] font-black uppercase text-slate-400 tracking-widest"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M15 19l-7-7 7-7"
-                  ></path>
-                </svg>
-              </button>
-
-              <div class="flex items-center gap-1">
-                @for (p of [].constructor(totalPages()); track $index) {
-                  @if ($index < 5 || $index === totalPages() - 1) {
-                    <button
-                      (click)="setPage($index + 1)"
-                      [class.bg-primary]="currentPage() === $index + 1"
-                      [class.text-white]="currentPage() === $index + 1"
-                      class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
-                    >
-                      {{ $index + 1 }}
-                    </button>
-                  }
-                }
+                  Records:
+                  <span class="text-slate-900 dark:text-white">{{
+                    service.paginatedPayments().length
+                  }}</span>
+                  / {{ service.allFilteredPayments().length }}
+                </span>
               </div>
-
-              <button
-                [disabled]="currentPage() === totalPages()"
-                (click)="setPage(currentPage() + 1)"
-                class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
-              >
-                <svg
-                  class="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div class="flex items-center gap-2">
+                <button
+                  [disabled]="service.currentPage() === 1"
+                  (click)="service.setPage(service.currentPage() - 1)"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M9 5l7 7-7 7"
-                  ></path>
-                </svg>
-              </button>
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M15 19l-7-7 7-7"
+                    ></path>
+                  </svg>
+                </button>
+
+                <div class="flex items-center gap-1">
+                  @for (p of service.pages(); track p) {
+                    @if (p <= 5 || p === service.totalPages()) {
+                      <button
+                        (click)="service.setPage(p)"
+                        [class.bg-primary]="service.currentPage() === p"
+                        [class.text-white]="service.currentPage() === p"
+                        class="w-8 h-8 rounded-lg text-[10px] font-black transition-all hover:bg-primary/10"
+                      >
+                        {{ p }}
+                      </button>
+                    }
+                  }
+                </div>
+
+                <button
+                  [disabled]="service.currentPage() === service.totalPages()"
+                  (click)="service.setPage(service.currentPage() + 1)"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M9 5l7 7-7 7"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
+          }
         </div>
 
-        @if (allFilteredPayments().length === 0) {
+        @if (service.allFilteredPayments().length === 0) {
           <div
             class="py-20 text-center bg-white/50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/10 mt-8"
           >
@@ -423,17 +433,12 @@ import {
   ],
 })
 export class PaymentsComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(PaymentsService);
+  private searchService = inject(SearchService);
   private notificationService = inject(NotificationService);
 
-  isLoading = signal(true);
-  isActionLoading = signal(false);
-  searchQuery = signal("");
-  filterMethod = signal("All");
   sortField = signal<string>("id");
   sortOrder = signal<"asc" | "desc">("desc");
-  currentPage = signal(1);
-  pageSize = signal(12);
 
   breadcrumbs = [
     { label: "Dashboard", link: "/dashboard" },
@@ -448,73 +453,20 @@ export class PaymentsComponent implements OnInit {
     { value: 100, label: "100 Per Page" },
   ];
 
-  payments = this.dataService.payments;
-
-  headerStats = computed(() => [
-    {
-      label: "Total Revenue",
-      value:
-        "$" +
-        (
-          this.payments()
-            .filter((p) => p.status === "Completed")
-            .reduce((acc, p) => acc + p.amount, 0) / 1000
-        ).toFixed(1) +
-        "k",
-      color: "success" as const,
-    },
-    {
-      label: "Pending Clear",
-      value: this.payments().filter((p) => p.status === "Pending").length,
-      color: "warning" as const,
-    },
-    {
-      label: "Success Rate",
-      value: "98.2%",
-      color: "info" as const,
-    },
-  ]);
-
-  allFilteredPayments = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const method = this.filterMethod();
-    const field = this.sortField();
-    const order = this.sortOrder();
-
-    let result = this.payments().filter((p) => {
-      const matchesSearch =
-        p.id.toLowerCase().includes(query) ||
-        p.method.toLowerCase().includes(query);
-      const matchesMethod = method === "All" || p.method === method;
-      return matchesSearch && matchesMethod;
-    });
-
-    return result.sort((a: any, b: any) => {
-      const valA = a[field];
-      const valB = b[field];
-      if (valA < valB) return order === "asc" ? -1 : 1;
-      if (valA > valB) return order === "asc" ? 1 : -1;
-      return 0;
-    });
-  });
-
-  paginatedPayments = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredPayments().slice(start, start + this.pageSize());
-  });
-
-  totalPages = computed(() =>
-    Math.ceil(this.allFilteredPayments().length / this.pageSize()),
-  );
-
   ngOnInit(): void {
-    setTimeout(() => this.isLoading.set(false), 800);
+    this.service.loadPayments();
+    this.registerSearchItems();
   }
 
-  setPage(page: number) {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-    }
+  private registerSearchItems(): void {
+    const items = this.service.payments().map((p) => ({
+      id: `payment-${p.id}`,
+      title: `Payment ${p.id}`,
+      path: `/inventory/payments/${p.id}`,
+      category: "Payment",
+      keywords: [p.method, p.status, p.reference],
+    }));
+    this.searchService.register(items);
   }
 
   toggleSort(field: string) {
@@ -524,7 +476,7 @@ export class PaymentsComponent implements OnInit {
       this.sortField.set(field);
       this.sortOrder.set("asc");
     }
-    this.currentPage.set(1);
+    this.service.currentPage.set(1);
   }
 
   initiateRefund(): void {

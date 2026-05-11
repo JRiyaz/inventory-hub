@@ -24,7 +24,7 @@ export const ORDERS_ROUTES: Routes = [
     data: { title: "Order Details" },
   },
   {
-    path: ":id/edit",
+    path: "edit/:id",
     loadComponent: () =>
       import("./order-create/order-create.component").then(
         (m) => m.OrderCreateComponent,

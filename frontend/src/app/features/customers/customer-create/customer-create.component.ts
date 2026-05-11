@@ -3,13 +3,15 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   Customer,
   NotificationService,
   CustomDropdownComponent,
   DropdownOption,
   LoaderComponent,
+  FormValidationDirective,
+  ValidationErrorPipe,
 } from "ui-shared";
+import { CustomersService } from "../customers.service";
 
 @Component({
   selector: "app-customer-create",
@@ -20,6 +22,8 @@ import {
     RouterModule,
     CustomDropdownComponent,
     LoaderComponent,
+    FormValidationDirective,
+    ValidationErrorPipe,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-4xl mx-auto animate-fade-in">
@@ -121,7 +125,12 @@ import {
           </div>
         </div>
 
-        <form (ngSubmit)="submitForm()" class="space-y-8">
+        <form
+          (ngSubmit)="submitForm()"
+          class="space-y-8"
+          #f="ngForm"
+          libFormValidation
+        >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
             <!-- Full Name -->
             <div class="floating-input-group">
@@ -133,8 +142,14 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #name="ngModel"
               />
               <label for="name" class="floating-label">Full Legal Name</label>
+              @if (name.invalid && name.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ name.errors | libValidationError: "Name" }}
+                </p>
+              }
             </div>
 
             <!-- Company -->
@@ -147,10 +162,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #company="ngModel"
               />
               <label for="company" class="floating-label"
                 >Enterprise Entity</label
               >
+              @if (company.invalid && company.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ company.errors | libValidationError: "Company" }}
+                </p>
+              }
             </div>
 
             <!-- Email -->
@@ -163,8 +184,15 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                email
+                #email="ngModel"
               />
               <label for="email" class="floating-label">Business Email</label>
+              @if (email.invalid && email.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ email.errors | libValidationError: "Email" }}
+                </p>
+              }
             </div>
 
             <!-- Phone -->
@@ -177,8 +205,14 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #phone="ngModel"
               />
               <label for="phone" class="floating-label">Contact Number</label>
+              @if (phone.invalid && phone.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ phone.errors | libValidationError: "Phone" }}
+                </p>
+              }
             </div>
 
             <!-- Location -->
@@ -191,10 +225,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #location="ngModel"
               />
               <label for="location" class="floating-label"
                 >Primary HQ Address</label
               >
+              @if (location.invalid && location.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ location.errors | libValidationError: "Location" }}
+                </p>
+              }
             </div>
 
             <!-- Status (Edit Mode only) -->
@@ -229,11 +269,11 @@ import {
             </button>
             <button
               type="submit"
-              [disabled]="isSubmitting() || !isValid()"
+              [disabled]="service.isActionLoading() || f.invalid"
               class="btn-primary-premium min-w-[160px]"
             >
               <lib-loader
-                [loading]="isSubmitting()"
+                [loading]="service.isActionLoading()"
                 [label]="
                   isEditMode() ? 'Save Changes' : 'Finalize Registration'
                 "
@@ -253,14 +293,13 @@ import {
   ],
 })
 export class CustomerCreateComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(CustomersService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   isEditMode = signal(false);
   customerId: string = "";
-  isSubmitting = signal(false);
 
   formData = {
     name: "",
@@ -269,6 +308,7 @@ export class CustomerCreateComponent implements OnInit {
     phone: "",
     location: "",
     status: "Active" as "Active" | "Inactive",
+    joinDate: new Date().toISOString().split("T")[0],
   };
 
   statusOptions: DropdownOption[] = [
@@ -287,9 +327,7 @@ export class CustomerCreateComponent implements OnInit {
   }
 
   loadCustomer() {
-    const customer = this.dataService
-      .customers()
-      .find((c) => c.id === this.customerId);
+    const customer = this.service.getCustomer(this.customerId);
     if (customer) {
       this.formData = {
         name: customer.name,
@@ -298,6 +336,7 @@ export class CustomerCreateComponent implements OnInit {
         phone: customer.phone,
         location: customer.location || "",
         status: customer.status,
+        joinDate: customer.joinDate,
       };
     } else {
       this.notificationService.error(
@@ -308,55 +347,39 @@ export class CustomerCreateComponent implements OnInit {
     }
   }
 
-  isValid(): boolean {
-    return !!(
-      this.formData.name &&
-      this.formData.company &&
-      this.formData.email &&
-      this.formData.phone
-    );
-  }
-
   submitForm() {
-    if (!this.isValid()) return;
-
-    this.isSubmitting.set(true);
-
     if (this.isEditMode()) {
-      const existingCustomer = this.dataService
-        .customers()
-        .find((c) => c.id === this.customerId);
       const updatedCustomer: Customer = {
-        ...existingCustomer!,
+        id: this.customerId,
         ...this.formData,
+        segment: "Standard", // Default for now
+        orders: 0,
+        spend: 0,
       };
 
-      setTimeout(() => {
-        this.dataService.updateCustomer(updatedCustomer);
+      this.service.updateCustomer(updatedCustomer).subscribe(() => {
         this.notificationService.success(
           "Update Successful",
-          `${updatedCustomer.name}'s profile has been updated.`,
+          `${this.formData.name}'s profile has been updated.`,
         );
-        this.isSubmitting.set(false);
         this.router.navigate(["/inventory/customers", this.customerId]);
-      }, 1200);
+      });
     } else {
       const newCustomer: Customer = {
         id: "CUST-" + Math.floor(1000 + Math.random() * 9000),
         ...this.formData,
-        status: "Active",
-        joinDate: new Date().toISOString().split("T")[0],
+        segment: "Standard",
+        orders: 0,
+        spend: 0,
       };
 
-      setTimeout(() => {
-        this.dataService.addCustomer(newCustomer);
+      this.service.addCustomer(newCustomer).subscribe(() => {
         this.notificationService.success(
           "Registration Successful",
-          `${newCustomer.name} has been added to the directory.`,
+          `${this.formData.name} has been added to the directory.`,
         );
-        this.isSubmitting.set(false);
-        this.router.navigate(["/inventory/customers", newCustomer.id]);
-      }, 1500);
+        this.router.navigate(["/inventory/customers"]);
+      });
     }
   }
 }

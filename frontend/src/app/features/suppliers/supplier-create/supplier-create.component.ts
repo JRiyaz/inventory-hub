@@ -3,13 +3,15 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   Supplier,
   NotificationService,
   CustomDropdownComponent,
   DropdownOption,
   LoaderComponent,
+  FormValidationDirective,
+  ValidationErrorPipe,
 } from "ui-shared";
+import { SuppliersService } from "../suppliers.service";
 
 @Component({
   selector: "app-supplier-create",
@@ -20,6 +22,8 @@ import {
     RouterModule,
     CustomDropdownComponent,
     LoaderComponent,
+    FormValidationDirective,
+    ValidationErrorPipe,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-4xl mx-auto animate-fade-in">
@@ -119,7 +123,12 @@ import {
           </div>
         </div>
 
-        <form (ngSubmit)="submitForm()" class="space-y-8">
+        <form
+          (ngSubmit)="submitForm()"
+          class="space-y-8"
+          #f="ngForm"
+          libFormValidation
+        >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
             <!-- Name -->
             <div class="floating-input-group md:col-span-2">
@@ -131,10 +140,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #name="ngModel"
               />
               <label for="name" class="floating-label"
                 >Supplier Entity Name</label
               >
+              @if (name.invalid && name.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ name.errors | libValidationError: "Name" }}
+                </p>
+              }
             </div>
 
             <!-- Category -->
@@ -147,10 +162,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #category="ngModel"
               />
               <label for="category" class="floating-label"
                 >Primary Goods Category</label
               >
+              @if (category.invalid && category.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ category.errors | libValidationError: "Category" }}
+                </p>
+              }
             </div>
 
             <!-- Reliability -->
@@ -163,10 +184,18 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                min="0"
+                max="100"
+                #reliability="ngModel"
               />
               <label for="reliability" class="floating-label"
                 >Reliability Score (0-100)</label
               >
+              @if (reliability.invalid && reliability.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ reliability.errors | libValidationError: "Reliability" }}
+                </p>
+              }
             </div>
 
             <!-- Email -->
@@ -179,10 +208,17 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                email
+                #email="ngModel"
               />
               <label for="email" class="floating-label"
                 >Procurement Email</label
               >
+              @if (email.invalid && email.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ email.errors | libValidationError: "Email" }}
+                </p>
+              }
             </div>
 
             <!-- Phone -->
@@ -195,8 +231,14 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #phone="ngModel"
               />
               <label for="phone" class="floating-label">Contact Number</label>
+              @if (phone.invalid && phone.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ phone.errors | libValidationError: "Phone" }}
+                </p>
+              }
             </div>
 
             <!-- Location -->
@@ -209,10 +251,16 @@ import {
                 placeholder=" "
                 class="floating-input"
                 required
+                #location="ngModel"
               />
               <label for="location" class="floating-label"
                 >Operational HQ Location</label
               >
+              @if (location.invalid && location.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  {{ location.errors | libValidationError: "Location" }}
+                </p>
+              }
             </div>
 
             <!-- Status (Edit Mode only) -->
@@ -247,11 +295,11 @@ import {
             </button>
             <button
               type="submit"
-              [disabled]="isSubmitting() || !isValid()"
+              [disabled]="service.isActionLoading() || f.invalid"
               class="btn-primary-premium min-w-[160px]"
             >
               <lib-loader
-                [loading]="isSubmitting()"
+                [loading]="service.isActionLoading()"
                 [label]="isEditMode() ? 'Save Changes' : 'Finalize Onboarding'"
               ></lib-loader>
             </button>
@@ -269,14 +317,13 @@ import {
   ],
 })
 export class SupplierCreateComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
+  public service = inject(SuppliersService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   isEditMode = signal(false);
   supplierId: string = "";
-  isSubmitting = signal(false);
 
   formData = {
     name: "",
@@ -285,13 +332,14 @@ export class SupplierCreateComponent implements OnInit {
     phone: "",
     location: "",
     reliability: 100,
-    status: "Active" as "Active" | "Pending" | "Inactive",
+    status: "Active" as "Active" | "Pending" | "Inactive" | "Critical",
   };
 
   statusOptions: DropdownOption[] = [
     { value: "Active", label: "Active" },
     { value: "Pending", label: "Pending" },
     { value: "Inactive", label: "Inactive" },
+    { value: "Critical", label: "Critical" },
   ];
 
   ngOnInit() {
@@ -305,9 +353,7 @@ export class SupplierCreateComponent implements OnInit {
   }
 
   loadSupplier() {
-    const supplier = this.dataService
-      .suppliers()
-      .find((s) => s.id === this.supplierId);
+    const supplier = this.service.getSupplier(this.supplierId);
     if (supplier) {
       this.formData = {
         name: supplier.name,
@@ -327,37 +373,20 @@ export class SupplierCreateComponent implements OnInit {
     }
   }
 
-  isValid(): boolean {
-    return !!(
-      this.formData.name &&
-      this.formData.category &&
-      this.formData.email
-    );
-  }
-
   submitForm() {
-    if (!this.isValid()) return;
-
-    this.isSubmitting.set(true);
-
     if (this.isEditMode()) {
-      const existingSupplier = this.dataService
-        .suppliers()
-        .find((s) => s.id === this.supplierId);
       const updatedSupplier: Supplier = {
-        ...existingSupplier!,
+        id: this.supplierId,
         ...this.formData,
       };
 
-      setTimeout(() => {
-        this.dataService.updateSupplier(updatedSupplier);
+      this.service.updateSupplier(updatedSupplier).subscribe(() => {
         this.notificationService.success(
           "Update Successful",
           `${updatedSupplier.name}'s profile has been updated.`,
         );
-        this.isSubmitting.set(false);
         this.router.navigate(["/inventory/suppliers", this.supplierId]);
-      }, 1200);
+      });
     } else {
       const newSupplier: Supplier = {
         id: "SUP-" + Math.floor(1000 + Math.random() * 9000),
@@ -365,15 +394,13 @@ export class SupplierCreateComponent implements OnInit {
         status: "Active",
       };
 
-      setTimeout(() => {
-        this.dataService.addSupplier(newSupplier);
+      this.service.addSupplier(newSupplier).subscribe(() => {
         this.notificationService.success(
           "Onboarding Successful",
           `${newSupplier.name} has been added to the vendor network.`,
         );
-        this.isSubmitting.set(false);
         this.router.navigate(["/inventory/suppliers", newSupplier.id]);
-      }, 1500);
+      });
     }
   }
 }

@@ -5,9 +5,9 @@ import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
   Breadcrumb,
   DetailLayoutComponent,
-  InventoryDataService,
   StatusBadgeComponent,
 } from "ui-shared";
+import { ProductsService } from "../products.service";
 
 @Component({
   selector: "app-product-detail",
@@ -30,7 +30,7 @@ import {
       actionLabel="Order More Stock"
       editLabel="Edit Product"
       [tabs]="['Overview', 'Supplier & Logistics', 'Relational Activity']"
-      [loading]="isActionLoading()"
+      [loading]="service.isActionLoading()"
       (tabChanged)="activeTab.set($event)"
       (action)="handleAction()"
       (edit)="goToEdit()"
@@ -343,89 +343,22 @@ import {
           <div class="space-y-4">
             <!-- Supplier Link Card -->
             <div
-              *ngIf="supplier()"
-              [routerLink]="['/inventory/suppliers', supplier()?.id]"
-              class="card-premium p-6 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden"
+              [routerLink]="
+                supplier() ? ['/inventory/suppliers', supplier()?.id] : null
+              "
+              [class.cursor-pointer]="supplier()"
+              class="card-premium p-6 hover:border-primary/50 transition-all group relative overflow-hidden"
             >
-              <div
-                class="absolute -right-4 -top-4 w-16 h-16 bg-primary/5 rounded-full group-hover:scale-150 transition-transform duration-700"
-              ></div>
-              <h4
-                class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center justify-between"
-              >
-                Primary Source
-                <svg
-                  class="w-4 h-4 text-slate-300 group-hover:text-primary transition-all"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M14 5l7 7-7 7"
-                  />
-                </svg>
-              </h4>
-              <div class="flex items-center gap-5">
+              @if (supplier()) {
                 <div
-                  class="w-14 h-14 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-primary font-black text-xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
+                  class="absolute -right-4 -top-4 w-16 h-16 bg-primary/5 rounded-full group-hover:scale-150 transition-transform duration-700"
+                ></div>
+                <h4
+                  class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center justify-between"
                 >
-                  {{ supplier()?.name?.[0] }}
-                </div>
-                <div>
-                  <p
-                    class="text-lg font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight"
-                  >
-                    {{ supplier()?.name }}
-                  </p>
-                  <p
-                    class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1"
-                  >
-                    {{ supplier()?.location }}
-                  </p>
-                  <lib-status-badge
-                    [status]="supplier()?.status || ''"
-                    class="mt-3 scale-75 origin-left"
-                  ></lib-status-badge>
-                </div>
-              </div>
-            </div>
-
-            <!-- Warehouse Link Card -->
-            <div
-              *ngIf="warehouse()"
-              [routerLink]="['/inventory/warehouses', warehouse()?.id]"
-              class="card-premium p-6 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden"
-            >
-              <div
-                class="absolute -right-4 -top-4 w-16 h-16 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"
-              ></div>
-              <h4
-                class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center justify-between"
-              >
-                Logistics Node
-                <svg
-                  class="w-4 h-4 text-slate-300 group-hover:text-primary transition-all"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M14 5l7 7-7 7"
-                  />
-                </svg>
-              </h4>
-              <div class="flex items-center gap-5">
-                <div
-                  class="w-14 h-14 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-amber-500 font-black group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
-                >
+                  Primary Source
                   <svg
-                    class="w-8 h-8"
+                    class="w-4 h-4 text-slate-300 group-hover:text-primary transition-all"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -433,33 +366,116 @@ import {
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
-                      stroke-width="1.5"
-                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                    ></path>
+                      stroke-width="2"
+                      d="M14 5l7 7-7 7"
+                    />
                   </svg>
-                </div>
-                <div>
-                  <p
-                    class="text-lg font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight"
+                </h4>
+                <div class="flex items-center gap-5">
+                  <div
+                    class="w-14 h-14 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-primary font-black text-xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
                   >
-                    {{ warehouse()?.name }}
-                  </p>
-                  <p
-                    class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1"
-                  >
-                    {{ warehouse()?.location }}
-                  </p>
-                  <div class="mt-3 flex items-center gap-2">
-                    <span
-                      class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
-                      >Load:</span
+                    {{ supplier()?.name?.[0] }}
+                  </div>
+                  <div>
+                    <p
+                      class="text-lg font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight"
                     >
-                    <span class="text-xs font-black text-primary"
-                      >{{ warehouse()?.utilization }}% Capacity</span
+                      {{ supplier()?.name }}
+                    </p>
+                    <p
+                      class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1"
                     >
+                      {{ supplier()?.location }}
+                    </p>
+                    <lib-status-badge
+                      [status]="supplier()?.status || ''"
+                      class="mt-3 scale-75 origin-left"
+                    ></lib-status-badge>
                   </div>
                 </div>
-              </div>
+              } @else {
+                <p class="text-xs font-bold text-slate-500 italic">
+                  No supplier linked
+                </p>
+              }
+            </div>
+
+            <!-- Warehouse Link Card -->
+            <div
+              [routerLink]="
+                warehouse() ? ['/inventory/warehouses', warehouse()?.id] : null
+              "
+              [class.cursor-pointer]="warehouse()"
+              class="card-premium p-6 hover:border-primary/50 transition-all group relative overflow-hidden"
+            >
+              @if (warehouse()) {
+                <div
+                  class="absolute -right-4 -top-4 w-16 h-16 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-700"
+                ></div>
+                <h4
+                  class="text-xs font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center justify-between"
+                >
+                  Logistics Node
+                  <svg
+                    class="w-4 h-4 text-slate-300 group-hover:text-primary transition-all"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M14 5l7 7-7 7"
+                    />
+                  </svg>
+                </h4>
+                <div class="flex items-center gap-5">
+                  <div
+                    class="w-14 h-14 bg-slate-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-amber-500 font-black group-hover:bg-amber-500 group-hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/10"
+                  >
+                    <svg
+                      class="w-8 h-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      ></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p
+                      class="text-lg font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors leading-tight"
+                    >
+                      {{ warehouse()?.name }}
+                    </p>
+                    <p
+                      class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1"
+                    >
+                      {{ warehouse()?.location }}
+                    </p>
+                    <div class="mt-3 flex items-center gap-2">
+                      <span
+                        class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                        >Load:</span
+                      >
+                      <span class="text-xs font-black text-primary"
+                        >{{ warehouse()?.utilization }}% Capacity</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <p class="text-xs font-bold text-slate-500 italic">
+                  No warehouse assigned
+                </p>
+              }
             </div>
           </div>
         } @else if (activeTab() === 2) {
@@ -541,18 +557,14 @@ import {
   ],
 })
 export class ProductDetailComponent implements OnInit {
+  public service = inject(ProductsService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private dataService = inject(InventoryDataService);
 
-  isLoading = signal(true);
-  isActionLoading = signal(false);
   activeTab = signal(0);
 
   productId = computed(() => Number(this.route.snapshot.paramMap.get("id")));
-  product = computed(() =>
-    this.dataService.products().find((p) => p.id === this.productId()),
-  );
+  product = computed(() => this.service.getProduct(this.productId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
     { label: "Dashboard", link: "/dashboard" },
@@ -563,25 +575,17 @@ export class ProductDetailComponent implements OnInit {
 
   supplier = computed(() => {
     const p = this.product();
-    return p?.supplierId
-      ? this.dataService.suppliers().find((s) => s.id === p.supplierId)
-      : null;
+    return p?.supplierId ? this.service.getSupplierById(p.supplierId) : null;
   });
 
   warehouse = computed(() => {
     const p = this.product();
-    return p?.warehouseId
-      ? this.dataService.warehouses().find((w) => w.id === p.warehouseId)
-      : null;
+    return p?.warehouseId ? this.service.getWarehouseById(p.warehouseId) : null;
   });
 
   relatedOrders = computed(() => {
     const p = this.product();
-    return p
-      ? this.dataService
-          .orders()
-          .filter((o) => o.items.some((i) => i.productId === p.id))
-      : [];
+    return p ? this.service.getOrdersByProductId(p.id) : [];
   });
 
   stockStatus = computed(() => {
@@ -593,24 +597,25 @@ export class ProductDetailComponent implements OnInit {
   });
 
   ngOnInit() {
-    setTimeout(() => this.isLoading.set(false), 1500);
+    this.service.loadProducts();
   }
 
   goToEdit() {
-    this.router.navigate(["/inventory/products", this.productId, "edit"]);
+    this.router.navigate(["/inventory/products", this.productId(), "edit"]);
   }
 
   handleAction() {
-    this.isActionLoading.set(true);
+    // Placeholder logic for "Order More Stock"
+    this.service.isActionLoading.set(true);
     setTimeout(() => {
-      this.isActionLoading.set(false);
+      this.service.isActionLoading.set(false);
     }, 2000);
   }
 
   getQuantityInOrder(orderId: string): number {
     const p = this.product();
     if (!p) return 0;
-    const order = this.dataService.orders().find((o) => o.id === orderId);
+    const order = this.relatedOrders().find((o) => o.id === orderId);
     return order?.items.find((i) => i.productId === p.id)?.qty || 0;
   }
 }

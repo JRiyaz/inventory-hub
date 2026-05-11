@@ -1,12 +1,8 @@
 import { Component, inject, signal, computed, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import {
-  InventoryDataService,
-  DetailLayoutComponent,
-  StatusBadgeComponent,
-  Breadcrumb,
-} from "ui-shared";
+import { DetailLayoutComponent, Breadcrumb } from "ui-shared";
+import { SuppliersService } from "../suppliers.service";
 
 @Component({
   selector: "app-supplier-detail",
@@ -25,7 +21,7 @@ import {
       actionLabel="Create Purchase Order"
       editLabel="Edit Supplier"
       [tabs]="['Overview', 'Products', 'Purchase Orders', 'Compliance']"
-      [loading]="isActionLoading()"
+      [loading]="service.isActionLoading()"
       (tabChanged)="activeTab.set($event)"
       (action)="handleAction()"
       (edit)="goToEdit()"
@@ -328,19 +324,15 @@ import {
     `,
   ],
 })
-export class SupplierDetailComponent {
+export class SupplierDetailComponent implements OnInit {
+  public service = inject(SuppliersService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private dataService = inject(InventoryDataService);
 
-  isLoading = signal(true);
-  isActionLoading = signal(false);
   activeTab = signal(0);
 
   supplierId = computed(() => this.route.snapshot.paramMap.get("id") || "");
-  supplier = computed(() =>
-    this.dataService.suppliers().find((s) => s.id === this.supplierId()),
-  );
+  supplier = computed(() => this.service.getSupplier(this.supplierId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
     { label: "Dashboard", link: "/dashboard" },
@@ -348,14 +340,13 @@ export class SupplierDetailComponent {
     { label: "Suppliers", link: "/inventory/suppliers" },
     { label: this.supplier()?.name || "Detail" },
   ]);
+
   products = computed(() =>
-    this.dataService
-      .products()
-      .filter((p) => p.supplierId === this.supplierId()),
+    this.service.getProductsBySupplierId(this.supplierId()),
   );
 
   ngOnInit() {
-    setTimeout(() => this.isLoading.set(false), 1500);
+    this.service.loadSuppliers();
   }
 
   goToEdit() {
@@ -366,9 +357,9 @@ export class SupplierDetailComponent {
   }
 
   handleAction() {
-    this.isActionLoading.set(true);
+    this.service.isActionLoading.set(true);
     setTimeout(() => {
-      this.isActionLoading.set(false);
+      this.service.isActionLoading.set(false);
     }, 2000);
   }
 }

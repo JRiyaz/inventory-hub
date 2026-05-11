@@ -9,13 +9,14 @@ import {
   signal,
   ViewEncapsulation,
 } from "@angular/core";
+import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { RouterModule } from "@angular/router";
 import {
   CustomDatePickerComponent,
-  InventoryDataService,
   PageHeaderComponent,
   SkeletonComponent,
 } from "ui-shared";
+import { AnalyticsService } from "./analytics.service";
 
 @Component({
   selector: "app-analytics",
@@ -33,16 +34,16 @@ import {
       class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in pb-20"
     >
       <lib-page-header
-        title="Business Intelligence"
+        title="Inventory Analytics"
         subtitle="Real-time analytics and performance metrics across the inventory ecosystem."
-        [stats]="summaryStats()"
+        [stats]="service.summaryStats()"
         [breadcrumbs]="breadcrumbs"
-        [loading]="isLoading()"
+        [loading]="service.isLoading()"
         actionLabel="Export Report"
         backLink="/dashboard"
       ></lib-page-header>
 
-      @if (isLoading()) {
+      @if (service.isLoading()) {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           <div class="lg:col-span-2 card-premium p-6 h-[400px]">
             <lib-skeleton width="100%" height="100%"></lib-skeleton>
@@ -73,7 +74,7 @@ import {
                 <p
                   class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest"
                 >
-                  {{ activeDuration() }} Performance Overview
+                  {{ service.activeDuration() }} Performance Overview
                 </p>
               </div>
 
@@ -82,11 +83,11 @@ import {
                 <div
                   class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/5"
                 >
-                  @for (d of ["Week", "Month", "Year"]; track d) {
+                  @for (d of durations; track d) {
                     <button
-                      (click)="activeDuration.set(d)"
+                      (click)="service.activeDuration.set(d)"
                       [class]="
-                        activeDuration() === d
+                        service.activeDuration() === d
                           ? 'bg-white dark:bg-primary shadow-sm text-primary dark:text-white'
                           : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                       "
@@ -102,9 +103,9 @@ import {
                   class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/5"
                 >
                   <button
-                    (click)="activeGraphType.set('line')"
+                    (click)="service.activeGraphType.set('line')"
                     [class]="
-                      activeGraphType() === 'line'
+                      service.activeGraphType() === 'line'
                         ? 'bg-white dark:bg-primary shadow-sm text-primary dark:text-white'
                         : 'text-slate-500'
                     "
@@ -126,9 +127,9 @@ import {
                     </svg>
                   </button>
                   <button
-                    (click)="activeGraphType.set('bar')"
+                    (click)="service.activeGraphType.set('bar')"
                     [class]="
-                      activeGraphType() === 'bar'
+                      service.activeGraphType() === 'bar'
                         ? 'bg-white dark:bg-primary shadow-sm text-primary dark:text-white'
                         : 'text-slate-500'
                     "
@@ -154,8 +155,8 @@ import {
                 <!-- Modernized Date Picker -->
                 <div class="relative min-w-[140px]">
                   <lib-custom-datepicker
-                    [value]="selectedDate()"
-                    (dateChange)="selectedDate.set($event)"
+                    [value]="service.selectedDate()"
+                    (dateChange)="service.selectedDate.set($event)"
                     placeholder="Filter Date"
                   ></lib-custom-datepicker>
                 </div>
@@ -202,17 +203,17 @@ import {
                   />
                 }
 
-                @if (activeGraphType() === "line") {
+                @if (service.activeGraphType() === "line") {
                   <!-- Area -->
                   <path
-                    [attr.d]="lineChartPath() + ' L 1000 300 L 0 300 Z'"
+                    [attr.d]="service.lineChartPath() + ' L 1000 300 L 0 300 Z'"
                     fill="url(#chartGradient)"
                     class="animate-chart-fill"
                   />
 
                   <!-- Line -->
                   <path
-                    [attr.d]="lineChartPath()"
+                    [attr.d]="service.lineChartPath()"
                     fill="none"
                     stroke="var(--primary-color, #3b82f6)"
                     stroke-width="4"
@@ -222,7 +223,7 @@ import {
                   />
 
                   <!-- Data Points -->
-                  @for (point of lineChartPoints(); track $index) {
+                  @for (point of service.lineChartPoints(); track $index) {
                     <circle
                       [attr.cx]="point.x"
                       [attr.cy]="point.y"
@@ -235,7 +236,7 @@ import {
                   }
                 } @else {
                   <!-- Bar Chart -->
-                  @for (point of lineChartPoints(); track $index) {
+                  @for (point of service.lineChartPoints(); track $index) {
                     <rect
                       [attr.x]="point.x - 15"
                       [attr.y]="point.y"
@@ -254,10 +255,10 @@ import {
             <div
               class="flex justify-between mt-6 px-2 text-[9px] font-black text-slate-400 uppercase tracking-widest"
             >
-              @if (activeDuration() === "Week") {
+              @if (service.activeDuration() === "Week") {
                 <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span
                 ><span>Fri</span><span>Sat</span><span>Sun</span>
-              } @else if (activeDuration() === "Month") {
+              } @else if (service.activeDuration() === "Month") {
                 <span>Week 1</span><span>Week 2</span><span>Week 3</span
                 ><span>Week 4</span>
               } @else {
@@ -283,7 +284,7 @@ import {
               class="flex-1 flex flex-col items-center justify-center relative"
             >
               <svg class="w-48 h-48 rotate-[-90deg]">
-                @for (segment of donutSegments(); track segment.label) {
+                @for (segment of service.donutSegments(); track segment.label) {
                   <circle
                     cx="96"
                     cy="96"
@@ -303,7 +304,7 @@ import {
                 <span
                   class="text-2xl font-black text-slate-900 dark:text-white leading-none"
                   >{{
-                    totalValue() | currency: "USD" : "symbol" : "1.0-0"
+                    service.totalValue() | currency: "USD" : "symbol" : "1.0-0"
                   }}</span
                 >
                 <span
@@ -314,7 +315,7 @@ import {
             </div>
 
             <div class="mt-8 space-y-2">
-              @for (segment of donutSegments(); track segment.label) {
+              @for (segment of service.donutSegments(); track segment.label) {
                 <div
                   class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
                   (click)="activeSection.set(segment.label)"
@@ -341,7 +342,7 @@ import {
 
         <!-- Section Details Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-          @for (section of sections(); track section.id) {
+          @for (section of service.sections(); track section.id) {
             <div
               class="card-premium p-6 group cursor-pointer hover:border-primary/50 transition-all flex flex-col h-[200px]"
               [class.border-primary]="activeSection() === section.title"
@@ -353,7 +354,10 @@ import {
                   [style.background-color]="section.color + '20'"
                   [style.color]="section.color"
                 >
-                  <div class="w-5 h-5" [innerHTML]="section.icon"></div>
+                  <div
+                    class="w-5 h-5"
+                    [innerHTML]="sanitize(section.icon)"
+                  ></div>
                 </div>
                 <div class="flex flex-col items-end">
                   <span
@@ -611,18 +615,16 @@ import {
   ],
 })
 export class AnalyticsComponent implements OnInit {
-  private dataService = inject(InventoryDataService);
-
-  isLoading = signal(true);
-  activeSection = signal<string | null>(null);
-  activeDuration = signal<string>("Month");
-  activeGraphType = signal<"line" | "bar">("line");
-  selectedDate = signal<string>(new Date().toISOString().split("T")[0]);
+  public service = inject(AnalyticsService);
   private renderer = inject(Renderer2);
+  private sanitizer = inject(DomSanitizer);
 
-  onDateChange(event: any) {
-    this.selectedDate.set(event.target.value);
+  sanitize(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
+
+  activeSection = signal<string | null>(null);
+  readonly durations = ["Week", "Month", "Year"] as const;
 
   constructor() {
     effect(() => {
@@ -634,241 +636,25 @@ export class AnalyticsComponent implements OnInit {
       }
     });
   }
+
   breadcrumbs = [
     { label: "Dashboard", link: "/dashboard" },
     { label: "Inventory", link: "/inventory" },
-    { label: "Intelligence" },
+    { label: "Analytics" },
   ];
-
-  products = this.dataService.products;
-  orders = this.dataService.orders;
-  suppliers = this.dataService.suppliers;
-  customers = this.dataService.customers;
-
-  summaryStats = computed(() => [
-    {
-      label: "Gross Revenue",
-      value: this.orders()
-        .reduce((acc, o) => acc + (o.totalAmount || 0), 0)
-        .toLocaleString("en-US", {
-          style: "currency",
-          currency: "USD",
-          maximumFractionDigits: 0,
-        }),
-      color: "primary" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    },
-    {
-      label: "Stock Valuation",
-      value: this.products()
-        .reduce((acc, p) => acc + p.price * p.stock, 0)
-        .toLocaleString("en-US", {
-          style: "currency",
-          currency: "USD",
-          maximumFractionDigits: 0,
-        }),
-      color: "success" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
-    },
-    {
-      label: "Order Fulfillment",
-      value: "94.2%",
-      color: "warning" as const,
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-    },
-  ]);
-
-  sections = computed(() => [
-    {
-      id: 1,
-      title: "Products",
-      value: this.products().length,
-      change: "8.4%",
-      color: "#3b82f6",
-      description:
-        "Inventory SKU growth and category diversification analysis.",
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
-      miniChart: [40, 70, 45, 90, 65],
-    },
-    {
-      id: 2,
-      title: "Orders",
-      value: this.orders().length,
-      change: "12.1%",
-      color: "#8b5cf6",
-      description: "Sales velocity and average order value trends.",
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>',
-      miniChart: [30, 50, 80, 40, 95],
-    },
-    {
-      id: 3,
-      title: "Suppliers",
-      value: this.suppliers().length,
-      change: "2.5%",
-      color: "#10b981",
-      description: "Supply chain reliability and procurement efficiency.",
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
-      miniChart: [60, 40, 70, 85, 50],
-    },
-    {
-      id: 4,
-      title: "Customers",
-      value: this.customers().length,
-      change: "15.8%",
-      color: "#f59e0b",
-      description: "Retention rates and lifetime value segmentation.",
-      icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>',
-      miniChart: [20, 40, 30, 60, 80],
-    },
-  ]);
-
-  totalValue = computed(() =>
-    this.products().reduce((acc, p) => acc + p.price * p.stock, 0),
-  );
-
-  donutSegments = computed(() => {
-    const categories = ["Industrial", "Electronics", "Raw Materials"];
-    const colors = ["#3b82f6", "#8b5cf6", "#10b981"];
-    const total = this.totalValue();
-
-    let currentOffset = 0;
-    const circumference = 2 * Math.PI * 70;
-
-    return categories.map((cat, i) => {
-      const value = this.products()
-        .filter((p) => p.category === cat)
-        .reduce((acc, p) => acc + p.price * p.stock, 0);
-
-      const percentage = Math.round((value / total) * 100);
-      const dashArray = `${(percentage / 100) * circumference} ${circumference}`;
-      const dashOffset = -currentOffset;
-
-      currentOffset += (percentage / 100) * circumference;
-
-      return {
-        label: cat,
-        percentage,
-        color: colors[i],
-        dashArray,
-        dashOffset,
-      };
-    });
-  });
-
-  lineChartPoints = computed(() => {
-    const orders = this.orders();
-    const duration = this.activeDuration();
-    const date = this.selectedDate();
-
-    // Group orders by date and sort
-    const dailyRevenue: { [key: string]: number } = {};
-    orders.forEach((o) => {
-      dailyRevenue[o.date] = (dailyRevenue[o.date] || 0) + (o.totalAmount || 0);
-    });
-
-    let sortedDates = Object.keys(dailyRevenue).sort();
-
-    // Filter by duration (Simulation)
-    if (duration === "Week") {
-      sortedDates = sortedDates.slice(-7);
-    } else if (duration === "Month") {
-      sortedDates = sortedDates.slice(-30);
-    }
-
-    const points = sortedDates.map((date) => dailyRevenue[date]);
-
-    if (points.length === 0)
-      return [
-        { x: 0, y: 150 },
-        { x: 1000, y: 150 },
-      ];
-
-    const max = Math.max(...points, 1);
-    const stepX = 1000 / Math.max(points.length - 1, 1);
-
-    return points.map((val, i) => ({
-      x: i * stepX,
-      y: 300 - (val / max) * 250,
-    }));
-  });
-
-  lineChartPath = computed(() => {
-    const points = this.lineChartPoints();
-    return `M ${points.map((p) => `${p.x} ${p.y}`).join(" L ")}`;
-  });
 
   activeDetailStats = computed(() => {
     const section = this.activeSection();
-    if (section === "Products") {
-      return [
-        { label: "Active SKUs", value: this.products().length, change: "4.2%" },
-        {
-          label: "Out of Stock",
-          value: this.products().filter((p) => p.stock === 0).length + " Items",
-          change: "-20%",
-        },
-        {
-          label: "Avg Unit Price",
-          value: (
-            this.products().reduce((acc, p) => acc + p.price, 0) /
-            (this.products().length || 1)
-          ).toLocaleString("en-US", { style: "currency", currency: "USD" }),
-          change: "1.2%",
-        },
-      ];
-    }
-    if (section === "Orders") {
-      return [
-        {
-          label: "Pending Orders",
-          value: this.orders().filter((o) => o.status === "Pending").length,
-          change: "12%",
-        },
-        {
-          label: "Avg Order Value",
-          value: (
-            this.orders().reduce((acc, o) => acc + (o.totalAmount || 0), 0) /
-            (this.orders().length || 1)
-          ).toLocaleString("en-US", { style: "currency", currency: "USD" }),
-          change: "8.5%",
-        },
-        { label: "Completion Rate", value: "92.4%", change: "2.1%" },
-      ];
-    }
-    if (section === "Suppliers") {
-      return [
-        {
-          label: "Active Vendors",
-          value: this.suppliers().length,
-          change: "0%",
-        },
-        {
-          label: "Avg Reliability",
-          value:
-            (
-              this.suppliers().reduce((acc, s) => acc + s.reliability, 0) /
-              (this.suppliers().length || 1)
-            ).toFixed(1) + "%",
-          change: "1.5%",
-        },
-        { label: "Delayed POs", value: "2", change: "-5%" },
-      ];
-    }
-    if (section === "Customers") {
-      return [
-        {
-          label: "Total Client Base",
-          value: this.customers().length,
-          change: "15%",
-        },
-        { label: "Retention Rate", value: "88.5%", change: "4.2%" },
-        { label: "New Leads", value: "12", change: "25%" },
-      ];
-    }
-    return [];
+    if (!section) return [];
+
+    return [
+      { label: "Volume", value: "1.2M", change: "+12%" },
+      { label: "Efficiency", value: "98.4%", change: "+2%" },
+      { label: "Stability", value: "High", change: "0%" },
+    ];
   });
 
-  ngOnInit(): void {
-    setTimeout(() => this.isLoading.set(false), 1200);
+  ngOnInit() {
+    this.service.loadAnalytics();
   }
 }

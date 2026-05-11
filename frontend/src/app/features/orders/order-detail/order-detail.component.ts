@@ -1,52 +1,65 @@
-import { Component, signal, OnInit, inject, computed } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
+import { Component, inject, OnInit, signal, computed } from "@angular/core";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
-  InventoryDataService,
   DetailLayoutComponent,
-  StatusBadgeComponent,
-  Breadcrumb,
+  EmptyStateComponent,
+  SkeletonComponent,
 } from "ui-shared";
+import { OrdersService } from "../orders.service";
 
 @Component({
   selector: "app-order-detail",
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     RouterModule,
+    SkeletonComponent,
     DetailLayoutComponent,
-    StatusBadgeComponent,
+    EmptyStateComponent,
   ],
   template: `
-    <lib-detail-layout
-      [title]="'Order #' + (order()?.id || '...')"
-      [subtitle]="
-        'Customer: ' + (order()?.customerName || order()?.customer || 'Unknown')
-      "
-      [status]="order()?.status || 'Unknown'"
-      [breadcrumbs]="breadcrumbs()"
-      backLink="/inventory/orders"
-      backLabel="Back to Tracking"
-      actionLabel="Print Invoice"
-      editLabel="Edit Order"
-      [tabs]="['Items', 'Customer Info', 'Payment Details', 'Shipping']"
-      [loading]="isActionLoading()"
-      (tabChanged)="activeTab.set($event)"
-      (action)="handleAction()"
-      (edit)="goToEdit()"
-      loaderType="bloom"
-    >
-      <div top-content>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Fulfillment Card -->
-          <div
-            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
-          >
-            <div class="flex items-center gap-4 flex-1">
+    <div class="p-3 sm:p-6 max-w-7xl mx-auto min-h-screen animate-fade-in">
+      @if (service.isLoading()) {
+        <div class="space-y-6">
+          <div class="flex items-center gap-4 mb-8">
+            <lib-skeleton
+              width="40px"
+              height="40px"
+              shape="circle"
+            ></lib-skeleton>
+            <div class="space-y-2">
+              <lib-skeleton width="200px" height="1.5rem"></lib-skeleton>
+              <lib-skeleton width="120px" height="0.75rem"></lib-skeleton>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+              <lib-skeleton width="100%" height="400px"></lib-skeleton>
+            </div>
+            <lib-skeleton width="100%" height="400px"></lib-skeleton>
+          </div>
+        </div>
+      } @else if (order()) {
+        <lib-detail-layout
+          [title]="'Order #' + order()?.id"
+          [subtitle]="'Placed on ' + (order()?.date | date: 'mediumDate')"
+          [status]="order()?.status || 'Unknown'"
+          [statusColor]="getStatusColor(order()?.status)"
+          [breadcrumbs]="breadcrumbs()"
+          backLink="/inventory/orders"
+          [isLoading]="service.isLoading()"
+          [isActionLoading]="service.isActionLoading()"
+          actionLabel="Edit Order"
+          (action)="editOrder()"
+        >
+          <!-- Top Stats Header Slots -->
+          <div top-content class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              class="card-premium p-4 border-l-4 border-l-primary flex items-center gap-4"
+            >
               <div
-                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
+                class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
               >
                 <svg
                   class="w-5 h-5"
@@ -58,46 +71,25 @@ import {
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M5 13l4 4L19 7"
-                  />
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
                 </svg>
               </div>
               <div>
-                <h4
-                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                >
-                  Fulfillment Status
-                </h4>
-                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
-                  Order processing in progress.
+                <p class="text-[10px] font-black uppercase text-slate-400">
+                  Total Amount
+                </p>
+                <p class="text-lg font-black text-slate-900 dark:text-white">
+                  {{ order()?.amount | currency }}
                 </p>
               </div>
             </div>
 
-            <div class="flex-1 max-w-[200px]">
+            <div
+              class="card-premium p-4 border-l-4 border-l-amber-500 flex items-center gap-4"
+            >
               <div
-                class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest mb-1.5"
-              >
-                <span class="text-slate-400">Progress</span>
-                <span class="text-primary">65%</span>
-              </div>
-              <div
-                class="h-1.5 w-full bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden shadow-inner"
-              >
-                <div
-                  class="h-full bg-primary w-[65%] shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]"
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Priority Card -->
-          <div
-            class="card-premium p-4 flex items-center justify-between gap-6 overflow-hidden"
-          >
-            <div class="flex items-center gap-4 flex-1">
-              <div
-                class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"
+                class="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500"
               >
                 <svg
                   class="w-5 h-5"
@@ -109,313 +101,296 @@ import {
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  ></path>
                 </svg>
               </div>
               <div>
-                <h4
-                  class="text-[10px] font-black uppercase tracking-widest text-slate-400"
-                >
-                  Shipping Priority
-                </h4>
-                <p class="text-[9px] text-slate-500 font-medium italic mt-0.5">
-                  Determined by SLA requirements.
+                <p class="text-[10px] font-black uppercase text-slate-400">
+                  Total Items
+                </p>
+                <p class="text-lg font-black text-slate-900 dark:text-white">
+                  {{ getTotalItems() }} Units
                 </p>
               </div>
             </div>
 
-            <div class="text-right px-4">
-              <p
-                class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5"
+            <div
+              class="card-premium p-4 border-l-4 border-l-emerald-500 flex items-center gap-4"
+            >
+              <div
+                class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"
               >
-                Delivery Tier
-              </p>
-              <p class="text-xl font-black text-amber-500 uppercase">
-                {{ order()?.priority ? "Express" : "Standard" }}
-              </p>
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <p class="text-[10px] font-black uppercase text-slate-400">
+                  Payment Status
+                </p>
+                <p class="text-lg font-black text-slate-900 dark:text-white">
+                  {{ isPaid() ? "Fully Paid" : "Balance Due" }}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div header-icon>
-        <svg
-          class="w-10 h-10"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.5"
-            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-          ></path>
-        </svg>
-      </div>
 
-      <div sidebar-info class="space-y-6">
-        <div class="space-y-1">
-          <p
-            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
-          >
-            Total Amount
-          </p>
-          <p class="text-xl font-black text-primary">
-            {{ order()?.totalAmount || order()?.amount || 0 | currency }}
-          </p>
-        </div>
-        <div class="space-y-1">
-          <p
-            class="text-[10px] font-black text-slate-400 uppercase tracking-widest"
-          >
-            Order Date
-          </p>
-          <p class="text-sm font-bold text-slate-900 dark:text-white">
-            {{ order()?.date }}
-          </p>
-        </div>
-        <div class="pt-4 border-t border-slate-100 dark:border-white/5">
-          <p
-            class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1"
-          >
-            SLA Compliance
-          </p>
-          <p class="text-xs font-black text-emerald-500 uppercase">
-            Within Bounds
-          </p>
-        </div>
-      </div>
-
-      <div sidebar-extra>
-        <h4
-          class="text-white text-xs font-black uppercase tracking-widest mb-4"
-        >
-          Internal Notes
-        </h4>
-        <p class="text-[10px] text-white/60 leading-relaxed font-medium italic">
-          Customer requested eco-friendly packaging for this shipment. Verify
-          all components for thermal compliance before shipping.
-        </p>
-      </div>
-
-      <div tab-content class="animate-fade-in">
-        @if (activeTab() === 0) {
-          <div class="space-y-4">
+          <!-- Main Content Slot -->
+          <div tab-content class="space-y-6">
             <div class="card-premium overflow-hidden">
-              <table class="w-full text-left border-collapse">
-                <thead
-                  class="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]"
+              <div
+                class="px-6 py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5 flex items-center justify-between"
+              >
+                <h3
+                  class="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white"
                 >
-                  <tr>
-                    <th
-                      (click)="toggleSort('name')"
-                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 cursor-pointer group"
-                    >
-                      <div class="flex items-center gap-2">
-                        <span class="group-hover:text-primary transition-colors"
-                          >Product</span
-                        >
-                        <svg
-                          class="w-2.5 h-2.5 transition-all duration-300"
-                          [class.text-primary]="sortField() === 'name'"
-                          [class.text-slate-200]="sortField() !== 'name'"
-                          [class.rotate-180]="
-                            sortField() === 'name' && sortOrder() === 'desc'
-                          "
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="3"
-                            d="M19 9l-7 7-7-7"
-                          ></path>
-                        </svg>
-                      </div>
-                    </th>
-                    <th
-                      (click)="toggleSort('qty')"
-                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center cursor-pointer group"
-                    >
-                      <div class="flex items-center justify-center gap-2">
-                        <span class="group-hover:text-primary transition-colors"
-                          >Qty</span
-                        >
-                        <svg
-                          class="w-2.5 h-2.5 transition-all duration-300"
-                          [class.text-primary]="sortField() === 'qty'"
-                          [class.text-slate-200]="sortField() !== 'qty'"
-                          [class.rotate-180]="
-                            sortField() === 'qty' && sortOrder() === 'desc'
-                          "
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="3"
-                            d="M19 9l-7 7-7-7"
-                          ></path>
-                        </svg>
-                      </div>
-                    </th>
-                    <th
-                      (click)="toggleSort('price')"
-                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right cursor-pointer group"
-                    >
-                      <div class="flex items-center justify-end gap-2">
-                        <span class="group-hover:text-primary transition-colors"
-                          >Price</span
-                        >
-                        <svg
-                          class="w-2.5 h-2.5 transition-all duration-300"
-                          [class.text-primary]="sortField() === 'price'"
-                          [class.text-slate-200]="sortField() !== 'price'"
-                          [class.rotate-180]="
-                            sortField() === 'price' && sortOrder() === 'desc'
-                          "
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="3"
-                            d="M19 9l-7 7-7-7"
-                          ></path>
-                        </svg>
-                      </div>
-                    </th>
-                    <th
-                      class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right"
-                    >
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody
-                  class="divide-y divide-slate-100 dark:divide-white/[0.04]"
+                  Order Line Items
+                </h3>
+                <span
+                  class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg"
+                  >{{ order()?.items?.length }} Items</span
                 >
-                  @for (item of order()?.items; track item.productId) {
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
                     <tr
-                      class="hover:bg-slate-50/50 dark:hover:bg-white/[0.01] transition-all group"
+                      class="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-white/5"
                     >
-                      <td class="px-6 py-4">
-                        <a
-                          [routerLink]="['/inventory/products', item.productId]"
-                          class="text-sm font-black text-slate-900 dark:text-white hover:text-primary transition-colors"
-                        >
-                          {{ item.name }}
-                        </a>
-                        <p
-                          class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5"
-                        >
-                          SKU: PROD-{{ item.productId }}
-                        </p>
-                      </td>
-                      <td
-                        class="px-6 py-4 text-center font-bold text-slate-600 dark:text-slate-400"
+                      <th class="px-6 py-4">Product</th>
+                      <th class="px-6 py-4 text-center">Quantity</th>
+                      <th class="px-6 py-4 text-right">Unit Price</th>
+                      <th class="px-6 py-4 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-white/5">
+                    @for (item of order()?.items; track item.productId) {
+                      <tr
+                        class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group"
                       >
-                        {{ item.qty }}
+                        <td class="px-6 py-4">
+                          <div class="flex items-center gap-3">
+                            <div
+                              class="w-8 h-8 bg-slate-100 dark:bg-white/10 rounded-lg flex items-center justify-center text-slate-400 group-hover:text-primary transition-colors"
+                            >
+                              <svg
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                                ></path>
+                              </svg>
+                            </div>
+                            <div>
+                              <p
+                                class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors"
+                              >
+                                {{ item.name }}
+                              </p>
+                              <p
+                                class="text-[9px] font-black uppercase text-slate-400"
+                              >
+                                SKU: #{{ item.productId }}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                          <span
+                            class="text-xs font-black text-slate-700 dark:text-slate-300"
+                            >{{ item.qty }}</span
+                          >
+                        </td>
+                        <td class="px-6 py-4 text-right text-xs font-bold">
+                          {{ item.price | currency }}
+                        </td>
+                        <td
+                          class="px-6 py-4 text-right text-xs font-black text-primary"
+                        >
+                          {{ item.price * item.qty | currency }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr
+                      class="bg-slate-50/50 dark:bg-white/5 font-black text-slate-900 dark:text-white"
+                    >
+                      <td colspan="3" class="px-6 py-4 text-right text-xs">
+                        Grand Total
                       </td>
-                      <td
-                        class="px-6 py-4 text-right font-mono text-xs text-slate-500"
-                      >
-                        {{ item.price | currency }}
-                      </td>
-                      <td class="px-6 py-4 text-right font-black text-primary">
-                        {{ item.qty * item.price | currency }}
+                      <td class="px-6 py-4 text-right text-base text-primary">
+                        {{ order()?.amount | currency }}
                       </td>
                     </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
-        } @else if (activeTab() === 1) {
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div
-              *ngIf="customer()"
-              [routerLink]="['/inventory/customers', customer()?.id]"
-              class="card-premium p-6 hover:border-primary transition-all cursor-pointer group"
-            >
-              <div class="flex items-center gap-4 mb-6">
-                <div
-                  class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary font-black text-xl group-hover:bg-primary group-hover:text-white transition-all"
-                >
-                  {{ customer()?.name?.[0] }}
-                </div>
-                <div>
-                  <p class="text-lg font-black text-slate-900 dark:text-white">
-                    {{ customer()?.name }}
-                  </p>
-                  <p class="text-xs text-slate-500 font-medium">
-                    {{ customer()?.email }}
-                  </p>
-                </div>
-              </div>
-              <div
-                class="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-white/5 pt-4"
-              >
-                <div>
-                  <p
-                    class="text-[9px] font-black uppercase text-slate-400 tracking-widest"
-                  >
-                    Phone
-                  </p>
-                  <p
-                    class="text-xs font-bold text-slate-700 dark:text-slate-300"
-                  >
-                    {{ customer()?.phone }}
-                  </p>
-                </div>
-                <div>
-                  <p
-                    class="text-[9px] font-black uppercase text-slate-400 tracking-widest"
-                  >
-                    Client Since
-                  </p>
-                  <p
-                    class="text-xs font-bold text-slate-700 dark:text-slate-300"
-                  >
-                    {{ customer()?.joinDate }}
-                  </p>
-                </div>
+                  </tfoot>
+                </table>
               </div>
             </div>
 
+            <!-- Payment Timeline -->
             <div class="card-premium p-6">
-              <h4
-                class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4"
+              <h3
+                class="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white mb-6"
               >
-                Billing Address
-              </h4>
-              <p
-                class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed"
-              >
-                Industrial Park East, Suite 400<br />
-                77 Quantum Valley Road<br />
-                Silicon Prairie, TX 75001<br />
-                United States
-              </p>
+                Payment History
+              </h3>
+              <div class="space-y-6">
+                @for (
+                  payment of payments();
+                  track payment.id;
+                  let last = $last
+                ) {
+                  <div class="flex gap-4 relative">
+                    @if (!last) {
+                      <div
+                        class="absolute left-[15px] top-8 bottom-[-24px] w-[2px] bg-slate-100 dark:bg-white/5"
+                      ></div>
+                    }
+                    <div
+                      class="w-8 h-8 rounded-full border-2 border-white dark:border-[#0f172a] shadow-sm flex items-center justify-center flex-shrink-0 z-10"
+                      [class]="
+                        payment.status === 'Completed'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-amber-500 text-white'
+                      "
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        ></path>
+                      </svg>
+                    </div>
+                    <div class="flex-1 pt-0.5">
+                      <div class="flex items-center justify-between mb-1">
+                        <p
+                          class="text-xs font-black text-slate-900 dark:text-white"
+                        >
+                          {{ payment.method }} Payment
+                        </p>
+                        <p class="text-[10px] font-black text-primary">
+                          {{ payment.amount | currency }}
+                        </p>
+                      </div>
+                      <p class="text-[10px] font-bold text-slate-400">
+                        {{ payment.date | date: "longDate" }} • Transaction #{{
+                          payment.id
+                        }}
+                      </p>
+                    </div>
+                  </div>
+                } @empty {
+                  <div
+                    class="py-8 text-center bg-slate-50 dark:bg-white/5 rounded-xl border-2 border-dashed border-slate-100 dark:border-white/10"
+                  >
+                    <p
+                      class="text-[10px] font-black uppercase tracking-widest text-slate-400"
+                    >
+                      No payment records found
+                    </p>
+                  </div>
+                }
+              </div>
             </div>
           </div>
-        } @else if (activeTab() === 2) {
-          <div class="space-y-4">
-            @for (pay of payments(); track pay.id) {
-              <div class="card-premium p-5 flex items-center justify-between">
-                <div class="flex items-center gap-4">
+
+          <!-- Sidebar Content Slot -->
+          <div sidebar-info class="space-y-6">
+            <!-- Customer Info -->
+            <div class="card-premium p-6">
+              <h3
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6"
+              >
+                Customer Profile
+              </h3>
+              @if (customer()) {
+                <div class="space-y-4">
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-lg font-black"
+                    >
+                      {{ customer()?.name?.charAt(0) }}
+                    </div>
+                    <div>
+                      <p
+                        class="text-sm font-black text-slate-900 dark:text-white hover:text-primary transition-colors cursor-pointer"
+                        [routerLink]="['/inventory/customers', customer()?.id]"
+                      >
+                        {{ customer()?.name }}
+                      </p>
+                      <span
+                        class="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 text-[8px] font-black rounded uppercase"
+                        >{{ customer()?.status }}</span
+                      >
+                    </div>
+                  </div>
                   <div
-                    class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500"
+                    class="pt-4 border-t border-slate-100 dark:border-white/5 space-y-3"
                   >
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] font-bold text-slate-400"
+                        >Customer ID</span
+                      >
+                      <span
+                        class="text-[10px] font-black text-slate-700 dark:text-slate-300"
+                        >#{{ customer()?.id }}</span
+                      >
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] font-bold text-slate-400"
+                        >Entity Type</span
+                      >
+                      <span
+                        class="text-[10px] font-black text-slate-700 dark:text-slate-300"
+                        >Corporate</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <p class="text-xs font-bold text-slate-500">
+                  {{ order()?.customer }}
+                </p>
+              }
+            </div>
+
+            <!-- Shipping Details -->
+            <div class="card-premium p-6">
+              <h3
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6"
+              >
+                Logistics & Shipping
+              </h3>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
                     <svg
-                      class="w-5 h-5"
+                      class="w-4 h-4 text-slate-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -424,121 +399,95 @@ import {
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
                       ></path>
                     </svg>
-                  </div>
-                  <div>
-                    <div class="flex items-center gap-2 mb-0.5">
-                      <p
-                        class="text-sm font-black text-slate-900 dark:text-white"
-                      >
-                        {{ pay.method }} Payment
-                      </p>
-                      <lib-status-badge
-                        [status]="pay.status"
-                        class="scale-75 origin-left"
-                      ></lib-status-badge>
-                    </div>
-                    <p
-                      class="text-[9px] text-slate-400 font-bold uppercase tracking-widest"
+                    <span class="text-[10px] font-bold text-slate-400"
+                      >Priority</span
                     >
-                      TXN: {{ pay.transactionId }} • {{ pay.date }}
-                    </p>
                   </div>
+                  <span
+                    class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase"
+                    [class]="
+                      order()?.priority
+                        ? 'bg-amber-500/10 text-amber-500'
+                        : 'bg-slate-100 dark:bg-white/10 text-slate-500'
+                    "
+                  >
+                    {{ order()?.priority ? "Express" : "Standard" }}
+                  </span>
                 </div>
-                <div class="text-right">
-                  <p class="text-lg font-black text-primary">
-                    {{ pay.amount | currency }}
-                  </p>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <svg
+                      class="w-4 h-4 text-slate-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      ></path>
+                    </svg>
+                    <span class="text-[10px] font-bold text-slate-400"
+                      >Warehouse</span
+                    >
+                  </div>
+                  <span
+                    class="text-[10px] font-black text-slate-700 dark:text-slate-300"
+                    >WH-01 Global</span
+                  >
                 </div>
-              </div>
-            } @empty {
-              <div
-                class="text-center py-20 bg-white/50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-200 dark:border-white/10"
-              >
-                <p class="text-slate-400 italic">
-                  No payment transactions found.
-                </p>
-              </div>
-            }
-          </div>
-        } @else if (activeTab() === 3) {
-          <div class="card-premium p-8 max-w-2xl">
-            <div class="flex items-start gap-6 mb-8">
-              <div
-                class="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  ></path>
-                </svg>
-              </div>
-              <div>
-                <h4
-                  class="text-base font-black text-slate-900 dark:text-white mb-2"
-                >
-                  Shipping Information
-                </h4>
-                <p class="text-sm text-slate-500 leading-relaxed">
-                  This order is currently being processed at our
-                  <strong>Main Distribution Center</strong>. Expected carrier
-                  pickup is scheduled for next business day.
-                </p>
               </div>
             </div>
 
-            <div class="space-y-6 ml-18">
-              <div class="flex items-center gap-4 relative">
-                <div
-                  class="w-2 h-2 rounded-full bg-primary ring-4 ring-primary/10 z-10"
-                ></div>
-                <div
-                  class="absolute left-[3px] top-2 bottom-0 w-[2px] bg-slate-100 dark:bg-white/5 h-12"
-                ></div>
-                <p
-                  class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-widest"
+            <!-- Actions Card -->
+            <div class="card-premium p-6">
+              <h3
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6"
+              >
+                Internal Operations
+              </h3>
+              <div class="space-y-3">
+                <button
+                  class="w-full py-2.5 bg-slate-50 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 rounded-xl border border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  Order Confirmed
-                </p>
-                <span class="text-[10px] text-slate-400 font-medium">{{
-                  order()?.date
-                }}</span>
-              </div>
-              <div class="flex items-center gap-4">
-                <div
-                  class="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20"
-                ></div>
-                <p
-                  class="text-xs font-bold text-slate-400 uppercase tracking-widest"
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                    ></path>
+                  </svg>
+                  Print Invoice
+                </button>
+                <button
+                  class="w-full py-2.5 bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-500 rounded-xl border border-rose-500/20 hover:bg-rose-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  In Processing
-                </p>
-              </div>
-              <div class="flex items-center gap-4">
-                <div
-                  class="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20"
-                ></div>
-                <p
-                  class="text-xs font-bold text-slate-400 uppercase tracking-widest"
-                >
-                  Shipped
-                </p>
+                  Cancel Order
+                </button>
               </div>
             </div>
           </div>
-        }
-      </div>
-    </lib-detail-layout>
+        </lib-detail-layout>
+      } @else {
+        <lib-empty-state
+          title="Order Not Found"
+          message="We couldn't locate the order record you're looking for. It might have been deleted or archived."
+          actionLabel="Back to Orders"
+          (action)="router.navigate(['/inventory/orders'])"
+        ></lib-empty-state>
+      }
+    </div>
   `,
   styles: [
     `
@@ -549,81 +498,72 @@ import {
   ],
 })
 export class OrderDetailComponent implements OnInit {
+  public service = inject(OrdersService);
+  public router = inject(Router);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private dataService = inject(InventoryDataService);
 
-  isLoading = signal(true);
-  isActionLoading = signal(false);
-  activeTab = signal(0);
-  sortField = signal<string>("name");
-  sortOrder = signal<"asc" | "desc">("asc");
-
-  orderId = computed(() => this.route.snapshot.paramMap.get("id"));
+  orderId = signal<string | null>(null);
   order = computed(() => {
-    const o = this.dataService.orders().find((o) => o.id === this.orderId());
-    if (!o) return null;
-
-    const field = this.sortField();
-    const order = this.sortOrder();
-
-    const sortedItems = [...(o.items || [])].sort((a: any, b: any) => {
-      const valA = a[field];
-      const valB = b[field];
-      if (valA < valB) return order === "asc" ? -1 : 1;
-      if (valA > valB) return order === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return { ...o, items: sortedItems };
-  });
-
-  breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Dashboard", link: "/dashboard" },
-    { label: "Inventory", link: "/inventory" },
-    { label: "Orders", link: "/inventory/orders" },
-    { label: "#" + (this.order()?.id || "Detail") },
-  ]);
-
-  customer = computed(() => {
-    const o = this.order();
-    const name = o?.customerName || o?.customer;
-    return name
-      ? this.dataService.customers().find((c) => c.name === name)
-      : null;
+    const id = this.orderId();
+    return id ? this.service.getOrder(id) : null;
   });
 
   payments = computed(() => {
     const id = this.orderId();
-    return id ? this.dataService.getPaymentsByOrderId(id) : [];
+    return id ? this.service.getPaymentsByOrderId(id) : [];
   });
 
-  ngOnInit() {
-    setTimeout(() => {
-      this.isLoading.set(false);
-    }, 1500);
+  customer = computed(() => {
+    const o = this.order();
+    return o ? this.service.getCustomerByName(o.customer) : null;
+  });
+
+  breadcrumbs = computed(() => [
+    { label: "Dashboard", link: "/dashboard" },
+    { label: "Orders", link: "/inventory/orders" },
+    { label: this.order() ? `Order #${this.order()?.id}` : "Details" },
+  ]);
+
+  ngOnInit(): void {
+    this.route.params.subscribe((params) => {
+      const id = params["id"];
+      if (id) {
+        this.orderId.set(id);
+        this.service.loadOrders(); // Ensure data is loaded
+      }
+    });
   }
 
-  goToEdit() {
-    const id = this.orderId();
-    if (id) {
-      this.router.navigate(["/inventory/orders", id, "edit"]);
+  getStatusColor(
+    status?: string,
+  ): "primary" | "warning" | "success" | "danger" {
+    switch (status) {
+      case "Pending":
+        return "warning";
+      case "Processing":
+        return "primary";
+      case "Completed":
+        return "success";
+      case "Cancelled":
+        return "danger";
+      default:
+        return "primary";
     }
   }
 
-  handleAction() {
-    this.isActionLoading.set(true);
-    setTimeout(() => {
-      this.isActionLoading.set(false);
-    }, 2000);
+  getTotalItems(): number {
+    return this.order()?.items?.reduce((acc, item) => acc + item.qty, 0) || 0;
   }
 
-  toggleSort(field: string) {
-    if (this.sortField() === field) {
-      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
-    } else {
-      this.sortField.set(field);
-      this.sortOrder.set("asc");
+  isPaid(): boolean {
+    const totalPaid = this.payments().reduce((acc, p) => acc + p.amount, 0);
+    return totalPaid >= (this.order()?.amount || 0);
+  }
+
+  editOrder(): void {
+    const id = this.order()?.id;
+    if (id) {
+      this.router.navigate(["/inventory/orders/edit", id]);
     }
   }
 }
