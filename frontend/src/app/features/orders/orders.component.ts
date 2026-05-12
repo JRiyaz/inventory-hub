@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { of } from 'rxjs';
 import {
   CustomDropdownComponent,
   type DropdownOption,
@@ -460,17 +461,27 @@ export class OrdersComponent implements OnInit {
 
   ngOnInit(): void {
     this.service.loadOrders();
-    this.registerSearchItems();
+    this.registerSearchProvider();
   }
 
-  private registerSearchItems(): void {
-    const items = this.service.orders().map((o) => ({
-      id: `order-${o.id}`,
-      title: `Order #${o.id}`,
-      path: `/inventory/orders/${o.id}`,
-      category: 'Order',
-      keywords: [o.customerName || o.customer, o.status],
-    }));
-    this.searchService.register(items);
+  private registerSearchProvider(): void {
+    this.searchService.registerProvider({
+      id: 'inventory-orders',
+      name: 'Orders',
+      search: (query: string) => {
+        const q = query.toLowerCase();
+        const results = this.service
+          .orders()
+          .filter((o) => o.id.toString().includes(q) || (o.customerName || o.customer).toLowerCase().includes(q))
+          .map((o) => ({
+            id: `order-${o.id}`,
+            title: `Order #${o.id}`,
+            path: `/inventory/orders/${o.id}`,
+            category: 'Order',
+            keywords: [o.customerName || o.customer, o.status],
+          }));
+        return of(results);
+      },
+    });
   }
 }

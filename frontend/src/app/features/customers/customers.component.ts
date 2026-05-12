@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { of } from 'rxjs';
 import {
   CustomDropdownComponent,
   type DropdownOption,
@@ -305,17 +306,27 @@ export class CustomersComponent implements OnInit {
 
   ngOnInit(): void {
     this.service.loadCustomers();
-    this.registerSearchItems();
+    this.registerSearchProvider();
   }
 
-  private registerSearchItems(): void {
-    const items = this.service.customers().map((c) => ({
-      id: `cust-${c.id}`,
-      title: c.name,
-      path: `/inventory/customers/${c.id}`,
-      category: 'Customer',
-      keywords: [c.company, c.email],
-    }));
-    this.searchService.register(items);
+  private registerSearchProvider(): void {
+    this.searchService.registerProvider({
+      id: 'inventory-customers',
+      name: 'Customers',
+      search: (query: string) => {
+        const q = query.toLowerCase();
+        const results = this.service
+          .customers()
+          .filter((c) => c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q))
+          .map((c) => ({
+            id: `cust-${c.id}`,
+            title: c.name,
+            path: `/inventory/customers/${c.id}`,
+            category: 'Customer',
+            keywords: [c.company, c.email],
+          }));
+        return of(results);
+      },
+    });
   }
 }

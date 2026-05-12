@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, type OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { of } from 'rxjs';
 import {
   CustomDropdownComponent,
   type DropdownOption,
@@ -463,17 +464,27 @@ export class SuppliersComponent implements OnInit {
 
   ngOnInit(): void {
     this.service.loadSuppliers();
-    this.registerSearchItems();
+    this.registerSearchProvider();
   }
 
-  private registerSearchItems(): void {
-    const items = this.service.suppliers().map((s) => ({
-      id: `supplier-${s.id}`,
-      title: s.name,
-      path: `/inventory/suppliers/${s.id}`,
-      category: 'Supplier',
-      keywords: [s.location, s.status],
-    }));
-    this.searchService.register(items);
+  private registerSearchProvider(): void {
+    this.searchService.registerProvider({
+      id: 'inventory-suppliers',
+      name: 'Suppliers',
+      search: (query: string) => {
+        const q = query.toLowerCase();
+        const results = this.service
+          .suppliers()
+          .filter((s) => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q))
+          .map((s) => ({
+            id: `supplier-${s.id}`,
+            title: s.name,
+            path: `/inventory/suppliers/${s.id}`,
+            category: 'Supplier',
+            keywords: [s.location, s.status],
+          }));
+        return of(results);
+      },
+    });
   }
 }

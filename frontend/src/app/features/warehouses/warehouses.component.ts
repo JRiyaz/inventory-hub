@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { of } from 'rxjs';
 import { EmptyStateComponent, PageHeaderComponent, SearchService, SkeletonComponent } from 'ui-shared';
 import { WarehousesService } from './warehouses.service';
 
@@ -217,18 +218,28 @@ export class WarehousesComponent implements OnInit {
 
   ngOnInit(): void {
     this.service.loadWarehouses();
-    this.registerSearchItems();
+    this.registerSearchProvider();
   }
 
-  private registerSearchItems(): void {
-    const items = this.service.warehouses().map((w) => ({
-      id: `warehouse-${w.id}`,
-      title: w.name,
-      path: `/inventory/warehouses/${w.id}`,
-      category: 'Warehouse',
-      keywords: [w.location, w.status],
-    }));
-    this.searchService.register(items);
+  private registerSearchProvider(): void {
+    this.searchService.registerProvider({
+      id: 'inventory-warehouses',
+      name: 'Warehouses',
+      search: (query: string) => {
+        const q = query.toLowerCase();
+        const results = this.service
+          .warehouses()
+          .filter((w) => w.name.toLowerCase().includes(q) || w.location.toLowerCase().includes(q))
+          .map((w) => ({
+            id: `warehouse-${w.id}`,
+            title: w.name,
+            path: `/inventory/warehouses/${w.id}`,
+            category: 'Warehouse',
+            keywords: [w.location, w.status],
+          }));
+        return of(results);
+      },
+    });
   }
 
   getCapacityClass(utilization: number) {

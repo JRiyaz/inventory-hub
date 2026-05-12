@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, type OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { of } from 'rxjs';
 import {
   CustomDropdownComponent,
   type DropdownOption,
@@ -475,18 +476,28 @@ export class PaymentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.service.loadPayments();
-    this.registerSearchItems();
+    this.registerSearchProvider();
   }
 
-  private registerSearchItems(): void {
-    const items = this.service.payments().map((p) => ({
-      id: `payment-${p.id}`,
-      title: `Payment ${p.id}`,
-      path: `/inventory/payments/${p.id}`,
-      category: 'Payment',
-      keywords: [p.method, p.status, p.reference],
-    }));
-    this.searchService.register(items);
+  private registerSearchProvider(): void {
+    this.searchService.registerProvider({
+      id: 'inventory-payments',
+      name: 'Payments',
+      search: (query: string) => {
+        const q = query.toLowerCase();
+        const results = this.service
+          .payments()
+          .filter((p) => p.id.toLowerCase().includes(q) || p.method.toLowerCase().includes(q))
+          .map((p) => ({
+            id: `payment-${p.id}`,
+            title: `Payment ${p.id}`,
+            path: `/inventory/payments/${p.id}`,
+            category: 'Payment',
+            keywords: [p.method, p.status, p.reference],
+          }));
+        return of(results);
+      },
+    });
   }
 
   toggleSort(field: string) {
