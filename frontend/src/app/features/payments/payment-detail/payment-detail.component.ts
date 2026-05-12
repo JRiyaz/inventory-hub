@@ -327,7 +327,7 @@ export class PaymentDetailComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.service.loadPayments();
+    this.service.loadPayment(this.paymentId());
   }
 
   handlePrint(): void {

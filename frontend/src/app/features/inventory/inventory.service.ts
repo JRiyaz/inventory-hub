@@ -1,12 +1,23 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
-import { InventoryDataService } from 'ui-shared';
+import { delay, firstValueFrom, of, tap } from 'rxjs';
+import {
+  type Customer,
+  InventoryDataService,
+  type Offer,
+  type Order,
+  type Payment,
+  type Product,
+  type Supplier,
+  type Warehouse,
+} from 'ui-shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class InventoryService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -44,14 +55,32 @@ export class InventoryService {
   ]);
 
   // Actions
-  loadOverview() {
+  async loadOverview() {
     this.isLoading.set(true);
-    return of(null)
-      .pipe(
-        delay(800),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const baseUrl = this.dataService.baseUrl;
+      const [products, orders, customers, suppliers, warehouses, payments, offers] = await Promise.all([
+        firstValueFrom(this.http.get<Product[]>(`${baseUrl}/products`)),
+        firstValueFrom(this.http.get<Order[]>(`${baseUrl}/orders`)),
+        firstValueFrom(this.http.get<Customer[]>(`${baseUrl}/customers`)),
+        firstValueFrom(this.http.get<Supplier[]>(`${baseUrl}/suppliers`)),
+        firstValueFrom(this.http.get<Warehouse[]>(`${baseUrl}/warehouses`)),
+        firstValueFrom(this.http.get<Payment[]>(`${baseUrl}/payments`)),
+        firstValueFrom(this.http.get<Offer[]>(`${baseUrl}/offers`)),
+      ]);
+
+      this.dataService.setProducts(products);
+      this.dataService.setOrders(orders);
+      this.dataService.setCustomers(customers);
+      this.dataService.setSuppliers(suppliers);
+      this.dataService.setWarehouses(warehouses);
+      this.dataService.setPayments(payments);
+      this.dataService.setOffers(offers);
+    } catch (error) {
+      console.error('Error loading overview data:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   optimizeLogistics() {

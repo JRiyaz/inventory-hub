@@ -1,5 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
+import { finalize, firstValueFrom, from } from 'rxjs';
 import { type Customer, InventoryDataService } from 'ui-shared';
 
 @Injectable({
@@ -7,6 +8,7 @@ import { type Customer, InventoryDataService } from 'ui-shared';
 })
 export class CustomersService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -63,14 +65,28 @@ export class CustomersService {
   ]);
 
   // Actions
-  loadCustomers() {
+  async loadCustomers() {
     this.isLoading.set(true);
-    return of(this.customers())
-      .pipe(
-        delay(800),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const data = await firstValueFrom(this.http.get<Customer[]>(`${this.dataService.baseUrl}/customers`));
+      this.dataService.setCustomers(data);
+    } catch (error) {
+      console.error('Error loading customers:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async loadCustomer(id: string) {
+    this.isLoading.set(true);
+    try {
+      const data = await firstValueFrom(this.http.get<Customer>(`${this.dataService.baseUrl}/customers/${id}`));
+      this.dataService.updateCustomerInState(data);
+    } catch (error) {
+      console.error('Error loading customer:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   setPage(page: number) {
@@ -89,23 +105,21 @@ export class CustomersService {
 
   addCustomer(customer: Customer) {
     this.isActionLoading.set(true);
-    return of(customer).pipe(
-      delay(1500),
-      tap((c) => {
-        this.dataService.addCustomer(c);
-        this.isActionLoading.set(false);
-      }),
+    const promise = firstValueFrom(this.http.post<Customer>(`${this.dataService.baseUrl}/customers`, customer)).then(
+      (data) => {
+        this.dataService.addCustomerToState(data);
+      },
     );
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 
   updateCustomer(customer: Customer) {
     this.isActionLoading.set(true);
-    return of(customer).pipe(
-      delay(1200),
-      tap((c) => {
-        this.dataService.updateCustomer(c);
-        this.isActionLoading.set(false);
-      }),
-    );
+    const promise = firstValueFrom(
+      this.http.put<Customer>(`${this.dataService.baseUrl}/customers/${customer.id}`, customer),
+    ).then((data) => {
+      this.dataService.updateCustomerInState(data);
+    });
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 }

@@ -1,12 +1,14 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
-import { InventoryDataService } from 'ui-shared';
+import { firstValueFrom } from 'rxjs';
+import { type Customer, InventoryDataService, type Order, type Product, type Supplier } from 'ui-shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AnalyticsService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -168,13 +170,25 @@ export class AnalyticsService {
   });
 
   // Actions
-  loadAnalytics() {
+  async loadAnalytics() {
     this.isLoading.set(true);
-    return of(null)
-      .pipe(
-        delay(1200),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const baseUrl = this.dataService.baseUrl;
+      const [products, orders, customers, suppliers] = await Promise.all([
+        firstValueFrom(this.http.get<Product[]>(`${baseUrl}/products`)),
+        firstValueFrom(this.http.get<Order[]>(`${baseUrl}/orders`)),
+        firstValueFrom(this.http.get<Customer[]>(`${baseUrl}/customers`)),
+        firstValueFrom(this.http.get<Supplier[]>(`${baseUrl}/suppliers`)),
+      ]);
+
+      this.dataService.setProducts(products);
+      this.dataService.setOrders(orders);
+      this.dataService.setCustomers(customers);
+      this.dataService.setSuppliers(suppliers);
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 }

@@ -343,7 +343,7 @@ export class SupplierDetailComponent implements OnInit {
   products = computed(() => this.service.getProductsBySupplierId(this.supplierId()));
 
   ngOnInit() {
-    this.service.loadSuppliers();
+    this.service.loadSupplier(this.supplierId());
   }
 
   goToEdit() {

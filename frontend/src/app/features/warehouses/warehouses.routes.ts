@@ -4,6 +4,7 @@ export const WAREHOUSES_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./warehouses.component').then((m) => m.WarehousesComponent),
+    pathMatch: 'full',
     data: { title: 'Warehouse Logistics' },
   },
   {

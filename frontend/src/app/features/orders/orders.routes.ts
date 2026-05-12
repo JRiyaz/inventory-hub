@@ -4,6 +4,7 @@ export const ORDERS_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./orders.component').then((m) => m.OrdersComponent),
+    pathMatch: 'full',
     data: { title: 'Order Tracking' },
   },
   {

@@ -1,5 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
+import { firstValueFrom, from, tap } from 'rxjs';
 import { InventoryDataService, type PurchaseOrder } from 'ui-shared';
 
 @Injectable({
@@ -7,6 +8,7 @@ import { InventoryDataService, type PurchaseOrder } from 'ui-shared';
 })
 export class ProcurementService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -78,9 +80,16 @@ export class ProcurementService {
   ]);
 
   // Helpers
-  loadOrders() {
+  async loadOrders() {
     this.isLoading.set(true);
-    setTimeout(() => this.isLoading.set(false), 800);
+    try {
+      const data = await firstValueFrom(this.http.get<PurchaseOrder[]>(`${this.dataService.baseUrl}/purchaseOrders`));
+      this.dataService.setPurchaseOrders(data);
+    } catch (error) {
+      console.error('Error loading purchase orders:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   setPage(page: number) {
@@ -113,13 +122,12 @@ export class ProcurementService {
 
   addPurchaseOrder(order: PurchaseOrder) {
     this.isActionLoading.set(true);
-    return of(order).pipe(
-      delay(1500),
-      tap((newOrder) => {
-        this.purchaseOrders.update((orders) => [newOrder, ...orders]);
-        this.isActionLoading.set(false);
-      }),
-    );
+    const promise = firstValueFrom(
+      this.http.post<PurchaseOrder>(`${this.dataService.baseUrl}/purchaseOrders`, order),
+    ).then((data) => {
+      this.dataService.setPurchaseOrders([...this.dataService.purchaseOrders(), data]);
+    });
+    return from(promise).pipe(tap(() => this.isActionLoading.set(false)));
   }
 
   getPurchaseOrder(id: string) {

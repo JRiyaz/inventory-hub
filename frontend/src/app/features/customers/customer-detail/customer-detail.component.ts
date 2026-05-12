@@ -398,7 +398,7 @@ export class CustomerDetailComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.service.loadCustomers();
+    this.service.loadCustomer(this.customerId());
   }
 
   goToEdit() {

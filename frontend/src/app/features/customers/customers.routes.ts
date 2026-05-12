@@ -4,6 +4,7 @@ export const CUSTOMERS_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./customers.component').then((m) => m.CustomersComponent),
+    pathMatch: 'full',
   },
   {
     path: 'create',

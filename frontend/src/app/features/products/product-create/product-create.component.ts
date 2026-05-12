@@ -317,6 +317,7 @@ export class ProductCreateComponent implements OnInit {
     category: 'Electronics',
     description: '',
     supplierId: '',
+    warehouseId: '',
     discount: 0,
   };
 
@@ -348,6 +349,7 @@ export class ProductCreateComponent implements OnInit {
         category: product.category,
         description: product.description,
         supplierId: product.supplierId || '',
+        warehouseId: product.warehouseId || '',
         discount: product.discount || 0,
       };
     } else {
@@ -373,9 +375,9 @@ export class ProductCreateComponent implements OnInit {
       });
     } else {
       const newProduct: Product = {
-        id: Math.floor(10000 + Math.random() * 90000),
+        id: Math.floor(Math.random() * 1000000),
         ...this.formData,
-      };
+      } as Product;
 
       this.service.addProduct(newProduct).subscribe(() => {
         this.notificationService.success(

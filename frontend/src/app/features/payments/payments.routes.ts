@@ -4,6 +4,7 @@ export const PAYMENTS_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./payments.component').then((m) => m.PaymentsComponent),
+    pathMatch: 'full',
     data: { type: 'global' },
   },
   {

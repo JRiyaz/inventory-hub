@@ -1,5 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
+import { finalize, firstValueFrom, from } from 'rxjs';
 import { InventoryDataService, type Product } from 'ui-shared';
 
 @Injectable({
@@ -7,6 +8,7 @@ import { InventoryDataService, type Product } from 'ui-shared';
 })
 export class ProductsService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -60,15 +62,28 @@ export class ProductsService {
   ]);
 
   // Actions
-  loadProducts() {
+  async loadProducts() {
     this.isLoading.set(true);
-    // Placeholder for backend fetching
-    return of(this.products())
-      .pipe(
-        delay(800),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const data = await firstValueFrom(this.http.get<Product[]>(`${this.dataService.baseUrl}/products`));
+      this.dataService.setProducts(data);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async loadProduct(id: number) {
+    this.isLoading.set(true);
+    try {
+      const data = await firstValueFrom(this.http.get<Product>(`${this.dataService.baseUrl}/products/${id}`));
+      this.dataService.updateProductInState(data);
+    } catch (error) {
+      console.error('Error loading product:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   setCategory(cat: string) {
@@ -102,25 +117,21 @@ export class ProductsService {
 
   addProduct(product: Product) {
     this.isActionLoading.set(true);
-    // Placeholder for backend save
-    return of(product).pipe(
-      delay(1500),
-      tap((p) => {
-        this.dataService.addProduct(p);
-        this.isActionLoading.set(false);
-      }),
+    const promise = firstValueFrom(this.http.post<Product>(`${this.dataService.baseUrl}/products`, product)).then(
+      (data) => {
+        this.dataService.addProductToState(data);
+      },
     );
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 
   updateProduct(product: Product) {
     this.isActionLoading.set(true);
-    // Placeholder for backend update
-    return of(product).pipe(
-      delay(1200),
-      tap((p) => {
-        this.dataService.updateProduct(p);
-        this.isActionLoading.set(false);
-      }),
-    );
+    const promise = firstValueFrom(
+      this.http.put<Product>(`${this.dataService.baseUrl}/products/${product.id}`, product),
+    ).then((data) => {
+      this.dataService.updateProductInState(data);
+    });
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 }

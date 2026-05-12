@@ -4,6 +4,7 @@ export const PRODUCTS_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./products.component').then((m) => m.ProductsComponent),
+    pathMatch: 'full',
     data: { title: 'Products Management' },
   },
   {

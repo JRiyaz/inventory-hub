@@ -358,7 +358,7 @@ export class SupplierCreateComponent implements OnInit {
       this.formData = {
         name: supplier.name,
         category: supplier.category,
-        email: supplier.email,
+        email: supplier.email || '',
         phone: supplier.phone,
         location: supplier.location,
         reliability: supplier.reliability,

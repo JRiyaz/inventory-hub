@@ -586,7 +586,7 @@ export class ProductDetailComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.service.loadProducts();
+    this.service.loadProduct(this.productId());
   }
 
   goToEdit() {

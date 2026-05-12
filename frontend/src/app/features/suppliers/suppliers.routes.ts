@@ -4,6 +4,7 @@ export const SUPPLIERS_ROUTES: Routes = [
   {
     path: '',
     loadComponent: () => import('./suppliers.component').then((m) => m.SuppliersComponent),
+    pathMatch: 'full',
     data: { title: 'Supplier Network' },
   },
   {

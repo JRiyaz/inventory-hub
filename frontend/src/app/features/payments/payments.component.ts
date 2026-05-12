@@ -6,12 +6,12 @@ import { of } from 'rxjs';
 import {
   CustomDropdownComponent,
   type DropdownOption,
+  LoaderComponent,
   NotificationService,
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
-  LoaderComponent,
 } from 'ui-shared';
 import { PaymentsService } from './payments.service';
 

@@ -1,12 +1,14 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
-import { InventoryDataService, type Warehouse } from 'ui-shared';
+import { finalize, firstValueFrom, from, Observable, of, tap } from 'rxjs';
+import { InventoryDataService, type Product, type Warehouse } from 'ui-shared';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WarehousesService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -50,14 +52,28 @@ export class WarehousesService {
   ]);
 
   // Actions
-  loadWarehouses() {
+  async loadWarehouses() {
     this.isLoading.set(true);
-    return of(this.warehouses())
-      .pipe(
-        delay(800),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const data = await firstValueFrom(this.http.get<Warehouse[]>(`${this.dataService.baseUrl}/warehouses`));
+      this.dataService.setWarehouses(data);
+    } catch (error) {
+      console.error('Error loading warehouses:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async loadWarehouse(id: string) {
+    this.isLoading.set(true);
+    try {
+      const data = await firstValueFrom(this.http.get<Warehouse>(`${this.dataService.baseUrl}/warehouses/${id}`));
+      this.dataService.updateWarehouseInState(data);
+    } catch (error) {
+      console.error('Error loading warehouse:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   getWarehouse(id: string) {
@@ -72,17 +88,19 @@ export class WarehousesService {
     return this.dataService.products().filter((p) => !(p as any).warehouseId);
   }
 
-  addProductToWarehouse(productId: number, warehouseId: string) {
+  addProductToWarehouse(productId: number, warehouseId: string): Observable<any> {
     this.isActionLoading.set(true);
     const product = this.dataService.products().find((p) => p.id === productId);
     if (product) {
       const updatedProduct = { ...product, warehouseId };
-      this.dataService.updateProduct(updatedProduct);
+      const promise = firstValueFrom(
+        this.http.put<Product>(`${this.dataService.baseUrl}/products/${productId}`, updatedProduct),
+      ).then((data) => {
+        this.dataService.updateProductInState(data);
+      });
+      return from(promise).pipe(tap(() => this.isActionLoading.set(false)));
     }
-    return of(true).pipe(
-      delay(1000),
-      tap(() => this.isActionLoading.set(false)),
-    );
+    return of(false);
   }
 
   getMovementsByWarehouseId(warehouseId: string) {
@@ -93,23 +111,21 @@ export class WarehousesService {
 
   addWarehouse(warehouse: Warehouse) {
     this.isActionLoading.set(true);
-    return of(warehouse).pipe(
-      delay(1500),
-      tap((w) => {
-        this.dataService.addWarehouse(w);
-        this.isActionLoading.set(false);
-      }),
+    const promise = firstValueFrom(this.http.post<Warehouse>(`${this.dataService.baseUrl}/warehouses`, warehouse)).then(
+      (data) => {
+        this.dataService.addWarehouseToState(data);
+      },
     );
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 
   updateWarehouse(warehouse: Warehouse) {
     this.isActionLoading.set(true);
-    return of(warehouse).pipe(
-      delay(1200),
-      tap((w) => {
-        this.dataService.updateWarehouse(w);
-        this.isActionLoading.set(false);
-      }),
-    );
+    const promise = firstValueFrom(
+      this.http.put<Warehouse>(`${this.dataService.baseUrl}/warehouses/${warehouse.id}`, warehouse),
+    ).then((data) => {
+      this.dataService.updateWarehouseInState(data);
+    });
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 }

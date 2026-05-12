@@ -695,7 +695,7 @@ export class WarehouseDetailComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.service.loadWarehouses();
+    this.service.loadWarehouse(this.warehouseId());
   }
 
   goToEdit() {

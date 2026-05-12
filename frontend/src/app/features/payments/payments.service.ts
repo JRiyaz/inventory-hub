@@ -1,5 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
+import { finalize, firstValueFrom, from } from 'rxjs';
 import { InventoryDataService, type Payment } from 'ui-shared';
 
 @Injectable({
@@ -7,6 +8,7 @@ import { InventoryDataService, type Payment } from 'ui-shared';
 })
 export class PaymentsService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -73,14 +75,28 @@ export class PaymentsService {
   ]);
 
   // Actions
-  loadPayments() {
+  async loadPayments() {
     this.isLoading.set(true);
-    return of(this.payments())
-      .pipe(
-        delay(800),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const data = await firstValueFrom(this.http.get<Payment[]>(`${this.dataService.baseUrl}/payments`));
+      this.dataService.setPayments(data);
+    } catch (error) {
+      console.error('Error loading payments:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async loadPayment(id: string) {
+    this.isLoading.set(true);
+    try {
+      const data = await firstValueFrom(this.http.get<Payment>(`${this.dataService.baseUrl}/payments/${id}`));
+      this.dataService.updatePaymentInState(data);
+    } catch (error) {
+      console.error('Error loading payment:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   setPage(page: number) {
@@ -99,11 +115,11 @@ export class PaymentsService {
 
   processPayment(payment: Payment) {
     this.isActionLoading.set(true);
-    return of(payment).pipe(
-      delay(2000),
-      tap(() => {
-        this.isActionLoading.set(false);
-      }),
+    const promise = firstValueFrom(this.http.post<Payment>(`${this.dataService.baseUrl}/payments`, payment)).then(
+      (data) => {
+        this.dataService.addPaymentToState(data);
+      },
     );
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 }

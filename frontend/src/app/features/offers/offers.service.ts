@@ -1,5 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
+import { finalize, firstValueFrom, from } from 'rxjs';
 import { InventoryDataService, type Offer } from 'ui-shared';
 
 @Injectable({
@@ -7,6 +8,7 @@ import { InventoryDataService, type Offer } from 'ui-shared';
 })
 export class OffersService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -14,48 +16,41 @@ export class OffersService {
   offers = this.dataService.offers;
 
   // Actions
-  loadOffers() {
+  async loadOffers() {
     this.isLoading.set(true);
-    return of(null)
-      .pipe(
-        delay(800),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const data = await firstValueFrom(this.http.get<Offer[]>(`${this.dataService.baseUrl}/offers`));
+      this.dataService.setOffers(data);
+    } catch (error) {
+      console.error('Error loading offers:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   addOffer(offer: Offer) {
     this.isActionLoading.set(true);
-    return of(offer).pipe(
-      delay(1500),
-      tap((newOffer) => {
-        this.dataService.addOffer(newOffer);
-        this.isActionLoading.set(false);
-      }),
-    );
+    const promise = firstValueFrom(this.http.post<Offer>(`${this.dataService.baseUrl}/offers`, offer)).then((data) => {
+      this.dataService.addOfferToState(data);
+    });
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 
   deleteOffer(id: string) {
-    // Note: InventoryDataService might need a deleteOffer method if we want to support deletion
-    // For now, we'll just mock it or assume it exists
     this.isActionLoading.set(true);
-    return of(id).pipe(
-      delay(1000),
-      tap(() => {
-        this.dataService.deleteOffer(id);
-        this.isActionLoading.set(false);
-      }),
-    );
+    const promise = firstValueFrom(this.http.delete(`${this.dataService.baseUrl}/offers/${id}`)).then(() => {
+      this.dataService.removeOfferFromState(id);
+    });
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 
   updateOffer(offer: Offer) {
     this.isActionLoading.set(true);
-    return of(offer).pipe(
-      delay(1200),
-      tap((updated) => {
-        this.dataService.updateOffer(updated);
-        this.isActionLoading.set(false);
-      }),
+    const promise = firstValueFrom(this.http.put<Offer>(`${this.dataService.baseUrl}/offers/${offer.id}`, offer)).then(
+      (data) => {
+        this.dataService.updateOfferInState(data);
+      },
     );
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 }

@@ -1,5 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
+import { finalize, firstValueFrom, from } from 'rxjs';
 import { InventoryDataService, type Order } from 'ui-shared';
 
 @Injectable({
@@ -7,6 +8,7 @@ import { InventoryDataService, type Order } from 'ui-shared';
 })
 export class OrdersService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -85,15 +87,28 @@ export class OrdersService {
   ]);
 
   // Actions
-  loadOrders() {
+  async loadOrders() {
     this.isLoading.set(true);
-    // Placeholder for backend fetching
-    return of(this.orders())
-      .pipe(
-        delay(800),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const data = await firstValueFrom(this.http.get<Order[]>(`${this.dataService.baseUrl}/orders`));
+      this.dataService.setOrders(data);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async loadOrder(id: string) {
+    this.isLoading.set(true);
+    try {
+      const data = await firstValueFrom(this.http.get<Order>(`${this.dataService.baseUrl}/orders/${id}`));
+      this.dataService.updateOrderInState(data);
+    } catch (error) {
+      console.error('Error loading order:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   toggleSort(field: string) {
@@ -126,25 +141,19 @@ export class OrdersService {
 
   addOrder(order: Order) {
     this.isActionLoading.set(true);
-    // Placeholder for backend save
-    return of(order).pipe(
-      delay(1500),
-      tap((o) => {
-        this.dataService.addOrder(o);
-        this.isActionLoading.set(false);
-      }),
-    );
+    const promise = firstValueFrom(this.http.post<Order>(`${this.dataService.baseUrl}/orders`, order)).then((data) => {
+      this.dataService.addOrderToState(data);
+    });
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 
   updateOrder(order: Order) {
     this.isActionLoading.set(true);
-    // Placeholder for backend save
-    return of(order).pipe(
-      delay(1200),
-      tap((o) => {
-        this.dataService.updateOrder(o);
-        this.isActionLoading.set(false);
-      }),
+    const promise = firstValueFrom(this.http.put<Order>(`${this.dataService.baseUrl}/orders/${order.id}`, order)).then(
+      (data) => {
+        this.dataService.updateOrderInState(data);
+      },
     );
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 }

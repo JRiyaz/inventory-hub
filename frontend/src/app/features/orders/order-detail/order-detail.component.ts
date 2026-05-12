@@ -635,7 +635,7 @@ export class OrderDetailComponent implements OnInit {
       const id = params['id'];
       if (id) {
         this.orderId.set(id);
-        this.service.loadOrders(); // Ensure data is loaded
+        this.service.loadOrder(id); // Only load this specific order
       }
     });
   }

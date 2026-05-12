@@ -1,5 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, of, tap } from 'rxjs';
+import { finalize, firstValueFrom, from } from 'rxjs';
 import { InventoryDataService, type Supplier } from 'ui-shared';
 
 @Injectable({
@@ -7,6 +8,7 @@ import { InventoryDataService, type Supplier } from 'ui-shared';
 })
 export class SuppliersService {
   private dataService = inject(InventoryDataService);
+  private http = inject(HttpClient);
 
   // State
   isLoading = signal(false);
@@ -64,14 +66,28 @@ export class SuppliersService {
   ]);
 
   // Actions
-  loadSuppliers() {
+  async loadSuppliers() {
     this.isLoading.set(true);
-    return of(this.suppliers())
-      .pipe(
-        delay(800),
-        tap(() => this.isLoading.set(false)),
-      )
-      .subscribe();
+    try {
+      const data = await firstValueFrom(this.http.get<Supplier[]>(`${this.dataService.baseUrl}/suppliers`));
+      this.dataService.setSuppliers(data);
+    } catch (error) {
+      console.error('Error loading suppliers:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async loadSupplier(id: string) {
+    this.isLoading.set(true);
+    try {
+      const data = await firstValueFrom(this.http.get<Supplier>(`${this.dataService.baseUrl}/suppliers/${id}`));
+      this.dataService.updateSupplierInState(data);
+    } catch (error) {
+      console.error('Error loading supplier:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
   setPage(page: number) {
@@ -90,23 +106,21 @@ export class SuppliersService {
 
   addSupplier(supplier: Supplier) {
     this.isActionLoading.set(true);
-    return of(supplier).pipe(
-      delay(1500),
-      tap((s) => {
-        this.dataService.addSupplier(s);
-        this.isActionLoading.set(false);
-      }),
+    const promise = firstValueFrom(this.http.post<Supplier>(`${this.dataService.baseUrl}/suppliers`, supplier)).then(
+      (data) => {
+        this.dataService.addSupplierToState(data);
+      },
     );
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 
   updateSupplier(supplier: Supplier) {
     this.isActionLoading.set(true);
-    return of(supplier).pipe(
-      delay(1200),
-      tap((s) => {
-        this.dataService.updateSupplier(s);
-        this.isActionLoading.set(false);
-      }),
-    );
+    const promise = firstValueFrom(
+      this.http.put<Supplier>(`${this.dataService.baseUrl}/suppliers/${supplier.id}`, supplier),
+    ).then((data) => {
+      this.dataService.updateSupplierInState(data);
+    });
+    return from(promise).pipe(finalize(() => this.isActionLoading.set(false)));
   }
 }

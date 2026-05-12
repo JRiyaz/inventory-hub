@@ -979,7 +979,7 @@ export class OrderCreateComponent implements OnInit {
     const order: Order = {
       id: (this.isEditMode() ? this.orderId : `ORD-${Math.floor(1000 + Math.random() * 9000)}`) as string,
       customer: this.selectedCustomerName() || '',
-      customerName: this.selectedCustomerName() || undefined,
+      customerName: this.selectedCustomerName() || '',
       status: this.isEditMode() ? this.selectedStatus() : 'Pending',
       priority: this.isPriority(),
       date: this.orderDate(),

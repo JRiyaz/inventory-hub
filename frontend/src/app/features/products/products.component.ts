@@ -7,10 +7,10 @@ import {
   CustomDropdownComponent,
   type DropdownOption,
   EmptyStateComponent,
+  LoaderComponent,
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
-  LoaderComponent,
 } from 'ui-shared';
 import { ProductsService } from './products.service';
 
