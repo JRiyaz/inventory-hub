@@ -10,6 +10,7 @@ import {
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
+  LoaderComponent,
 } from 'ui-shared';
 import { ProductsService } from './products.service';
 
@@ -24,6 +25,7 @@ import { ProductsService } from './products.service';
     CustomDropdownComponent,
     PageHeaderComponent,
     EmptyStateComponent,
+    LoaderComponent,
   ],
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
@@ -350,19 +352,21 @@ import { ProductsService } from './products.service';
                   aria-label="Previous Page"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2.5"
-                      d="M15 19l-7-7 7-7"
-                    ></path>
-                  </svg>
+                  <lib-loader [loading]="service.isLoading()" [type]="'pulse'" [customClass]="'scale-50'">
+                    <svg
+                      class="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2.5"
+                        d="M15 19l-7-7 7-7"
+                      ></path>
+                    </svg>
+                  </lib-loader>
                 </button>
 
                 <div class="flex items-center gap-1">
@@ -393,19 +397,21 @@ import { ProductsService } from './products.service';
                   aria-label="Next Page"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2.5"
-                      d="M9 5l7 7-7 7"
-                    ></path>
-                  </svg>
+                  <lib-loader [loading]="service.isLoading()" [type]="'pulse'" [customClass]="'scale-50'">
+                    <svg
+                      class="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2.5"
+                        d="M9 5l7 7-7 7"
+                      ></path>
+                    </svg>
+                  </lib-loader>
                 </button>
               </div>
             </div>

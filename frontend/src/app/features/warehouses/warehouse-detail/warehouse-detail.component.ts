@@ -2,13 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, HostListener, inject, type OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { type Breadcrumb, DetailLayoutComponent } from 'ui-shared';
+import { type Breadcrumb, DetailLayoutComponent, LoaderComponent } from 'ui-shared';
 import { WarehousesService } from '../warehouses.service';
 
 @Component({
   selector: 'app-warehouse-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DetailLayoutComponent],
+  imports: [CommonModule, FormsModule, RouterModule, DetailLayoutComponent, LoaderComponent],
   template: `
     <lib-detail-layout
       [title]="warehouse()?.name || 'Loading...'"
@@ -334,7 +334,7 @@ import { WarehousesService } from '../warehouses.service';
                   (click)="showProductSearch.set(!showProductSearch())"
                   class="px-4 py-1.5 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-primary transition-all hover:text-white"
                 >
-                  Add Product
+                  <lib-loader label="Add Product"></lib-loader>
                 </button>
 
                 @if (showProductSearch()) {

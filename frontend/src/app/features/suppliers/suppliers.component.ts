@@ -11,6 +11,7 @@ import {
   SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
+  LoaderComponent,
 } from 'ui-shared';
 import { SuppliersService } from './suppliers.service';
 
@@ -26,6 +27,7 @@ import { SuppliersService } from './suppliers.service';
     PageHeaderComponent,
     EmptyStateComponent,
     StatusBadgeComponent,
+    LoaderComponent,
   ],
   template: `
     <div class="p-3 sm:p-5  animate-fade-in">
@@ -365,19 +367,21 @@ import { SuppliersService } from './suppliers.service';
                   (click)="service.setPage(service.currentPage() - 1)"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2.5"
-                      d="M15 19l-7-7 7-7"
-                    ></path>
-                  </svg>
+                  <lib-loader [loading]="service.isLoading()" [type]="'pulse'" [customClass]="'scale-50'">
+                    <svg
+                      class="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2.5"
+                        d="M15 19l-7-7 7-7"
+                      ></path>
+                    </svg>
+                  </lib-loader>
                 </button>
 
                 <div class="flex items-center gap-1">
@@ -400,19 +404,21 @@ import { SuppliersService } from './suppliers.service';
                   (click)="service.setPage(service.currentPage() + 1)"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
-                  <svg
-                    class="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2.5"
-                      d="M9 5l7 7-7 7"
-                    ></path>
-                  </svg>
+                  <lib-loader [loading]="service.isLoading()" [type]="'pulse'" [customClass]="'scale-50'">
+                    <svg
+                      class="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2.5"
+                        d="M9 5l7 7-7 7"
+                      ></path>
+                    </svg>
+                  </lib-loader>
                 </button>
               </div>
             </div>

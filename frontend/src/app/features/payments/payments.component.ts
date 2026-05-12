@@ -11,6 +11,7 @@ import {
   SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
+  LoaderComponent,
 } from 'ui-shared';
 import { PaymentsService } from './payments.service';
 
@@ -25,6 +26,7 @@ import { PaymentsService } from './payments.service';
     PageHeaderComponent,
     StatusBadgeComponent,
     CustomDropdownComponent,
+    LoaderComponent,
   ],
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
@@ -361,6 +363,7 @@ import { PaymentsService } from './payments.service';
                   (click)="service.setPage(service.currentPage() - 1)"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
+                <lib-loader [loading]="service.isLoading()" [type]="'pulse'" [customClass]="'scale-50'">
                   <svg
                     class="w-3.5 h-3.5"
                     fill="none"
@@ -374,6 +377,7 @@ import { PaymentsService } from './payments.service';
                       d="M15 19l-7-7 7-7"
                     ></path>
                   </svg>
+                </lib-loader>
                 </button>
 
                 <div class="flex items-center gap-1">
@@ -396,6 +400,7 @@ import { PaymentsService } from './payments.service';
                   (click)="service.setPage(service.currentPage() + 1)"
                   class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:border-primary/50 hover:bg-white dark:hover:bg-white/5 transition-all disabled:opacity-20"
                 >
+                <lib-loader [loading]="service.isLoading()" [type]="'pulse'" [customClass]="'scale-50'">
                   <svg
                     class="w-3.5 h-3.5"
                     fill="none"
@@ -409,6 +414,7 @@ import { PaymentsService } from './payments.service';
                       d="M9 5l7 7-7 7"
                     ></path>
                   </svg>
+                </lib-loader>
                 </button>
               </div>
             </div>

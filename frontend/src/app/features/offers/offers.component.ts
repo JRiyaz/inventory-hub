@@ -31,7 +31,7 @@ import { OffersService } from './offers.service';
           (click)="showForm.set(true)"
           class="bg-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20"
         >
-          Create New Offer
+          <lib-loader label="Create New Offer"></lib-loader>
         </button>
       </header>
 
@@ -323,15 +323,10 @@ import { OffersService } from './offers.service';
                 (click)="executeDelete()"
                 class="bg-rose-500 text-white flex-1 rounded-xl font-black text-sm hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20 flex items-center justify-center gap-2"
               >
-                @if (service.isActionLoading()) {
-                  <div class="dots-wave dots-white scale-50">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                } @else {
-                  Delete Offer
-                }
+                <lib-loader
+                  [loading]="service.isActionLoading()"
+                  label="Delete Offer"
+                ></lib-loader>
               </button>
             </div>
           </div>
