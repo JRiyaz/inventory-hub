@@ -318,9 +318,9 @@ export class CustomerCreateComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params.id) {
+      if (params['id']) {
         this.isEditMode.set(true);
-        this.customerId = params.id;
+        this.customerId = params['id'];
         this.loadCustomer();
       }
     });

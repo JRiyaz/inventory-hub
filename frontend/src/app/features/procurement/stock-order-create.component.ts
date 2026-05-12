@@ -476,8 +476,8 @@ export class StockOrderCreateComponent implements OnInit {
 
   dynamicBreadcrumbs = computed(() => {
     const crumbs = [{ label: 'Inventory', link: '/inventory' }];
-    const pId = this.route.snapshot.queryParams.productId;
-    const sId = this.route.snapshot.queryParams.supplierId;
+    const pId = this.route.snapshot.queryParams['productId'];
+    const sId = this.route.snapshot.queryParams['supplierId'];
 
     if (pId) {
       const product = this.service.getProductById(Number(pId));
@@ -531,8 +531,8 @@ export class StockOrderCreateComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
-      const pId = params.productId;
-      const sId = params.supplierId;
+      const pId = params['productId'];
+      const sId = params['supplierId'];
 
       if (pId) {
         const product = this.service.getProductById(Number(pId));

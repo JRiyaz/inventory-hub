@@ -789,9 +789,9 @@ export class OrderCreateComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params.id) {
+      if (params['id']) {
         this.isEditMode.set(true);
-        this.orderId = params.id;
+        this.orderId = params['id'];
         this.loadOrder();
       }
     });

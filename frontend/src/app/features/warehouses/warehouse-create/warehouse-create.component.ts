@@ -286,9 +286,9 @@ export class WarehouseCreateComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params.id) {
+      if (params['id']) {
         this.isEditMode.set(true);
-        this.warehouseId = params.id;
+        this.warehouseId = params['id'];
         this.loadWarehouse();
       }
     });

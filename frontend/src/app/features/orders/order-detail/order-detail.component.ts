@@ -632,7 +632,7 @@ export class OrderDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
-      const id = params.id;
+      const id = params['id'];
       if (id) {
         this.orderId.set(id);
         this.service.loadOrders(); // Ensure data is loaded

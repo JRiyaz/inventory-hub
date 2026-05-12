@@ -618,7 +618,7 @@ export class AnalyticsComponent implements OnInit {
   }
 
   headerInfo = computed(() => {
-    const type = this.route.snapshot.data.type || 'global';
+    const type = this.route.snapshot.data['type'] || 'global';
     switch (type) {
       case 'sales':
         return {

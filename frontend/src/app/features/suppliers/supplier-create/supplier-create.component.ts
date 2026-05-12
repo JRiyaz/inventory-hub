@@ -344,9 +344,9 @@ export class SupplierCreateComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params.id) {
+      if (params['id']) {
         this.isEditMode.set(true);
-        this.supplierId = params.id;
+        this.supplierId = params['id'];
         this.loadSupplier();
       }
     });

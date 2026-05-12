@@ -329,9 +329,9 @@ export class ProductCreateComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params.id) {
+      if (params['id']) {
         this.isEditMode.set(true);
-        this.productId = Number(params.id);
+        this.productId = Number(params['id']);
         this.loadProduct();
       }
     });
