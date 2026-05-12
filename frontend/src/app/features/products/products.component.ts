@@ -1,19 +1,19 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import {
   CustomDropdownComponent,
-  DropdownOption,
+  type DropdownOption,
+  EmptyStateComponent,
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
-  EmptyStateComponent,
-} from "ui-shared";
-import { ProductsService } from "./products.service";
+} from 'ui-shared';
+import { ProductsService } from './products.service';
 
 @Component({
-  selector: "app-products",
+  selector: 'app-products',
   standalone: true,
   imports: [
     CommonModule,
@@ -435,19 +435,16 @@ export class ProductsComponent implements OnInit {
   private searchService = inject(SearchService);
   public router = inject(Router);
 
-  breadcrumbs = [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Products" },
-  ];
+  breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Products' }];
 
   pageSizeOptions: DropdownOption[] = [
-    { value: 8, label: "8 Per Page" },
-    { value: 16, label: "16 Per Page" },
-    { value: 32, label: "32 Per Page" },
-    { value: 50, label: "50 Per Page" },
+    { value: 8, label: '8 Per Page' },
+    { value: 16, label: '16 Per Page' },
+    { value: 32, label: '32 Per Page' },
+    { value: 50, label: '50 Per Page' },
   ];
 
-  categories = ["All", "Electronics", "Industrial", "Raw Materials"];
+  categories = ['All', 'Electronics', 'Industrial', 'Raw Materials'];
   categoryOptions: DropdownOption[] = this.categories.map((c) => ({
     value: c,
     label: c,
@@ -463,7 +460,7 @@ export class ProductsComponent implements OnInit {
       id: `prod-${p.id}`,
       title: p.name,
       path: `/inventory/products/${p.id}`,
-      category: "Product",
+      category: 'Product',
       keywords: [p.category, p.description],
     }));
     this.searchService.register(items);

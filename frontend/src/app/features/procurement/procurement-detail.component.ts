@@ -1,23 +1,13 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit, signal, computed } from "@angular/core";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import {
-  DetailLayoutComponent,
-  EmptyStateComponent,
-  SkeletonComponent,
-} from "ui-shared";
-import { ProcurementService } from "./procurement.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { DetailLayoutComponent, EmptyStateComponent, SkeletonComponent } from 'ui-shared';
+import { ProcurementService } from './procurement.service';
 
 @Component({
-  selector: "app-procurement-detail",
+  selector: 'app-procurement-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    SkeletonComponent,
-    DetailLayoutComponent,
-    EmptyStateComponent,
-  ],
+  imports: [CommonModule, RouterModule, SkeletonComponent, DetailLayoutComponent, EmptyStateComponent],
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
       @if (service.isLoading()) {
@@ -347,14 +337,14 @@ export class ProcurementDetailComponent implements OnInit {
   });
 
   breadcrumbs = computed(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Procurement", link: "/inventory/procurement" },
-    { label: this.order() ? `PO #${this.order()?.id}` : "Details" },
+    { label: 'Inventory', link: '/inventory' },
+    { label: 'Procurement', link: '/inventory/procurement' },
+    { label: this.order() ? `PO #${this.order()?.id}` : 'Details' },
   ]);
 
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
-      const id = params["id"];
+      const id = params.id;
       if (id) {
         this.orderId.set(id);
         this.service.loadOrders();
@@ -362,20 +352,18 @@ export class ProcurementDetailComponent implements OnInit {
     });
   }
 
-  getStatusColor(
-    status?: string,
-  ): "primary" | "warning" | "success" | "danger" {
+  getStatusColor(status?: string): 'primary' | 'warning' | 'success' | 'danger' {
     switch (status) {
-      case "Draft":
-        return "warning";
-      case "Ordered":
-        return "primary";
-      case "Received":
-        return "success";
-      case "Cancelled":
-        return "danger";
+      case 'Draft':
+        return 'warning';
+      case 'Ordered':
+        return 'primary';
+      case 'Received':
+        return 'success';
+      case 'Cancelled':
+        return 'danger';
       default:
-        return "primary";
+        return 'primary';
     }
   }
 }

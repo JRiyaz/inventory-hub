@@ -1,27 +1,14 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
-import {
-  DropdownOption,
-  PageHeaderComponent,
-  SearchService,
-  SkeletonComponent,
-  EmptyStateComponent,
-} from "ui-shared";
-import { WarehousesService } from "./warehouses.service";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { EmptyStateComponent, PageHeaderComponent, SearchService, SkeletonComponent } from 'ui-shared';
+import { WarehousesService } from './warehouses.service';
 
 @Component({
-  selector: "app-warehouses",
+  selector: 'app-warehouses',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    SkeletonComponent,
-    PageHeaderComponent,
-    EmptyStateComponent,
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, SkeletonComponent, PageHeaderComponent, EmptyStateComponent],
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
       <lib-page-header
@@ -226,10 +213,7 @@ export class WarehousesComponent implements OnInit {
   private searchService = inject(SearchService);
   public router = inject(Router);
 
-  breadcrumbs = [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Warehouses" },
-  ];
+  breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Warehouses' }];
 
   ngOnInit(): void {
     this.service.loadWarehouses();
@@ -241,23 +225,21 @@ export class WarehousesComponent implements OnInit {
       id: `warehouse-${w.id}`,
       title: w.name,
       path: `/inventory/warehouses/${w.id}`,
-      category: "Warehouse",
+      category: 'Warehouse',
       keywords: [w.location, w.status],
     }));
     this.searchService.register(items);
   }
 
   getCapacityClass(utilization: number) {
-    if (utilization > 90)
-      return "bg-rose-500/10 text-rose-500 border-rose-500/20";
-    if (utilization > 70)
-      return "bg-amber-500/10 text-amber-500 border-amber-500/20";
-    return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+    if (utilization > 90) return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
+    if (utilization > 70) return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+    return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
   }
 
   getBarClass(utilization: number) {
-    if (utilization > 90) return "bg-rose-500";
-    if (utilization > 70) return "bg-amber-500";
-    return "bg-primary";
+    if (utilization > 90) return 'bg-rose-500';
+    if (utilization > 70) return 'bg-amber-500';
+    return 'bg-primary';
   }
 }

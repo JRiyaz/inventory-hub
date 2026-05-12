@@ -1,24 +1,14 @@
-import { Component, signal, computed, inject, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import {
-  DetailLayoutComponent,
-  StatusBadgeComponent,
-  Breadcrumb,
-} from "ui-shared";
-import { CustomersService } from "../customers.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent } from 'ui-shared';
+import { CustomersService } from '../customers.service';
 
 @Component({
-  selector: "app-customer-detail",
+  selector: 'app-customer-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    DetailLayoutComponent,
-    StatusBadgeComponent,
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, DetailLayoutComponent, StatusBadgeComponent],
   template: `
     <lib-detail-layout
       [title]="customer()?.name || 'Loading...'"
@@ -389,13 +379,13 @@ export class CustomerDetailComponent implements OnInit {
 
   activeTab = signal(0);
 
-  customerId = computed(() => this.route.snapshot.paramMap.get("id") || "");
+  customerId = computed(() => this.route.snapshot.paramMap.get('id') || '');
   customer = computed(() => this.service.getCustomer(this.customerId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Customers", link: "/inventory/customers" },
-    { label: this.customer()?.name || "Detail" },
+    { label: 'Inventory', link: '/inventory' },
+    { label: 'Customers', link: '/inventory/customers' },
+    { label: this.customer()?.name || 'Detail' },
   ]);
 
   relatedOrders = computed(() => {
@@ -404,10 +394,7 @@ export class CustomerDetailComponent implements OnInit {
   });
 
   lifetimeSpend = computed(() => {
-    return this.relatedOrders().reduce(
-      (acc: number, order: any) => acc + (order.amount || 0),
-      0,
-    );
+    return this.relatedOrders().reduce((acc: number, order: any) => acc + (order.amount || 0), 0);
   });
 
   ngOnInit(): void {
@@ -417,7 +404,7 @@ export class CustomerDetailComponent implements OnInit {
   goToEdit() {
     const id = this.customerId();
     if (id) {
-      this.router.navigate(["/inventory/customers", id, "edit"]);
+      this.router.navigate(['/inventory/customers', id, 'edit']);
     }
   }
 

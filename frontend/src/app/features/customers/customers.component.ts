@@ -1,19 +1,19 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import {
   CustomDropdownComponent,
-  DropdownOption,
+  type DropdownOption,
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
-} from "ui-shared";
-import { CustomersService } from "./customers.service";
+} from 'ui-shared';
+import { CustomersService } from './customers.service';
 
 @Component({
-  selector: "app-customers",
+  selector: 'app-customers',
   standalone: true,
   imports: [
     CommonModule,
@@ -294,16 +294,13 @@ export class CustomersComponent implements OnInit {
   private searchService = inject(SearchService);
   public router = inject(Router);
 
-  breadcrumbs = [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Customers" },
-  ];
+  breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Customers' }];
 
   pageSizeOptions: DropdownOption[] = [
-    { value: 12, label: "12 Per Page" },
-    { value: 24, label: "24 Per Page" },
-    { value: 48, label: "48 Per Page" },
-    { value: 100, label: "100 Per Page" },
+    { value: 12, label: '12 Per Page' },
+    { value: 24, label: '24 Per Page' },
+    { value: 48, label: '48 Per Page' },
+    { value: 100, label: '100 Per Page' },
   ];
 
   ngOnInit(): void {
@@ -316,7 +313,7 @@ export class CustomersComponent implements OnInit {
       id: `cust-${c.id}`,
       title: c.name,
       path: `/inventory/customers/${c.id}`,
-      category: "Customer",
+      category: 'Customer',
       keywords: [c.company, c.email],
     }));
     this.searchService.register(items);

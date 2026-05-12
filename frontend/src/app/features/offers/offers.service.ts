@@ -1,9 +1,9 @@
-import { Injectable, inject, signal } from "@angular/core";
-import { InventoryDataService, Offer } from "ui-shared";
-import { delay, of, tap } from "rxjs";
+import { Injectable, inject, signal } from '@angular/core';
+import { delay, of, tap } from 'rxjs';
+import { InventoryDataService, type Offer } from 'ui-shared';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class OffersService {
   private dataService = inject(InventoryDataService);

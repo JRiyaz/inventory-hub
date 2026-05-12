@@ -1,33 +1,26 @@
-import { Routes } from "@angular/router";
+import type { Routes } from '@angular/router';
 
 export const WAREHOUSES_ROUTES: Routes = [
   {
-    path: "",
-    loadComponent: () =>
-      import("./warehouses.component").then((m) => m.WarehousesComponent),
-    data: { title: "Warehouse Logistics" },
+    path: '',
+    loadComponent: () => import('./warehouses.component').then((m) => m.WarehousesComponent),
+    data: { title: 'Warehouse Logistics' },
   },
   {
-    path: "create",
+    path: 'create',
     loadComponent: () =>
-      import("./warehouse-create/warehouse-create.component").then(
-        (m) => m.WarehouseCreateComponent,
-      ),
-    data: { title: "Register New Facility" },
+      import('./warehouse-create/warehouse-create.component').then((m) => m.WarehouseCreateComponent),
+    data: { title: 'Register New Facility' },
   },
   {
-    path: ":id",
+    path: ':id',
     loadComponent: () =>
-      import("./warehouse-detail/warehouse-detail.component").then(
-        (m) => m.WarehouseDetailComponent,
-      ),
+      import('./warehouse-detail/warehouse-detail.component').then((m) => m.WarehouseDetailComponent),
   },
   {
-    path: ":id/edit",
+    path: ':id/edit',
     loadComponent: () =>
-      import("./warehouse-create/warehouse-create.component").then(
-        (m) => m.WarehouseCreateComponent,
-      ),
-    data: { title: "Edit Warehouse" },
+      import('./warehouse-create/warehouse-create.component').then((m) => m.WarehouseCreateComponent),
+    data: { title: 'Edit Warehouse' },
   },
 ];

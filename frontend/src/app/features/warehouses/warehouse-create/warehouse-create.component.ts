@@ -1,27 +1,20 @@
-import { Component, signal, inject, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
-  NotificationService,
-  LoaderComponent,
   FormValidationDirective,
+  LoaderComponent,
+  NotificationService,
   ValidationErrorPipe,
-  Warehouse,
-} from "ui-shared";
-import { WarehousesService } from "../warehouses.service";
+  type Warehouse,
+} from 'ui-shared';
+import { WarehousesService } from '../warehouses.service';
 
 @Component({
-  selector: "app-warehouse-create",
+  selector: 'app-warehouse-create',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    LoaderComponent,
-    FormValidationDirective,
-    ValidationErrorPipe,
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, LoaderComponent, FormValidationDirective, ValidationErrorPipe],
   template: `
     <div class="p-3 sm:p-6 max-w-4xl mx-auto animate-fade-in">
       <nav
@@ -281,21 +274,21 @@ export class WarehouseCreateComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   isEditMode = signal(false);
-  warehouseId: string = "";
+  warehouseId: string = '';
 
   formData = {
-    name: "",
-    location: "",
+    name: '',
+    location: '',
     totalCapacity: 50000,
-    manager: "",
-    lastAudit: "",
+    manager: '',
+    lastAudit: '',
   };
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params["id"]) {
+      if (params.id) {
         this.isEditMode.set(true);
-        this.warehouseId = params["id"];
+        this.warehouseId = params.id;
         this.loadWarehouse();
       }
     });
@@ -308,48 +301,35 @@ export class WarehouseCreateComponent implements OnInit {
         name: warehouse.name,
         location: warehouse.location,
         totalCapacity: warehouse.totalCapacity,
-        manager: warehouse.manager || "",
-        lastAudit: warehouse.lastAudit || "",
+        manager: warehouse.manager || '',
+        lastAudit: warehouse.lastAudit || '',
       };
     } else {
-      this.notificationService.error(
-        "Facility Not Found",
-        "The logistics node could not be found.",
-      );
-      this.router.navigate(["/inventory/warehouses"]);
+      this.notificationService.error('Facility Not Found', 'The logistics node could not be found.');
+      this.router.navigate(['/inventory/warehouses']);
     }
   }
 
   submitForm() {
     const warehouse: Warehouse = {
-      id: this.isEditMode()
-        ? this.warehouseId
-        : "WH-" + Math.floor(100 + Math.random() * 900),
+      id: this.isEditMode() ? this.warehouseId : `WH-${Math.floor(100 + Math.random() * 900)}`,
       ...this.formData,
-      status: "Active",
-      utilization: this.isEditMode()
-        ? this.service.getWarehouse(this.warehouseId)?.utilization || 0
-        : 0,
-      currentStock: this.isEditMode()
-        ? this.service.getWarehouse(this.warehouseId)?.currentStock || 0
-        : 0,
-      zones: this.isEditMode()
-        ? this.service.getWarehouse(this.warehouseId)?.zones || []
-        : [],
+      status: 'Active',
+      utilization: this.isEditMode() ? this.service.getWarehouse(this.warehouseId)?.utilization || 0 : 0,
+      currentStock: this.isEditMode() ? this.service.getWarehouse(this.warehouseId)?.currentStock || 0 : 0,
+      zones: this.isEditMode() ? this.service.getWarehouse(this.warehouseId)?.zones || [] : [],
     };
 
-    const action = this.isEditMode()
-      ? this.service.updateWarehouse(warehouse)
-      : this.service.addWarehouse(warehouse);
+    const action = this.isEditMode() ? this.service.updateWarehouse(warehouse) : this.service.addWarehouse(warehouse);
 
     action.subscribe(() => {
       this.notificationService.success(
-        this.isEditMode() ? "Update Successful" : "Facility Registered",
+        this.isEditMode() ? 'Update Successful' : 'Facility Registered',
         this.isEditMode()
           ? `${warehouse.name} specifications have been updated.`
           : `${warehouse.name} is now active in the logistics network.`,
       );
-      this.router.navigate(["/inventory/warehouses", warehouse.id]);
+      this.router.navigate(['/inventory/warehouses', warehouse.id]);
     });
   }
 }

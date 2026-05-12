@@ -1,9 +1,9 @@
-import { Injectable, inject, signal, computed } from "@angular/core";
-import { InventoryDataService, Supplier } from "ui-shared";
-import { delay, of, tap } from "rxjs";
+import { computed, Injectable, inject, signal } from '@angular/core';
+import { delay, of, tap } from 'rxjs';
+import { InventoryDataService, type Supplier } from 'ui-shared';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class SuppliersService {
   private dataService = inject(InventoryDataService);
@@ -11,8 +11,8 @@ export class SuppliersService {
   // State
   isLoading = signal(false);
   isActionLoading = signal(false);
-  searchQuery = signal("");
-  statusFilter = signal("All Statuses");
+  searchQuery = signal('');
+  statusFilter = signal('All Statuses');
   currentPage = signal(1);
   pageSize = signal(8);
 
@@ -26,9 +26,9 @@ export class SuppliersService {
     return this.suppliers().filter((s) => {
       const matchesSearch =
         s.name.toLowerCase().includes(query) ||
-        (s.category || "").toLowerCase().includes(query) ||
-        (s.location || "").toLowerCase().includes(query);
-      const matchesStatus = status === "All Statuses" || s.status === status;
+        (s.category || '').toLowerCase().includes(query) ||
+        (s.location || '').toLowerCase().includes(query);
+      const matchesStatus = status === 'All Statuses' || s.status === status;
       return matchesSearch && matchesStatus;
     });
   });
@@ -38,31 +38,27 @@ export class SuppliersService {
     return this.allFilteredSuppliers().slice(start, start + this.pageSize());
   });
 
-  totalPages = computed(() =>
-    Math.ceil(this.allFilteredSuppliers().length / this.pageSize()),
-  );
+  totalPages = computed(() => Math.ceil(this.allFilteredSuppliers().length / this.pageSize()));
 
-  pages = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, i) => i + 1),
-  );
+  pages = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
   headerStats = computed(() => [
     {
-      label: "Total Vendors",
+      label: 'Total Vendors',
       value: this.suppliers().length,
-      color: "primary" as const,
+      color: 'primary' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
     },
     {
-      label: "Critical Supply",
-      value: this.suppliers().filter((s) => s.status === "Critical").length,
-      color: "danger" as const,
+      label: 'Critical Supply',
+      value: this.suppliers().filter((s) => s.status === 'Critical').length,
+      color: 'danger' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
     },
     {
-      label: "Reliability",
-      value: "98.4%",
-      color: "success" as const,
+      label: 'Reliability',
+      value: '98.4%',
+      color: 'success' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
     },
   ]);
@@ -89,9 +85,7 @@ export class SuppliersService {
   }
 
   getProductsBySupplierId(supplierId: string) {
-    return this.dataService
-      .products()
-      .filter((p) => p.supplierId === supplierId);
+    return this.dataService.products().filter((p) => p.supplierId === supplierId);
   }
 
   addSupplier(supplier: Supplier) {

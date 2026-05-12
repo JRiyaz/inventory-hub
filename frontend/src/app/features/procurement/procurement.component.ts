@@ -1,19 +1,19 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import {
   CustomDropdownComponent,
-  DropdownOption,
+  type DropdownOption,
+  EmptyStateComponent,
   PageHeaderComponent,
   SkeletonComponent,
   StatusBadgeComponent,
-  EmptyStateComponent,
-} from "ui-shared";
-import { ProcurementService } from "./procurement.service";
+} from 'ui-shared';
+import { ProcurementService } from './procurement.service';
 
 @Component({
-  selector: "app-procurement",
+  selector: 'app-procurement',
   standalone: true,
   imports: [
     CommonModule,
@@ -428,17 +428,14 @@ export class ProcurementComponent implements OnInit {
   public service = inject(ProcurementService);
   public router = inject(Router);
 
-  breadcrumbs = [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Procurement" },
-  ];
+  breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Procurement' }];
 
   statusOptions: DropdownOption[] = [
-    { value: "All Statuses", label: "All Statuses" },
-    { value: "Draft", label: "Draft" },
-    { value: "Ordered", label: "Ordered" },
-    { value: "Received", label: "Received" },
-    { value: "Cancelled", label: "Cancelled" },
+    { value: 'All Statuses', label: 'All Statuses' },
+    { value: 'Draft', label: 'Draft' },
+    { value: 'Ordered', label: 'Ordered' },
+    { value: 'Received', label: 'Received' },
+    { value: 'Cancelled', label: 'Cancelled' },
   ];
 
   ngOnInit(): void {

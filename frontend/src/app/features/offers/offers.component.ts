@@ -1,27 +1,21 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, computed, inject, signal } from "@angular/core";
-import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   CustomDropdownComponent,
-  DropdownOption,
+  type DropdownOption,
   InventoryDataService,
   LoaderComponent,
   NotificationService,
-  Offer,
+  type Offer,
   SkeletonComponent,
-} from "ui-shared";
-import { OffersService } from "./offers.service";
+} from 'ui-shared';
+import { OffersService } from './offers.service';
 
 @Component({
-  selector: "app-offers-admin",
+  selector: 'app-offers-admin',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    LoaderComponent,
-    SkeletonComponent,
-    CustomDropdownComponent,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, LoaderComponent, SkeletonComponent, CustomDropdownComponent],
   template: `
     <div class="offers-admin p-6 animate-fade-in">
       <header class="flex justify-between items-center mb-8">
@@ -363,9 +357,7 @@ export class OffersComponent implements OnInit {
   products = this.dataService.products;
 
   productDropdownOptions = computed<DropdownOption[]>(() => {
-    const options: DropdownOption[] = [
-      { label: "No specific product", value: null },
-    ];
+    const options: DropdownOption[] = [{ label: 'No specific product', value: null }];
 
     this.products().forEach((p) => {
       options.push({
@@ -385,12 +377,12 @@ export class OffersComponent implements OnInit {
   deletingOfferId = signal<string | null>(null);
 
   offerForm = this.fb.group({
-    title: ["", Validators.required],
-    description: ["", Validators.required],
+    title: ['', Validators.required],
+    description: ['', Validators.required],
     discount: [10, [Validators.required, Validators.min(1)]],
-    color: ["#4f46e5", Validators.required],
-    expiryDate: ["", Validators.required],
-    category: [""],
+    color: ['#4f46e5', Validators.required],
+    expiryDate: ['', Validators.required],
+    category: [''],
     productId: [null],
   });
 
@@ -405,9 +397,9 @@ export class OffersComponent implements OnInit {
       title: offer.title,
       description: offer.description,
       discount: offer.discount,
-      color: offer.color || "#4f46e5",
+      color: offer.color || '#4f46e5',
       expiryDate: offer.expiryDate,
-      category: offer.category || "",
+      category: offer.category || '',
       productId: (offer.productId as any) || null,
     });
     this.showForm.set(true);
@@ -417,42 +409,35 @@ export class OffersComponent implements OnInit {
     this.showForm.set(false);
     this.isEditMode.set(false);
     this.editingId.set(null);
-    this.offerForm.reset({ color: "#4f46e5", discount: 10 });
+    this.offerForm.reset({ color: '#4f46e5', discount: 10 });
   }
 
   saveOffer() {
     if (this.offerForm.invalid) return;
 
     if (this.isEditMode()) {
+      const id = this.editingId();
+      if (!id) return;
+
       const updatedOffer: Offer = {
-        id: this.editingId()!,
+        id,
         ...this.offerForm.value,
-        productId: this.offerForm.value.productId
-          ? Number(this.offerForm.value.productId)
-          : undefined,
+        productId: this.offerForm.value.productId ? Number(this.offerForm.value.productId) : undefined,
       } as Offer;
 
       this.service.updateOffer(updatedOffer).subscribe(() => {
-        this.notify.success(
-          "Offer Updated",
-          `"${updatedOffer.title}" has been successfully modified.`,
-        );
+        this.notify.success('Offer Updated', `"${updatedOffer.title}" has been successfully modified.`);
         this.cancelEdit();
       });
     } else {
       const newOffer: Offer = {
-        id: "OFFER-" + Math.random().toString(36).substr(2, 5).toUpperCase(),
+        id: `OFFER-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
         ...this.offerForm.value,
-        productId: this.offerForm.value.productId
-          ? Number(this.offerForm.value.productId)
-          : undefined,
+        productId: this.offerForm.value.productId ? Number(this.offerForm.value.productId) : undefined,
       } as Offer;
 
       this.service.addOffer(newOffer).subscribe(() => {
-        this.notify.success(
-          "Offer Created",
-          `"${newOffer.title}" is now live on the storefront.`,
-        );
+        this.notify.success('Offer Created', `"${newOffer.title}" is now live on the storefront.`);
         this.cancelEdit();
       });
     }
@@ -468,7 +453,7 @@ export class OffersComponent implements OnInit {
     if (!id) return;
 
     this.service.deleteOffer(id).subscribe(() => {
-      this.notify.info("Offer Deleted", "The promotion has been removed.");
+      this.notify.info('Offer Deleted', 'The promotion has been removed.');
       this.showDeleteConfirm.set(false);
       this.deletingOfferId.set(null);
     });

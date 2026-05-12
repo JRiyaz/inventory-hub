@@ -1,20 +1,20 @@
-import { CommonModule } from "@angular/common";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import {
   CustomDropdownComponent,
-  DropdownOption,
+  type DropdownOption,
   NotificationService,
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
-} from "ui-shared";
-import { PaymentsService } from "./payments.service";
+} from 'ui-shared';
+import { PaymentsService } from './payments.service';
 
 @Component({
-  selector: "app-payments",
+  selector: 'app-payments',
   standalone: true,
   imports: [
     CommonModule,
@@ -440,43 +440,37 @@ export class PaymentsComponent implements OnInit {
   private searchService = inject(SearchService);
   private notificationService = inject(NotificationService);
 
-  sortField = signal<string>("id");
-  sortOrder = signal<"asc" | "desc">("desc");
+  sortField = signal<string>('id');
+  sortOrder = signal<'asc' | 'desc'>('desc');
 
   headerInfo = computed(() => {
-    const type = this.route.snapshot.data["type"] || "global";
+    const type = this.route.snapshot.data.type || 'global';
     switch (type) {
-      case "sales":
+      case 'sales':
         return {
-          title: "Sales Ledger",
-          subtitle:
-            "Monitor all inbound payments and revenue streams from customers.",
+          title: 'Sales Ledger',
+          subtitle: 'Monitor all inbound payments and revenue streams from customers.',
         };
-      case "procurement":
+      case 'procurement':
         return {
-          title: "Procurement Ledger",
-          subtitle:
-            "Track outbound transactions and expenditures for stock and supplies.",
+          title: 'Procurement Ledger',
+          subtitle: 'Track outbound transactions and expenditures for stock and supplies.',
         };
       default:
         return {
-          title: "Unified Ledger",
-          subtitle:
-            "Consolidated financial records across the entire organization.",
+          title: 'Unified Ledger',
+          subtitle: 'Consolidated financial records across the entire organization.',
         };
     }
   });
 
-  breadcrumbs = computed(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: this.headerInfo().title },
-  ]);
+  breadcrumbs = computed(() => [{ label: 'Inventory', link: '/inventory' }, { label: this.headerInfo().title }]);
 
   pageSizeOptions: DropdownOption[] = [
-    { value: 12, label: "12 Per Page" },
-    { value: 24, label: "24 Per Page" },
-    { value: 48, label: "48 Per Page" },
-    { value: 100, label: "100 Per Page" },
+    { value: 12, label: '12 Per Page' },
+    { value: 24, label: '24 Per Page' },
+    { value: 48, label: '48 Per Page' },
+    { value: 100, label: '100 Per Page' },
   ];
 
   ngOnInit(): void {
@@ -489,7 +483,7 @@ export class PaymentsComponent implements OnInit {
       id: `payment-${p.id}`,
       title: `Payment ${p.id}`,
       path: `/inventory/payments/${p.id}`,
-      category: "Payment",
+      category: 'Payment',
       keywords: [p.method, p.status, p.reference],
     }));
     this.searchService.register(items);
@@ -497,18 +491,18 @@ export class PaymentsComponent implements OnInit {
 
   toggleSort(field: string) {
     if (this.sortField() === field) {
-      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
+      this.sortOrder.set(this.sortOrder() === 'asc' ? 'desc' : 'asc');
     } else {
       this.sortField.set(field);
-      this.sortOrder.set("asc");
+      this.sortOrder.set('asc');
     }
     this.service.currentPage.set(1);
   }
 
   initiateRefund(): void {
     this.notificationService.success(
-      "Refund Engine Ready",
-      "Please select a completed transaction to initiate the refund process.",
+      'Refund Engine Ready',
+      'Please select a completed transaction to initiate the refund process.',
     );
   }
 }

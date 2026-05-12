@@ -1,20 +1,20 @@
-import { Component, signal, inject, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
-  Customer,
-  NotificationService,
   CustomDropdownComponent,
-  DropdownOption,
-  LoaderComponent,
+  type Customer,
+  type DropdownOption,
   FormValidationDirective,
+  LoaderComponent,
+  NotificationService,
   ValidationErrorPipe,
-} from "ui-shared";
-import { CustomersService } from "../customers.service";
+} from 'ui-shared';
+import { CustomersService } from '../customers.service';
 
 @Component({
-  selector: "app-customer-create",
+  selector: 'app-customer-create',
   standalone: true,
   imports: [
     CommonModule,
@@ -299,28 +299,28 @@ export class CustomerCreateComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   isEditMode = signal(false);
-  customerId: string = "";
+  customerId: string = '';
 
   formData = {
-    name: "",
-    company: "",
-    email: "",
-    phone: "",
-    location: "",
-    status: "Active" as "Active" | "Inactive",
-    joinDate: new Date().toISOString().split("T")[0],
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    location: '',
+    status: 'Active' as 'Active' | 'Inactive',
+    joinDate: new Date().toISOString().split('T')[0],
   };
 
   statusOptions: DropdownOption[] = [
-    { value: "Active", label: "Active" },
-    { value: "Inactive", label: "Inactive" },
+    { value: 'Active', label: 'Active' },
+    { value: 'Inactive', label: 'Inactive' },
   ];
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params["id"]) {
+      if (params.id) {
         this.isEditMode.set(true);
-        this.customerId = params["id"];
+        this.customerId = params.id;
         this.loadCustomer();
       }
     });
@@ -331,19 +331,16 @@ export class CustomerCreateComponent implements OnInit {
     if (customer) {
       this.formData = {
         name: customer.name,
-        company: customer.company || "",
+        company: customer.company || '',
         email: customer.email,
         phone: customer.phone,
-        location: customer.location || "",
+        location: customer.location || '',
         status: customer.status,
         joinDate: customer.joinDate,
       };
     } else {
-      this.notificationService.error(
-        "Customer Not Found",
-        "The client record could not be found.",
-      );
-      this.router.navigate(["/inventory/customers"]);
+      this.notificationService.error('Customer Not Found', 'The client record could not be found.');
+      this.router.navigate(['/inventory/customers']);
     }
   }
 
@@ -352,33 +349,30 @@ export class CustomerCreateComponent implements OnInit {
       const updatedCustomer: Customer = {
         id: this.customerId,
         ...this.formData,
-        segment: "Standard", // Default for now
+        segment: 'Standard', // Default for now
         orders: 0,
         spend: 0,
       };
 
       this.service.updateCustomer(updatedCustomer).subscribe(() => {
-        this.notificationService.success(
-          "Update Successful",
-          `${this.formData.name}'s profile has been updated.`,
-        );
-        this.router.navigate(["/inventory/customers", this.customerId]);
+        this.notificationService.success('Update Successful', `${this.formData.name}'s profile has been updated.`);
+        this.router.navigate(['/inventory/customers', this.customerId]);
       });
     } else {
       const newCustomer: Customer = {
-        id: "CUST-" + Math.floor(1000 + Math.random() * 9000),
+        id: `CUST-${Math.floor(1000 + Math.random() * 9000)}`,
         ...this.formData,
-        segment: "Standard",
+        segment: 'Standard',
         orders: 0,
         spend: 0,
       };
 
       this.service.addCustomer(newCustomer).subscribe(() => {
         this.notificationService.success(
-          "Registration Successful",
+          'Registration Successful',
           `${this.formData.name} has been added to the directory.`,
         );
-        this.router.navigate(["/inventory/customers"]);
+        this.router.navigate(['/inventory/customers']);
       });
     }
   }

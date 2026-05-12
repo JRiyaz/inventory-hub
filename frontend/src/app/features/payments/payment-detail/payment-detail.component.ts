@@ -1,24 +1,14 @@
-import { Component, signal, computed, inject, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, RouterModule } from "@angular/router";
-import {
-  DetailLayoutComponent,
-  StatusBadgeComponent,
-  Breadcrumb,
-} from "ui-shared";
-import { PaymentsService } from "../payments.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent } from 'ui-shared';
+import { PaymentsService } from '../payments.service';
 
 @Component({
-  selector: "app-payment-detail",
+  selector: 'app-payment-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    DetailLayoutComponent,
-    StatusBadgeComponent,
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, DetailLayoutComponent, StatusBadgeComponent],
   template: `
     <lib-detail-layout
       [title]="payment()?.id || 'Loading...'"
@@ -321,13 +311,13 @@ export class PaymentDetailComponent implements OnInit {
 
   activeTab = signal(0);
 
-  paymentId = computed(() => this.route.snapshot.paramMap.get("id") || "");
+  paymentId = computed(() => this.route.snapshot.paramMap.get('id') || '');
   payment = computed(() => this.service.getPayment(this.paymentId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Payments", link: "/inventory/payments" },
-    { label: this.payment()?.id || "Detail" },
+    { label: 'Inventory', link: '/inventory' },
+    { label: 'Payments', link: '/inventory/payments' },
+    { label: this.payment()?.id || 'Detail' },
   ]);
 
   relatedOrder = computed(() => {

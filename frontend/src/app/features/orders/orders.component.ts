@@ -1,20 +1,20 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import {
   CustomDropdownComponent,
-  DropdownOption,
+  type DropdownOption,
+  EmptyStateComponent,
   PageHeaderComponent,
   SearchService,
   SkeletonComponent,
   StatusBadgeComponent,
-  EmptyStateComponent,
-} from "ui-shared";
-import { OrdersService } from "./orders.service";
+} from 'ui-shared';
+import { OrdersService } from './orders.service';
 
 @Component({
-  selector: "app-orders",
+  selector: 'app-orders',
   standalone: true,
   imports: [
     CommonModule,
@@ -440,25 +440,22 @@ export class OrdersComponent implements OnInit {
   public router = inject(Router);
   private searchService = inject(SearchService);
 
-  breadcrumbs = [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Orders" },
-  ];
+  breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Orders' }];
 
   pageSizeOptions: DropdownOption[] = [
-    { value: 10, label: "10 Per Page" },
-    { value: 25, label: "25 Per Page" },
-    { value: 50, label: "50 Per Page" },
-    { value: 100, label: "100 Per Page" },
+    { value: 10, label: '10 Per Page' },
+    { value: 25, label: '25 Per Page' },
+    { value: 50, label: '50 Per Page' },
+    { value: 100, label: '100 Per Page' },
   ];
 
   statusOptions: DropdownOption[] = [
-    { value: "All Statuses", label: "All Statuses" },
-    { value: "Pending", label: "Pending" },
-    { value: "Processing", label: "Processing" },
-    { value: "Shipped", label: "Shipped" },
-    { value: "Delivered", label: "Delivered" },
-    { value: "Cancelled", label: "Cancelled" },
+    { value: 'All Statuses', label: 'All Statuses' },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Processing', label: 'Processing' },
+    { value: 'Shipped', label: 'Shipped' },
+    { value: 'Delivered', label: 'Delivered' },
+    { value: 'Cancelled', label: 'Cancelled' },
   ];
 
   ngOnInit(): void {
@@ -471,7 +468,7 @@ export class OrdersComponent implements OnInit {
       id: `order-${o.id}`,
       title: `Order #${o.id}`,
       path: `/inventory/orders/${o.id}`,
-      category: "Order",
+      category: 'Order',
       keywords: [o.customerName || o.customer, o.status],
     }));
     this.searchService.register(items);

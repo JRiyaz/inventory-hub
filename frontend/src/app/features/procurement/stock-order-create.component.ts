@@ -1,29 +1,12 @@
-import { CommonModule } from "@angular/common";
-import {
-  Component,
-  computed,
-  effect,
-  ElementRef,
-  HostListener,
-  inject,
-  OnInit,
-  signal,
-  viewChild,
-} from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import {
-  InventoryDataService,
-  LoaderComponent,
-  PurchaseOrderItem,
-  Product,
-  Supplier,
-  PurchaseOrder,
-} from "ui-shared";
-import { ProcurementService } from "./procurement.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, ElementRef, HostListener, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { LoaderComponent, type Product, type PurchaseOrder, type PurchaseOrderItem, type Supplier } from 'ui-shared';
+import { ProcurementService } from './procurement.service';
 
 @Component({
-  selector: "app-stock-order-create",
+  selector: 'app-stock-order-create',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LoaderComponent],
   template: `
@@ -483,22 +466,22 @@ export class StockOrderCreateComponent implements OnInit {
 
   showSupplierSearch = signal(false);
   showProductSearch = signal(false);
-  supplierSearchQuery = signal("");
-  productSearchQuery = signal("");
+  supplierSearchQuery = signal('');
+  productSearchQuery = signal('');
 
   selectedSupplierId = signal<string | null>(null);
   selectedSupplierName = signal<string | null>(null);
   orderItems = signal<PurchaseOrderItem[]>([]);
-  quickSearchQuery = "";
+  quickSearchQuery = '';
 
   dynamicBreadcrumbs = computed(() => {
-    const crumbs = [{ label: "Inventory", link: "/inventory" }];
-    const pId = this.route.snapshot.queryParams["productId"];
-    const sId = this.route.snapshot.queryParams["supplierId"];
+    const crumbs = [{ label: 'Inventory', link: '/inventory' }];
+    const pId = this.route.snapshot.queryParams.productId;
+    const sId = this.route.snapshot.queryParams.supplierId;
 
     if (pId) {
       const product = this.service.getProductById(Number(pId));
-      crumbs.push({ label: "Products", link: "/inventory/products" });
+      crumbs.push({ label: 'Products', link: '/inventory/products' });
       if (product)
         crumbs.push({
           label: product.name,
@@ -506,26 +489,24 @@ export class StockOrderCreateComponent implements OnInit {
         });
     } else if (sId) {
       const supplier = this.service.getSupplierById(sId);
-      crumbs.push({ label: "Suppliers", link: "/inventory/suppliers" });
+      crumbs.push({ label: 'Suppliers', link: '/inventory/suppliers' });
       if (supplier)
         crumbs.push({
           label: supplier.name,
           link: `/inventory/suppliers/${supplier.id}`,
         });
     } else {
-      crumbs.push({ label: "Procurement", link: "/inventory/procurement" });
+      crumbs.push({ label: 'Procurement', link: '/inventory/procurement' });
     }
 
-    crumbs.push({ label: "New Stock Order", link: "" });
+    crumbs.push({ label: 'New Stock Order', link: '' });
     return crumbs;
   });
 
   filteredSuppliers = computed(() => {
     const query = this.supplierSearchQuery().toLowerCase().trim();
     if (!query) return this.service.getSuppliers();
-    return this.service
-      .getSuppliers()
-      .filter((s) => s.name.toLowerCase().includes(query));
+    return this.service.getSuppliers().filter((s) => s.name.toLowerCase().includes(query));
   });
 
   filteredProducts = computed(() => {
@@ -535,19 +516,13 @@ export class StockOrderCreateComponent implements OnInit {
     return products.filter((p) => p.name.toLowerCase().includes(query));
   });
 
-  orderTotal = computed(() =>
-    this.orderItems().reduce((sum, item) => sum + item.price * item.qty, 0),
-  );
+  orderTotal = computed(() => this.orderItems().reduce((sum, item) => sum + item.price * item.qty, 0));
 
-  totalItemsCount = computed(() =>
-    this.orderItems().reduce((sum, item) => sum + item.qty, 0),
-  );
+  totalItemsCount = computed(() => this.orderItems().reduce((sum, item) => sum + item.qty, 0));
 
-  canSubmit = computed(
-    () => this.selectedSupplierId() !== null && this.orderItems().length > 0,
-  );
+  canSubmit = computed(() => this.selectedSupplierId() !== null && this.orderItems().length > 0);
 
-  @HostListener("document:click", ["$event"])
+  @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     if (!this.eRef.nativeElement.contains(event.target)) {
       this.closeAllPopovers();
@@ -556,8 +531,8 @@ export class StockOrderCreateComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe((params) => {
-      const pId = params["productId"];
-      const sId = params["supplierId"];
+      const pId = params.productId;
+      const sId = params.supplierId;
 
       if (pId) {
         const product = this.service.getProductById(Number(pId));
@@ -609,12 +584,11 @@ export class StockOrderCreateComponent implements OnInit {
     const products = this.service.getProducts();
     const product = products.find(
       (p) =>
-        p.id.toString() === this.quickSearchQuery ||
-        p.name.toLowerCase().includes(this.quickSearchQuery.toLowerCase()),
+        p.id.toString() === this.quickSearchQuery || p.name.toLowerCase().includes(this.quickSearchQuery.toLowerCase()),
     );
     if (product) {
       this.addProductToOrder(product);
-      this.quickSearchQuery = "";
+      this.quickSearchQuery = '';
     }
   }
 
@@ -640,11 +614,7 @@ export class StockOrderCreateComponent implements OnInit {
 
   updateQty(item: PurchaseOrderItem, delta: number) {
     this.orderItems.update((items) =>
-      items.map((i) =>
-        i.productId === item.productId
-          ? { ...i, qty: Math.max(0, i.qty + delta) }
-          : i,
-      ),
+      items.map((i) => (i.productId === item.productId ? { ...i, qty: Math.max(0, i.qty + delta) } : i)),
     );
   }
 
@@ -653,18 +623,23 @@ export class StockOrderCreateComponent implements OnInit {
   }
 
   submitOrder() {
+    const supplierId = this.selectedSupplierId();
+    const supplierName = this.selectedSupplierName();
+
+    if (!supplierId || !supplierName) return;
+
     const order: PurchaseOrder = {
-      id: "PO-" + Math.floor(10000 + Math.random() * 90000),
-      supplierId: this.selectedSupplierId()!,
-      supplierName: this.selectedSupplierName()!,
-      status: "Ordered",
+      id: `PO-${Math.floor(10000 + Math.random() * 90000)}`,
+      supplierId,
+      supplierName,
+      status: 'Ordered',
       amount: this.orderTotal(),
       date: new Date().toISOString(),
       items: this.orderItems(),
     };
 
     this.service.addPurchaseOrder(order).subscribe(() => {
-      this.router.navigate(["/inventory/procurement", order.id]);
+      this.router.navigate(['/inventory/procurement', order.id]);
     });
   }
 }

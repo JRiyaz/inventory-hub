@@ -1,20 +1,20 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { RouterModule, Router } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import {
   CustomDropdownComponent,
-  DropdownOption,
+  type DropdownOption,
+  EmptyStateComponent,
+  PageHeaderComponent,
   SearchService,
   SkeletonComponent,
-  PageHeaderComponent,
-  EmptyStateComponent,
   StatusBadgeComponent,
-} from "ui-shared";
-import { SuppliersService } from "./suppliers.service";
+} from 'ui-shared';
+import { SuppliersService } from './suppliers.service';
 
 @Component({
-  selector: "app-suppliers",
+  selector: 'app-suppliers',
   standalone: true,
   imports: [
     CommonModule,
@@ -443,25 +443,22 @@ export class SuppliersComponent implements OnInit {
   private searchService = inject(SearchService);
   public router = inject(Router);
 
-  viewType = signal<"grid" | "list">("grid");
+  viewType = signal<'grid' | 'list'>('grid');
 
-  breadcrumbs = [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Suppliers" },
-  ];
+  breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Suppliers' }];
 
   pageSizeOptions: DropdownOption[] = [
-    { value: 8, label: "8 Per Page" },
-    { value: 16, label: "16 Per Page" },
-    { value: 32, label: "32 Per Page" },
-    { value: 50, label: "50 Per Page" },
+    { value: 8, label: '8 Per Page' },
+    { value: 16, label: '16 Per Page' },
+    { value: 32, label: '32 Per Page' },
+    { value: 50, label: '50 Per Page' },
   ];
 
   statusOptions: DropdownOption[] = [
-    { value: "All Statuses", label: "All Statuses" },
-    { value: "Active", label: "Active" },
-    { value: "Pending", label: "Pending" },
-    { value: "Inactive", label: "Inactive" },
+    { value: 'All Statuses', label: 'All Statuses' },
+    { value: 'Active', label: 'Active' },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Inactive', label: 'Inactive' },
   ];
 
   ngOnInit(): void {
@@ -474,7 +471,7 @@ export class SuppliersComponent implements OnInit {
       id: `supplier-${s.id}`,
       title: s.name,
       path: `/inventory/suppliers/${s.id}`,
-      category: "Supplier",
+      category: 'Supplier',
       keywords: [s.location, s.status],
     }));
     this.searchService.register(items);

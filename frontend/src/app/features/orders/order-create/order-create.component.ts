@@ -1,32 +1,32 @@
-import { CommonModule } from "@angular/common";
+import { CommonModule } from '@angular/common';
 import {
   Component,
   computed,
-  effect,
   ElementRef,
+  effect,
   HostListener,
   inject,
-  OnInit,
+  type OnInit,
   signal,
   viewChild,
-} from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
   CustomDatePickerComponent,
   CustomDropdownComponent,
-  Customer,
-  DropdownOption,
+  type Customer,
+  type DropdownOption,
   InventoryDataService,
   LoaderComponent,
-  OrderItem,
-  Product,
-  Order,
-} from "ui-shared";
-import { OrdersService } from "../orders.service";
+  type Order,
+  type OrderItem,
+  type Product,
+} from 'ui-shared';
+import { OrdersService } from '../orders.service';
 
 @Component({
-  selector: "app-order-create",
+  selector: 'app-order-create',
   standalone: true,
   imports: [
     CommonModule,
@@ -716,9 +716,9 @@ export class OrderCreateComponent implements OnInit {
   isEditMode = signal(false);
   orderId: string | null = null;
 
-  scanInput = "";
-  productSearchQuery = signal("");
-  customerSearchQuery = signal("");
+  scanInput = '';
+  productSearchQuery = signal('');
+  customerSearchQuery = signal('');
   showProductResults = signal(false);
   showCustomerSearch = signal(false);
   activeCustomerIndex = signal(0);
@@ -726,35 +726,28 @@ export class OrderCreateComponent implements OnInit {
 
   private eRef = inject(ElementRef);
 
-  customerSearchInput = viewChild<ElementRef<HTMLInputElement>>(
-    "customerSearchInput",
-  );
-  productSearchInput =
-    viewChild<ElementRef<HTMLInputElement>>("productSearchInput");
-  customerResultsContainer = viewChild<ElementRef<HTMLDivElement>>(
-    "customerResultsContainer",
-  );
-  productResultsContainer = viewChild<ElementRef<HTMLDivElement>>(
-    "productResultsContainer",
-  );
+  customerSearchInput = viewChild<ElementRef<HTMLInputElement>>('customerSearchInput');
+  productSearchInput = viewChild<ElementRef<HTMLInputElement>>('productSearchInput');
+  customerResultsContainer = viewChild<ElementRef<HTMLDivElement>>('customerResultsContainer');
+  productResultsContainer = viewChild<ElementRef<HTMLDivElement>>('productResultsContainer');
 
   selectedCustomerId = signal<string | null>(null);
   selectedCustomerName = signal<string | null>(null);
   isPriority = signal(false);
-  selectedStatus = signal<any>("Pending");
-  orderDate = signal<string>(new Date().toISOString().split("T")[0]);
+  selectedStatus = signal<any>('Pending');
+  orderDate = signal<string>(new Date().toISOString().split('T')[0]);
   orderItems = signal<OrderItem[]>([]);
 
   statusOptions: DropdownOption[] = [
-    { value: "Pending", label: "Pending" },
-    { value: "Processing", label: "Processing" },
-    { value: "Completed", label: "Completed" },
-    { value: "Cancelled", label: "Cancelled" },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Processing', label: 'Processing' },
+    { value: 'Completed', label: 'Completed' },
+    { value: 'Cancelled', label: 'Cancelled' },
   ];
 
   priorityOptions: DropdownOption[] = [
-    { value: "Standard", label: "Standard Tier" },
-    { value: "Express", label: "Express (High Priority)" },
+    { value: 'Standard', label: 'Standard Tier' },
+    { value: 'Express', label: 'Express (High Priority)' },
   ];
 
   filteredCustomerOptions = computed(() => {
@@ -762,11 +755,7 @@ export class OrderCreateComponent implements OnInit {
     if (!query) return this.service.customerOptions();
     return this.service
       .customerOptions()
-      .filter(
-        (c) =>
-          c.name.toLowerCase().includes(query) ||
-          c.id.toString().includes(query),
-      );
+      .filter((c) => c.name.toLowerCase().includes(query) || c.id.toString().includes(query));
   });
 
   filteredProductOptions = computed(() => {
@@ -776,23 +765,15 @@ export class OrderCreateComponent implements OnInit {
       .productOptions()
       .filter(
         (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.id.toString() === query ||
-          p.category.toLowerCase().includes(query),
+          p.name.toLowerCase().includes(query) || p.id.toString() === query || p.category.toLowerCase().includes(query),
       );
   });
 
-  subtotal = computed(() =>
-    this.orderItems().reduce((sum, item) => sum + item.price * item.qty, 0),
-  );
+  subtotal = computed(() => this.orderItems().reduce((sum, item) => sum + item.price * item.qty, 0));
 
-  totalItemsCount = computed(() =>
-    this.orderItems().reduce((sum, item) => sum + item.qty, 0),
-  );
+  totalItemsCount = computed(() => this.orderItems().reduce((sum, item) => sum + item.qty, 0));
 
-  canSubmit = computed(
-    () => this.selectedCustomerId() !== null && this.orderItems().length > 0,
-  );
+  canSubmit = computed(() => this.selectedCustomerId() !== null && this.orderItems().length > 0);
 
   constructor() {
     effect(() => {
@@ -808,34 +789,32 @@ export class OrderCreateComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params["id"]) {
+      if (params.id) {
         this.isEditMode.set(true);
-        this.orderId = params["id"];
+        this.orderId = params.id;
         this.loadOrder();
       }
     });
   }
 
   loadOrder() {
-    const order = this.service.getOrder(this.orderId || "");
+    const order = this.service.getOrder(this.orderId || '');
     if (order) {
       const customer = this.dataService
         .customers()
-        .find(
-          (c: Customer) => c.name === order.customer || c.id === order.customer,
-        );
-      this.selectedCustomerId.set(customer?.id || "manual");
+        .find((c: Customer) => c.name === order.customer || c.id === order.customer);
+      this.selectedCustomerId.set(customer?.id || 'manual');
       this.selectedCustomerName.set(order.customer);
       this.isPriority.set(order.priority);
       this.selectedStatus.set(order.status);
       this.orderDate.set(order.date);
       this.orderItems.set([...order.items]);
     } else {
-      this.router.navigate(["/inventory/orders"]);
+      this.router.navigate(['/inventory/orders']);
     }
   }
 
-  @HostListener("document:click", ["$event"])
+  @HostListener('document:click', ['$event'])
   clickout(event: any) {
     if (!this.eRef.nativeElement.contains(event.target)) {
       this.closeAllPopovers();
@@ -846,31 +825,23 @@ export class OrderCreateComponent implements OnInit {
     if (this.showCustomerSearch()) {
       const options = this.filteredCustomerOptions();
       switch (event.key) {
-        case "ArrowDown":
+        case 'ArrowDown':
           event.preventDefault();
           this.activeCustomerIndex.update((i) => (i + 1) % options.length);
-          this.scrollToActiveItem(
-            this.customerResultsContainer(),
-            this.activeCustomerIndex(),
-          );
+          this.scrollToActiveItem(this.customerResultsContainer(), this.activeCustomerIndex());
           break;
-        case "ArrowUp":
+        case 'ArrowUp':
           event.preventDefault();
-          this.activeCustomerIndex.update(
-            (i) => (i - 1 + options.length) % options.length,
-          );
-          this.scrollToActiveItem(
-            this.customerResultsContainer(),
-            this.activeCustomerIndex(),
-          );
+          this.activeCustomerIndex.update((i) => (i - 1 + options.length) % options.length);
+          this.scrollToActiveItem(this.customerResultsContainer(), this.activeCustomerIndex());
           break;
-        case "Enter":
+        case 'Enter':
           event.preventDefault();
           if (options[this.activeCustomerIndex()]) {
             this.onCustomerSelect(options[this.activeCustomerIndex()]);
           }
           break;
-        case "Escape":
+        case 'Escape':
           this.closeAllPopovers();
           break;
       }
@@ -881,31 +852,23 @@ export class OrderCreateComponent implements OnInit {
     if (this.showProductResults()) {
       const options = this.filteredProductOptions();
       switch (event.key) {
-        case "ArrowDown":
+        case 'ArrowDown':
           event.preventDefault();
           this.activeProductIndex.update((i) => (i + 1) % options.length);
-          this.scrollToActiveItem(
-            this.productResultsContainer(),
-            this.activeProductIndex(),
-          );
+          this.scrollToActiveItem(this.productResultsContainer(), this.activeProductIndex());
           break;
-        case "ArrowUp":
+        case 'ArrowUp':
           event.preventDefault();
-          this.activeProductIndex.update(
-            (i) => (i - 1 + options.length) % options.length,
-          );
-          this.scrollToActiveItem(
-            this.productResultsContainer(),
-            this.activeProductIndex(),
-          );
+          this.activeProductIndex.update((i) => (i - 1 + options.length) % options.length);
+          this.scrollToActiveItem(this.productResultsContainer(), this.activeProductIndex());
           break;
-        case "Enter":
+        case 'Enter':
           event.preventDefault();
           if (options[this.activeProductIndex()]) {
             this.addItemToOrder(options[this.activeProductIndex()]);
           }
           break;
-        case "Escape":
+        case 'Escape':
           this.closeAllPopovers();
           break;
       }
@@ -921,7 +884,7 @@ export class OrderCreateComponent implements OnInit {
     this.selectedCustomerId.set(customer.id);
     this.selectedCustomerName.set(customer.name);
     this.showCustomerSearch.set(false);
-    this.customerSearchQuery.set("");
+    this.customerSearchQuery.set('');
   }
 
   toggleCustomerSearch(event: Event) {
@@ -942,15 +905,15 @@ export class OrderCreateComponent implements OnInit {
     this.showProductResults.set(!currentState);
 
     if (this.showProductResults()) {
-      this.productSearchQuery.set("");
+      this.productSearchQuery.set('');
       this.activeProductIndex.set(0);
       setTimeout(() => {
         this.productSearchInput()?.nativeElement.focus();
-        const container = document.querySelector(".max-h-\\[500px\\]");
+        const container = document.querySelector('.max-h-\\[500px\\]');
         if (container) {
           container.scrollTo({
             top: container.scrollHeight,
-            behavior: "smooth",
+            behavior: 'smooth',
           });
         }
       }, 100);
@@ -963,17 +926,13 @@ export class OrderCreateComponent implements OnInit {
 
     const product = this.dataService
       .products()
-      .find(
-        (p: Product) =>
-          p.id.toString() === input ||
-          p.name.toLowerCase().includes(input.toLowerCase()),
-      );
+      .find((p: Product) => p.id.toString() === input || p.name.toLowerCase().includes(input.toLowerCase()));
 
     if (product) {
       this.addItemToOrder(product);
-      this.scanInput = "";
+      this.scanInput = '';
     } else {
-      this.scanInput = "";
+      this.scanInput = '';
     }
   }
 
@@ -981,9 +940,7 @@ export class OrderCreateComponent implements OnInit {
     this.orderItems.update((items) => {
       const existing = items.find((i) => i.productId === product.id);
       if (existing) {
-        return items.map((i) =>
-          i.productId === product.id ? { ...i, qty: i.qty + 1 } : i,
-        );
+        return items.map((i) => (i.productId === product.id ? { ...i, qty: i.qty + 1 } : i));
       } else {
         return [
           ...items,
@@ -996,7 +953,7 @@ export class OrderCreateComponent implements OnInit {
         ];
       }
     });
-    this.productSearchQuery.set("");
+    this.productSearchQuery.set('');
     this.showProductResults.set(false);
   }
 
@@ -1020,12 +977,10 @@ export class OrderCreateComponent implements OnInit {
     if (!this.canSubmit()) return;
 
     const order: Order = {
-      id: (this.isEditMode()
-        ? this.orderId
-        : "ORD-" + Math.floor(1000 + Math.random() * 9000)) as string,
-      customer: this.selectedCustomerName() || "",
+      id: (this.isEditMode() ? this.orderId : `ORD-${Math.floor(1000 + Math.random() * 9000)}`) as string,
+      customer: this.selectedCustomerName() || '',
       customerName: this.selectedCustomerName() || undefined,
-      status: this.isEditMode() ? this.selectedStatus() : "Pending",
+      status: this.isEditMode() ? this.selectedStatus() : 'Pending',
       priority: this.isPriority(),
       date: this.orderDate(),
       items: this.orderItems(),
@@ -1033,22 +988,17 @@ export class OrderCreateComponent implements OnInit {
       amount: this.subtotal(),
     };
 
-    const action = this.isEditMode()
-      ? this.service.updateOrder(order)
-      : this.service.addOrder(order);
+    const action = this.isEditMode() ? this.service.updateOrder(order) : this.service.addOrder(order);
 
     action.subscribe(() => {
-      this.router.navigate(["/inventory/orders", order.id]);
+      this.router.navigate(['/inventory/orders', order.id]);
     });
   }
 
-  private scrollToActiveItem(
-    containerRef: ElementRef<HTMLDivElement> | undefined,
-    index: number,
-  ) {
+  private scrollToActiveItem(containerRef: ElementRef<HTMLDivElement> | undefined, index: number) {
     if (!containerRef) return;
     const container = containerRef.nativeElement;
-    const items = container.querySelectorAll("button");
+    const items = container.querySelectorAll('button');
     const activeItem = items[index] as HTMLElement;
 
     if (activeItem) {
@@ -1058,11 +1008,11 @@ export class OrderCreateComponent implements OnInit {
       const itemBottom = itemTop + activeItem.clientHeight;
 
       if (itemTop < containerTop) {
-        container.scrollTo({ top: itemTop, behavior: "smooth" });
+        container.scrollTo({ top: itemTop, behavior: 'smooth' });
       } else if (itemBottom > containerBottom) {
         container.scrollTo({
           top: itemBottom - container.clientHeight,
-          behavior: "smooth",
+          behavior: 'smooth',
         });
       }
     }

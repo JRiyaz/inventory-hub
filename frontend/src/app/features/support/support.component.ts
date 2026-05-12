@@ -1,14 +1,9 @@
-import { Component, inject, signal } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import {
-  ChatService,
-  PageHeaderComponent,
-  ChatWidgetComponent,
-  ChatViewComponent,
-} from "ui-shared";
+import { CommonModule } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
+import { ChatService, ChatViewComponent, PageHeaderComponent } from 'ui-shared';
 
 @Component({
-  selector: "app-support",
+  selector: 'app-support',
   standalone: true,
   imports: [CommonModule, PageHeaderComponent, ChatViewComponent],
   template: `

@@ -1,20 +1,20 @@
-import { Component, signal, inject, computed, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
-  Product,
-  NotificationService,
   CustomDropdownComponent,
-  DropdownOption,
-  LoaderComponent,
+  type DropdownOption,
   FormValidationDirective,
+  LoaderComponent,
+  NotificationService,
+  type Product,
   ValidationErrorPipe,
-} from "ui-shared";
-import { ProductsService } from "../products.service";
+} from 'ui-shared';
+import { ProductsService } from '../products.service';
 
 @Component({
-  selector: "app-product-create",
+  selector: 'app-product-create',
   standalone: true,
   imports: [
     CommonModule,
@@ -311,34 +311,35 @@ export class ProductCreateComponent implements OnInit {
   productId: number | null = null;
 
   formData = {
-    name: "",
+    name: '',
     price: 0,
     stock: 0,
-    category: "Electronics",
-    description: "",
-    supplierId: "",
+    category: 'Electronics',
+    description: '',
+    supplierId: '',
     discount: 0,
   };
 
   categoryOptions: DropdownOption[] = [
-    { value: "Electronics", label: "Electronics" },
-    { value: "Industrial", label: "Industrial" },
-    { value: "Raw Materials", label: "Raw Materials" },
-    { value: "Computing", label: "Computing" },
+    { value: 'Electronics', label: 'Electronics' },
+    { value: 'Industrial', label: 'Industrial' },
+    { value: 'Raw Materials', label: 'Raw Materials' },
+    { value: 'Computing', label: 'Computing' },
   ];
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params["id"]) {
+      if (params.id) {
         this.isEditMode.set(true);
-        this.productId = Number(params["id"]);
+        this.productId = Number(params.id);
         this.loadProduct();
       }
     });
   }
 
   loadProduct() {
-    const product = this.service.getProduct(this.productId!);
+    if (!this.productId) return;
+    const product = this.service.getProduct(this.productId);
     if (product) {
       this.formData = {
         name: product.name,
@@ -346,31 +347,29 @@ export class ProductCreateComponent implements OnInit {
         stock: product.stock,
         category: product.category,
         description: product.description,
-        supplierId: product.supplierId || "",
+        supplierId: product.supplierId || '',
         discount: product.discount || 0,
       };
     } else {
-      this.notificationService.error(
-        "Product Not Found",
-        "The requested SKU could not be located.",
-      );
-      this.router.navigate(["/inventory/products"]);
+      this.notificationService.error('Product Not Found', 'The requested SKU could not be located.');
+      this.router.navigate(['/inventory/products']);
     }
   }
 
   submitForm() {
     if (this.isEditMode()) {
+      if (!this.productId) return;
       const updatedProduct: Product = {
-        id: this.productId!,
+        id: this.productId,
         ...this.formData,
       };
 
       this.service.updateProduct(updatedProduct).subscribe(() => {
         this.notificationService.success(
-          "Update Successful",
+          'Update Successful',
           `${updatedProduct.name} has been modified in the catalog.`,
         );
-        this.router.navigate(["/inventory/products", this.productId]);
+        this.router.navigate(['/inventory/products', this.productId]);
       });
     } else {
       const newProduct: Product = {
@@ -380,10 +379,10 @@ export class ProductCreateComponent implements OnInit {
 
       this.service.addProduct(newProduct).subscribe(() => {
         this.notificationService.success(
-          "Product Initialized",
+          'Product Initialized',
           `${newProduct.name} has been added to the master catalog.`,
         );
-        this.router.navigate(["/inventory/products", newProduct.id]);
+        this.router.navigate(['/inventory/products', newProduct.id]);
       });
     }
   }

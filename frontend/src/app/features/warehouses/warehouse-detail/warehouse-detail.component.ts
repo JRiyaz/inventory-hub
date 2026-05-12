@@ -1,24 +1,12 @@
-import {
-  Component,
-  signal,
-  OnInit,
-  inject,
-  computed,
-  ElementRef,
-  HostListener,
-} from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import {
-  DetailLayoutComponent,
-  StatusBadgeComponent,
-  Breadcrumb,
-} from "ui-shared";
-import { WarehousesService } from "../warehouses.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, ElementRef, HostListener, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { type Breadcrumb, DetailLayoutComponent } from 'ui-shared';
+import { WarehousesService } from '../warehouses.service';
 
 @Component({
-  selector: "app-warehouse-detail",
+  selector: 'app-warehouse-detail',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, DetailLayoutComponent],
   template: `
@@ -642,19 +630,19 @@ export class WarehouseDetailComponent implements OnInit {
   private eRef = inject(ElementRef);
 
   activeTab = signal(0);
-  sortField = signal<string>("date");
-  sortOrder = signal<"asc" | "desc">("desc");
+  sortField = signal<string>('date');
+  sortOrder = signal<'asc' | 'desc'>('desc');
 
   showProductSearch = signal(false);
-  productSearchQuery = signal("");
+  productSearchQuery = signal('');
 
-  warehouseId = computed(() => this.route.snapshot.paramMap.get("id") || "");
+  warehouseId = computed(() => this.route.snapshot.paramMap.get('id') || '');
   warehouse = computed(() => this.service.getWarehouse(this.warehouseId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Warehouses", link: "/inventory/warehouses" },
-    { label: this.warehouse()?.name || "Detail" },
+    { label: 'Inventory', link: '/inventory' },
+    { label: 'Warehouses', link: '/inventory/warehouses' },
+    { label: this.warehouse()?.name || 'Detail' },
   ]);
 
   storedProducts = computed(() => {
@@ -672,25 +660,25 @@ export class WarehouseDetailComponent implements OnInit {
     const field = this.sortField();
     const order = this.sortOrder();
 
-    let result = this.service.getMovementsByWarehouseId(this.warehouseId());
+    const result = this.service.getMovementsByWarehouseId(this.warehouseId());
 
     return result.sort((a: any, b: any) => {
       const valA = a[field];
       const valB = b[field];
-      if (valA < valB) return order === "asc" ? -1 : 1;
-      if (valA > valB) return order === "asc" ? 1 : -1;
+      if (valA < valB) return order === 'asc' ? -1 : 1;
+      if (valA > valB) return order === 'asc' ? 1 : -1;
       return 0;
     });
   });
 
   capacityStatus = computed(() => {
     const u = this.warehouse()?.utilization || 0;
-    if (u > 90) return "Near Capacity";
-    if (u > 70) return "Heavy Load";
-    return "Optimal";
+    if (u > 90) return 'Near Capacity';
+    if (u > 70) return 'Heavy Load';
+    return 'Optimal';
   });
 
-  @HostListener("document:click", ["$event"])
+  @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     if (!this.eRef.nativeElement.contains(event.target)) {
       this.showProductSearch.set(false);
@@ -699,10 +687,10 @@ export class WarehouseDetailComponent implements OnInit {
 
   toggleSort(field: string) {
     if (this.sortField() === field) {
-      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
+      this.sortOrder.set(this.sortOrder() === 'asc' ? 'desc' : 'asc');
     } else {
       this.sortField.set(field);
-      this.sortOrder.set("asc");
+      this.sortOrder.set('asc');
     }
   }
 
@@ -713,7 +701,7 @@ export class WarehouseDetailComponent implements OnInit {
   goToEdit() {
     const id = this.warehouseId();
     if (id) {
-      this.router.navigate(["/inventory/warehouses", id, "edit"]);
+      this.router.navigate(['/inventory/warehouses', id, 'edit']);
     }
   }
 
@@ -725,17 +713,15 @@ export class WarehouseDetailComponent implements OnInit {
   }
 
   getBarClass(u: number) {
-    if (u > 90) return "bg-rose-500";
-    if (u > 70) return "bg-amber-500";
-    return "bg-primary";
+    if (u > 90) return 'bg-rose-500';
+    if (u > 70) return 'bg-amber-500';
+    return 'bg-primary';
   }
 
   addProduct(productId: number) {
-    this.service
-      .addProductToWarehouse(productId, this.warehouseId())
-      .subscribe(() => {
-        this.showProductSearch.set(false);
-        this.productSearchQuery.set("");
-      });
+    this.service.addProductToWarehouse(productId, this.warehouseId()).subscribe(() => {
+      this.showProductSearch.set(false);
+      this.productSearchQuery.set('');
+    });
   }
 }

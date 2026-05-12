@@ -1,20 +1,20 @@
-import { Routes } from "@angular/router";
-import { AnalyticsComponent } from "./analytics.component";
+import type { Routes } from '@angular/router';
+import { AnalyticsComponent } from './analytics.component';
 
 export const ANALYTICS_ROUTES: Routes = [
   {
-    path: "",
+    path: '',
     component: AnalyticsComponent,
-    data: { type: "global" },
+    data: { type: 'global' },
   },
   {
-    path: "sales",
+    path: 'sales',
     component: AnalyticsComponent,
-    data: { type: "sales" },
+    data: { type: 'sales' },
   },
   {
-    path: "procurement",
+    path: 'procurement',
     component: AnalyticsComponent,
-    data: { type: "procurement" },
+    data: { type: 'procurement' },
   },
 ];

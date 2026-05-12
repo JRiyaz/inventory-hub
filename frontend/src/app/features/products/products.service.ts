@@ -1,9 +1,9 @@
-import { Injectable, inject, signal, computed } from "@angular/core";
-import { InventoryDataService, Product } from "ui-shared";
-import { delay, of, tap } from "rxjs";
+import { computed, Injectable, inject, signal } from '@angular/core';
+import { delay, of, tap } from 'rxjs';
+import { InventoryDataService, type Product } from 'ui-shared';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class ProductsService {
   private dataService = inject(InventoryDataService);
@@ -11,11 +11,11 @@ export class ProductsService {
   // State
   isLoading = signal(false);
   isActionLoading = signal(false);
-  searchQuery = signal("");
-  selectedCategory = signal("All");
+  searchQuery = signal('');
+  selectedCategory = signal('All');
   currentPage = signal(1);
   pageSize = signal(8);
-  viewType = signal<"grid" | "list">("grid");
+  viewType = signal<'grid' | 'list'>('grid');
 
   // Derived Data
   products = this.dataService.products;
@@ -25,10 +25,8 @@ export class ProductsService {
     const cat = this.selectedCategory();
 
     return this.products().filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query);
-      const matchesCat = cat === "All" || p.category === cat;
+      const matchesSearch = p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query);
+      const matchesCat = cat === 'All' || p.category === cat;
       return matchesSearch && matchesCat;
     });
   });
@@ -38,33 +36,25 @@ export class ProductsService {
     return this.allFilteredProducts().slice(start, start + this.pageSize());
   });
 
-  totalPages = computed(() =>
-    Math.ceil(this.allFilteredProducts().length / this.pageSize()),
-  );
+  totalPages = computed(() => Math.ceil(this.allFilteredProducts().length / this.pageSize()));
 
   headerStats = computed(() => [
     {
-      label: "Live Inventory",
+      label: 'Live Inventory',
       value: this.products().length,
-      color: "primary" as const,
+      color: 'primary' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
     },
     {
-      label: "Shortage Alerts",
+      label: 'Shortage Alerts',
       value: this.products().filter((p) => p.stock < 20).length,
-      color: "danger" as const,
+      color: 'danger' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
     },
     {
-      label: "Global Valuation",
-      value:
-        "$" +
-        (
-          this.products().reduce((acc, p) => acc + p.price * p.stock, 0) /
-          1000000
-        ).toFixed(2) +
-        "M",
-      color: "success" as const,
+      label: 'Global Valuation',
+      value: `$${(this.products().reduce((acc, p) => acc + p.price * p.stock, 0) / 1000000).toFixed(2)}M`,
+      color: 'success' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
     },
   ]);
@@ -105,14 +95,10 @@ export class ProductsService {
   }
 
   getOrdersByProductId(productId: number) {
-    return this.dataService
-      .orders()
-      .filter((o) => o.items.some((i) => i.productId === productId));
+    return this.dataService.orders().filter((o) => o.items.some((i) => i.productId === productId));
   }
 
-  supplierOptions = computed(() =>
-    this.dataService.suppliers().map((s) => ({ value: s.id, label: s.name })),
-  );
+  supplierOptions = computed(() => this.dataService.suppliers().map((s) => ({ value: s.id, label: s.name })));
 
   addProduct(product: Product) {
     this.isActionLoading.set(true);

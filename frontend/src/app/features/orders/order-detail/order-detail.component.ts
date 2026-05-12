@@ -1,23 +1,13 @@
-import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit, signal, computed } from "@angular/core";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import {
-  DetailLayoutComponent,
-  EmptyStateComponent,
-  SkeletonComponent,
-} from "ui-shared";
-import { OrdersService } from "../orders.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { DetailLayoutComponent, EmptyStateComponent, SkeletonComponent } from 'ui-shared';
+import { OrdersService } from '../orders.service';
 
 @Component({
-  selector: "app-order-detail",
+  selector: 'app-order-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    SkeletonComponent,
-    DetailLayoutComponent,
-    EmptyStateComponent,
-  ],
+  imports: [CommonModule, RouterModule, SkeletonComponent, DetailLayoutComponent, EmptyStateComponent],
   template: `
     <div class="p-3 sm:p-6 min-h-screen animate-fade-in">
       @if (service.isLoading()) {
@@ -635,14 +625,14 @@ export class OrderDetailComponent implements OnInit {
   });
 
   breadcrumbs = computed(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Orders", link: "/inventory/orders" },
-    { label: this.order() ? `Order #${this.order()?.id}` : "Details" },
+    { label: 'Inventory', link: '/inventory' },
+    { label: 'Orders', link: '/inventory/orders' },
+    { label: this.order() ? `Order #${this.order()?.id}` : 'Details' },
   ]);
 
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
-      const id = params["id"];
+      const id = params.id;
       if (id) {
         this.orderId.set(id);
         this.service.loadOrders(); // Ensure data is loaded
@@ -650,20 +640,18 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
-  getStatusColor(
-    status?: string,
-  ): "primary" | "warning" | "success" | "danger" {
+  getStatusColor(status?: string): 'primary' | 'warning' | 'success' | 'danger' {
     switch (status) {
-      case "Pending":
-        return "warning";
-      case "Processing":
-        return "primary";
-      case "Completed":
-        return "success";
-      case "Cancelled":
-        return "danger";
+      case 'Pending':
+        return 'warning';
+      case 'Processing':
+        return 'primary';
+      case 'Completed':
+        return 'success';
+      case 'Cancelled':
+        return 'danger';
       default:
-        return "primary";
+        return 'primary';
     }
   }
 
@@ -679,7 +667,7 @@ export class OrderDetailComponent implements OnInit {
   editOrder(): void {
     const id = this.order()?.id;
     if (id) {
-      this.router.navigate(["/inventory/orders/edit", id]);
+      this.router.navigate(['/inventory/orders/edit', id]);
     }
   }
 }

@@ -1,20 +1,20 @@
-import { Component, signal, inject, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
+import { CommonModule } from '@angular/common';
+import { Component, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
-  Supplier,
-  NotificationService,
   CustomDropdownComponent,
-  DropdownOption,
-  LoaderComponent,
+  type DropdownOption,
   FormValidationDirective,
+  LoaderComponent,
+  NotificationService,
+  type Supplier,
   ValidationErrorPipe,
-} from "ui-shared";
-import { SuppliersService } from "../suppliers.service";
+} from 'ui-shared';
+import { SuppliersService } from '../suppliers.service';
 
 @Component({
-  selector: "app-supplier-create",
+  selector: 'app-supplier-create',
   standalone: true,
   imports: [
     CommonModule,
@@ -323,30 +323,30 @@ export class SupplierCreateComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   isEditMode = signal(false);
-  supplierId: string = "";
+  supplierId: string = '';
 
   formData = {
-    name: "",
-    category: "",
-    email: "",
-    phone: "",
-    location: "",
+    name: '',
+    category: '',
+    email: '',
+    phone: '',
+    location: '',
     reliability: 100,
-    status: "Active" as "Active" | "Pending" | "Inactive" | "Critical",
+    status: 'Active' as 'Active' | 'Pending' | 'Inactive' | 'Critical',
   };
 
   statusOptions: DropdownOption[] = [
-    { value: "Active", label: "Active" },
-    { value: "Pending", label: "Pending" },
-    { value: "Inactive", label: "Inactive" },
-    { value: "Critical", label: "Critical" },
+    { value: 'Active', label: 'Active' },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Inactive', label: 'Inactive' },
+    { value: 'Critical', label: 'Critical' },
   ];
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
-      if (params["id"]) {
+      if (params.id) {
         this.isEditMode.set(true);
-        this.supplierId = params["id"];
+        this.supplierId = params.id;
         this.loadSupplier();
       }
     });
@@ -365,11 +365,8 @@ export class SupplierCreateComponent implements OnInit {
         status: supplier.status,
       };
     } else {
-      this.notificationService.error(
-        "Supplier Not Found",
-        "The requested vendor record could not be found.",
-      );
-      this.router.navigate(["/inventory/suppliers"]);
+      this.notificationService.error('Supplier Not Found', 'The requested vendor record could not be found.');
+      this.router.navigate(['/inventory/suppliers']);
     }
   }
 
@@ -381,25 +378,22 @@ export class SupplierCreateComponent implements OnInit {
       };
 
       this.service.updateSupplier(updatedSupplier).subscribe(() => {
-        this.notificationService.success(
-          "Update Successful",
-          `${updatedSupplier.name}'s profile has been updated.`,
-        );
-        this.router.navigate(["/inventory/suppliers", this.supplierId]);
+        this.notificationService.success('Update Successful', `${updatedSupplier.name}'s profile has been updated.`);
+        this.router.navigate(['/inventory/suppliers', this.supplierId]);
       });
     } else {
       const newSupplier: Supplier = {
-        id: "SUP-" + Math.floor(1000 + Math.random() * 9000),
+        id: `SUP-${Math.floor(1000 + Math.random() * 9000)}`,
         ...this.formData,
-        status: "Active",
+        status: 'Active',
       };
 
       this.service.addSupplier(newSupplier).subscribe(() => {
         this.notificationService.success(
-          "Onboarding Successful",
+          'Onboarding Successful',
           `${newSupplier.name} has been added to the vendor network.`,
         );
-        this.router.navigate(["/inventory/suppliers", newSupplier.id]);
+        this.router.navigate(['/inventory/suppliers', newSupplier.id]);
       });
     }
   }

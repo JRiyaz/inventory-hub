@@ -1,33 +1,14 @@
-import { CommonModule } from "@angular/common";
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  OnInit,
-  Renderer2,
-  signal,
-  ViewEncapsulation,
-} from "@angular/core";
-import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import { ActivatedRoute, RouterModule } from "@angular/router";
-import {
-  CustomDatePickerComponent,
-  PageHeaderComponent,
-  SkeletonComponent,
-} from "ui-shared";
-import { AnalyticsService } from "./analytics.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, effect, inject, type OnInit, Renderer2, signal, ViewEncapsulation } from '@angular/core';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { CustomDatePickerComponent, PageHeaderComponent, SkeletonComponent } from 'ui-shared';
+import { AnalyticsService } from './analytics.service';
 
 @Component({
-  selector: "app-analytics",
+  selector: 'app-analytics',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    PageHeaderComponent,
-    SkeletonComponent,
-    CustomDatePickerComponent,
-  ],
+  imports: [CommonModule, RouterModule, PageHeaderComponent, SkeletonComponent, CustomDatePickerComponent],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in pb-20">
@@ -623,59 +604,53 @@ export class AnalyticsComponent implements OnInit {
   }
 
   activeSection = signal<string | null>(null);
-  readonly durations = ["Week", "Month", "Year"] as const;
+  readonly durations = ['Week', 'Month', 'Year'] as const;
 
   constructor() {
     effect(() => {
       const section = this.activeSection();
       if (section) {
-        this.renderer.addClass(document.body, "modal-open");
+        this.renderer.addClass(document.body, 'modal-open');
       } else {
-        this.renderer.removeClass(document.body, "modal-open");
+        this.renderer.removeClass(document.body, 'modal-open');
       }
     });
   }
 
   headerInfo = computed(() => {
-    const type = this.route.snapshot.data["type"] || "global";
+    const type = this.route.snapshot.data.type || 'global';
     switch (type) {
-      case "sales":
+      case 'sales':
         return {
-          title: "Sales & CRM Analytics",
-          subtitle:
-            "Detailed breakdown of customer orders, revenue, and promotional impact.",
-          chartTitle: "Sales Revenue Analysis",
+          title: 'Sales & CRM Analytics',
+          subtitle: 'Detailed breakdown of customer orders, revenue, and promotional impact.',
+          chartTitle: 'Sales Revenue Analysis',
         };
-      case "procurement":
+      case 'procurement':
         return {
-          title: "Supply Chain Analytics",
-          subtitle:
-            "Monitoring stock orders, supplier performance, and warehouse efficiency.",
-          chartTitle: "Procurement Expenditure Analysis",
+          title: 'Supply Chain Analytics',
+          subtitle: 'Monitoring stock orders, supplier performance, and warehouse efficiency.',
+          chartTitle: 'Procurement Expenditure Analysis',
         };
       default:
         return {
-          title: "Global Ecosystem Analytics",
-          subtitle:
-            "Consolidated performance metrics across both sales and procurement streams.",
-          chartTitle: "Consolidated Revenue Analysis",
+          title: 'Global Ecosystem Analytics',
+          subtitle: 'Consolidated performance metrics across both sales and procurement streams.',
+          chartTitle: 'Consolidated Revenue Analysis',
         };
     }
   });
 
-  breadcrumbs = computed(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: this.headerInfo().title },
-  ]);
+  breadcrumbs = computed(() => [{ label: 'Inventory', link: '/inventory' }, { label: this.headerInfo().title }]);
 
   activeDetailStats = computed(() => {
     const section = this.activeSection();
     if (!section) return [];
 
     return [
-      { label: "Volume", value: "1.2M", change: "+12%" },
-      { label: "Efficiency", value: "98.4%", change: "+2%" },
-      { label: "Stability", value: "High", change: "0%" },
+      { label: 'Volume', value: '1.2M', change: '+12%' },
+      { label: 'Efficiency', value: '98.4%', change: '+2%' },
+      { label: 'Stability', value: 'High', change: '0%' },
     ];
   });
 

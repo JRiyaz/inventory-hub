@@ -1,24 +1,14 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit, computed, inject, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import {
-  Breadcrumb,
-  DetailLayoutComponent,
-  StatusBadgeComponent,
-} from "ui-shared";
-import { ProductsService } from "../products.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent } from 'ui-shared';
+import { ProductsService } from '../products.service';
 
 @Component({
-  selector: "app-product-detail",
+  selector: 'app-product-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterModule,
-    DetailLayoutComponent,
-    StatusBadgeComponent,
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, DetailLayoutComponent, StatusBadgeComponent],
   template: `
     <lib-detail-layout
       [title]="product()?.name || 'Loading...'"
@@ -563,13 +553,13 @@ export class ProductDetailComponent implements OnInit {
 
   activeTab = signal(0);
 
-  productId = computed(() => Number(this.route.snapshot.paramMap.get("id")));
+  productId = computed(() => Number(this.route.snapshot.paramMap.get('id')));
   product = computed(() => this.service.getProduct(this.productId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Products", link: "/inventory/products" },
-    { label: this.product()?.name || "Detail" },
+    { label: 'Inventory', link: '/inventory' },
+    { label: 'Products', link: '/inventory/products' },
+    { label: this.product()?.name || 'Detail' },
   ]);
 
   supplier = computed(() => {
@@ -589,10 +579,10 @@ export class ProductDetailComponent implements OnInit {
 
   stockStatus = computed(() => {
     const p = this.product();
-    if (!p) return "Unknown";
-    if (p.stock === 0) return "Out of Stock";
-    if (p.stock < 20) return "Low Stock";
-    return "Optimal Stock";
+    if (!p) return 'Unknown';
+    if (p.stock === 0) return 'Out of Stock';
+    if (p.stock < 20) return 'Low Stock';
+    return 'Optimal Stock';
   });
 
   ngOnInit() {
@@ -600,11 +590,11 @@ export class ProductDetailComponent implements OnInit {
   }
 
   goToEdit() {
-    this.router.navigate(["/inventory/products", this.productId(), "edit"]);
+    this.router.navigate(['/inventory/products', this.productId(), 'edit']);
   }
 
   handleAction() {
-    this.router.navigate(["/inventory/procurement/stock-order/create"], {
+    this.router.navigate(['/inventory/procurement/stock-order/create'], {
       queryParams: { productId: this.productId() },
     });
   }

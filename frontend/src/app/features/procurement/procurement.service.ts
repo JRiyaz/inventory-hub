@@ -1,15 +1,9 @@
-import { Injectable, inject, signal, computed } from "@angular/core";
-import {
-  InventoryDataService,
-  PurchaseOrder,
-  PurchaseOrderItem,
-  Product,
-  Supplier,
-} from "ui-shared";
-import { delay, of, tap } from "rxjs";
+import { computed, Injectable, inject, signal } from '@angular/core';
+import { delay, of, tap } from 'rxjs';
+import { InventoryDataService, type PurchaseOrder } from 'ui-shared';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class ProcurementService {
   private dataService = inject(InventoryDataService);
@@ -17,12 +11,12 @@ export class ProcurementService {
   // State
   isLoading = signal(false);
   isActionLoading = signal(false);
-  searchQuery = signal("");
-  statusFilter = signal("All Statuses");
+  searchQuery = signal('');
+  statusFilter = signal('All Statuses');
   currentPage = signal(1);
   pageSize = signal(10);
-  sortField = signal<string>("date");
-  sortOrder = signal<"asc" | "desc">("desc");
+  sortField = signal<string>('date');
+  sortOrder = signal<'asc' | 'desc'>('desc');
 
   // Purchase Orders State
   purchaseOrders = signal<PurchaseOrder[]>([]);
@@ -31,16 +25,11 @@ export class ProcurementService {
   allFilteredOrders = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const status = this.statusFilter();
-    const all = [
-      ...this.dataService.purchaseOrders(),
-      ...this.purchaseOrders(),
-    ];
+    const all = [...this.dataService.purchaseOrders(), ...this.purchaseOrders()];
 
-    let filtered = all.filter((o) => {
-      const matchesSearch =
-        o.id.toLowerCase().includes(query) ||
-        o.supplierName.toLowerCase().includes(query);
-      const matchesStatus = status === "All Statuses" || o.status === status;
+    const filtered = all.filter((o) => {
+      const matchesSearch = o.id.toLowerCase().includes(query) || o.supplierName.toLowerCase().includes(query);
+      const matchesStatus = status === 'All Statuses' || o.status === status;
       return matchesSearch && matchesStatus;
     });
 
@@ -50,8 +39,8 @@ export class ProcurementService {
     return filtered.sort((a: any, b: any) => {
       const valA = a[field];
       const valB = b[field];
-      if (valA < valB) return order === "asc" ? -1 : 1;
-      if (valA > valB) return order === "asc" ? 1 : -1;
+      if (valA < valB) return order === 'asc' ? -1 : 1;
+      if (valA > valB) return order === 'asc' ? 1 : -1;
       return 0;
     });
   });
@@ -61,32 +50,29 @@ export class ProcurementService {
     return this.allFilteredOrders().slice(start, start + this.pageSize());
   });
 
-  totalPages = computed(() =>
-    Math.ceil(this.allFilteredOrders().length / this.pageSize()),
-  );
+  totalPages = computed(() => Math.ceil(this.allFilteredOrders().length / this.pageSize()));
 
   headerStats = computed(() => [
     {
-      label: "Total Orders",
+      label: 'Total Orders',
       value: this.allFilteredOrders().length,
-      color: "primary" as const,
+      color: 'primary' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>',
     },
     {
-      label: "Total Amount",
+      label: 'Total Amount',
       value:
-        "$" +
+        '$' +
         this.allFilteredOrders()
           .reduce((sum, o) => sum + o.amount, 0)
           .toLocaleString(),
-      color: "success" as const,
+      color: 'success' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
     },
     {
-      label: "Pending",
-      value: this.allFilteredOrders().filter((o) => o.status === "Ordered")
-        .length,
-      color: "warning" as const,
+      label: 'Pending',
+      value: this.allFilteredOrders().filter((o) => o.status === 'Ordered').length,
+      color: 'warning' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
     },
   ]);
@@ -103,10 +89,10 @@ export class ProcurementService {
 
   toggleSort(field: string) {
     if (this.sortField() === field) {
-      this.sortOrder.set(this.sortOrder() === "asc" ? "desc" : "asc");
+      this.sortOrder.set(this.sortOrder() === 'asc' ? 'desc' : 'asc');
     } else {
       this.sortField.set(field);
-      this.sortOrder.set("asc");
+      this.sortOrder.set('asc');
     }
   }
   getProducts() {
@@ -137,10 +123,7 @@ export class ProcurementService {
   }
 
   getPurchaseOrder(id: string) {
-    const all = [
-      ...this.dataService.purchaseOrders(),
-      ...this.purchaseOrders(),
-    ];
+    const all = [...this.dataService.purchaseOrders(), ...this.purchaseOrders()];
     return all.find((o) => o.id === id);
   }
 }

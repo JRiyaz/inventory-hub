@@ -1,11 +1,11 @@
-import { Component, inject, signal, computed, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import { DetailLayoutComponent, Breadcrumb } from "ui-shared";
-import { SuppliersService } from "../suppliers.service";
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { type Breadcrumb, DetailLayoutComponent } from 'ui-shared';
+import { SuppliersService } from '../suppliers.service';
 
 @Component({
-  selector: "app-supplier-detail",
+  selector: 'app-supplier-detail',
   standalone: true,
   imports: [CommonModule, RouterModule, DetailLayoutComponent],
   template: `
@@ -331,18 +331,16 @@ export class SupplierDetailComponent implements OnInit {
 
   activeTab = signal(0);
 
-  supplierId = computed(() => this.route.snapshot.paramMap.get("id") || "");
+  supplierId = computed(() => this.route.snapshot.paramMap.get('id') || '');
   supplier = computed(() => this.service.getSupplier(this.supplierId()));
 
   breadcrumbs = computed<Breadcrumb[]>(() => [
-    { label: "Inventory", link: "/inventory" },
-    { label: "Suppliers", link: "/inventory/suppliers" },
-    { label: this.supplier()?.name || "Detail" },
+    { label: 'Inventory', link: '/inventory' },
+    { label: 'Suppliers', link: '/inventory/suppliers' },
+    { label: this.supplier()?.name || 'Detail' },
   ]);
 
-  products = computed(() =>
-    this.service.getProductsBySupplierId(this.supplierId()),
-  );
+  products = computed(() => this.service.getProductsBySupplierId(this.supplierId()));
 
   ngOnInit() {
     this.service.loadSuppliers();
@@ -351,12 +349,12 @@ export class SupplierDetailComponent implements OnInit {
   goToEdit() {
     const id = this.supplierId();
     if (id) {
-      this.router.navigate(["/inventory/suppliers", id, "edit"]);
+      this.router.navigate(['/inventory/suppliers', id, 'edit']);
     }
   }
 
   handleAction() {
-    this.router.navigate(["/inventory/procurement/stock-order/create"], {
+    this.router.navigate(['/inventory/procurement/stock-order/create'], {
       queryParams: { supplierId: this.supplierId() },
     });
   }
