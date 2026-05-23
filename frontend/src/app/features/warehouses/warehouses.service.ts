@@ -52,28 +52,20 @@ export class WarehousesService {
   ]);
 
   // Actions
-  async loadWarehouses() {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Warehouse[]>(`${this.dataService.baseUrl}/warehouses`));
-      this.dataService.setWarehouses(data);
-    } catch (error) {
-      console.error('Error loading warehouses:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getWarehousesData(): Observable<Warehouse[]> {
+    return this.http.get<Warehouse[]>(`${this.dataService.baseUrl}/warehouses`);
   }
 
-  async loadWarehouse(id: string) {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Warehouse>(`${this.dataService.baseUrl}/warehouses/${id}`));
-      this.dataService.updateWarehouseInState(data);
-    } catch (error) {
-      console.error('Error loading warehouse:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getWarehouseData(id: string): Observable<Warehouse> {
+    return this.http.get<Warehouse>(`${this.dataService.baseUrl}/warehouses/${id}`);
+  }
+
+  setWarehouses(data: Warehouse[]): void {
+    this.dataService.setWarehouses(data);
+  }
+
+  setWarehouse(data: Warehouse): void {
+    this.dataService.updateWarehouseInState(data);
   }
 
   getWarehouse(id: string) {

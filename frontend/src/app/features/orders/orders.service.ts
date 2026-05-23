@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable } from 'rxjs';
 import { InventoryDataService, type Order } from 'ui-shared';
 
 @Injectable({
@@ -87,28 +87,20 @@ export class OrdersService {
   ]);
 
   // Actions
-  async loadOrders() {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Order[]>(`${this.dataService.baseUrl}/orders`));
-      this.dataService.setOrders(data);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getOrdersData(): Observable<Order[]> {
+    return this.http.get<Order[]>(`${this.dataService.baseUrl}/orders`);
   }
 
-  async loadOrder(id: string) {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Order>(`${this.dataService.baseUrl}/orders/${id}`));
-      this.dataService.updateOrderInState(data);
-    } catch (error) {
-      console.error('Error loading order:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getOrderData(id: string): Observable<Order> {
+    return this.http.get<Order>(`${this.dataService.baseUrl}/orders/${id}`);
+  }
+
+  setOrders(data: Order[]): void {
+    this.dataService.setOrders(data);
+  }
+
+  setOrder(data: Order): void {
+    this.dataService.updateOrderInState(data);
   }
 
   toggleSort(field: string) {

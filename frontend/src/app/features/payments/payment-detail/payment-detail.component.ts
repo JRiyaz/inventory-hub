@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent } from 'ui-shared';
@@ -308,6 +308,7 @@ import { PaymentsService } from '../payments.service';
 export class PaymentDetailComponent implements OnInit {
   public service = inject(PaymentsService);
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   activeTab = signal(0);
 
@@ -327,7 +328,18 @@ export class PaymentDetailComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.service.loadPayment(this.paymentId());
+    this.service.isLoading.set(true);
+    const sub = this.service.getPaymentData(this.paymentId()).subscribe({
+      next: (data) => {
+        this.service.setPayment(data);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading payment details:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   handlePrint(): void {

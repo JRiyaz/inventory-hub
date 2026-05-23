@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { delay, firstValueFrom, of, tap } from 'rxjs';
+import { delay, firstValueFrom, of, tap, forkJoin } from 'rxjs';
 import {
   type Customer,
   InventoryDataService,
@@ -53,6 +53,37 @@ export class InventoryService {
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>',
     },
   ]);
+
+  getOverviewData() {
+    const baseUrl = this.dataService.baseUrl;
+    return forkJoin([
+      this.http.get<Product[]>(`${baseUrl}/products`),
+      this.http.get<Order[]>(`${baseUrl}/orders`),
+      this.http.get<Customer[]>(`${baseUrl}/customers`),
+      this.http.get<Supplier[]>(`${baseUrl}/suppliers`),
+      this.http.get<Warehouse[]>(`${baseUrl}/warehouses`),
+      this.http.get<Payment[]>(`${baseUrl}/payments`),
+      this.http.get<Offer[]>(`${baseUrl}/offers`)
+    ]);
+  }
+
+  setOverviewData(
+    products: Product[],
+    orders: Order[],
+    customers: Customer[],
+    suppliers: Supplier[],
+    warehouses: Warehouse[],
+    payments: Payment[],
+    offers: Offer[]
+  ) {
+    this.dataService.setProducts(products);
+    this.dataService.setOrders(orders);
+    this.dataService.setCustomers(customers);
+    this.dataService.setSuppliers(suppliers);
+    this.dataService.setWarehouses(warehouses);
+    this.dataService.setPayments(payments);
+    this.dataService.setOffers(offers);
+  }
 
   // Actions
   async loadOverview() {

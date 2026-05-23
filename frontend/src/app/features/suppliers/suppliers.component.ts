@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit, signal } from '@angular/core';
+import { Component, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -222,7 +222,7 @@ import { SuppliersService } from './suppliers.service';
                       </div>
                       <div>
                         <h3
-                          class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors"
+                          class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate"
                         >
                           {{ supplier.name }}
                         </h3>
@@ -449,6 +449,7 @@ export class SuppliersComponent implements OnInit {
   public service = inject(SuppliersService);
   private searchService = inject(SearchService);
   public router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   viewType = signal<'grid' | 'list'>('grid');
 
@@ -469,7 +470,18 @@ export class SuppliersComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.service.loadSuppliers();
+    this.service.isLoading.set(true);
+    const sub = this.service.getSuppliersData().subscribe({
+      next: (suppliers) => {
+        this.service.setSuppliers(suppliers);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading suppliers:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
     this.registerSearchProvider();
   }
 

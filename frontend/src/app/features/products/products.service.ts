@@ -61,6 +61,18 @@ export class ProductsService {
     },
   ]);
 
+  getProductsData() {
+    return this.http.get<Product[]>(`${this.dataService.baseUrl}/products`);
+  }
+
+  setProducts(products: Product[]) {
+    this.dataService.setProducts(products);
+  }
+
+  updateProductInState(product: Product) {
+    this.dataService.updateProductInState(product);
+  }
+
   // Actions
   async loadProducts() {
     this.isLoading.set(true);
@@ -72,6 +84,10 @@ export class ProductsService {
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  getProductData(id: number) {
+    return this.http.get<Product>(`${this.dataService.baseUrl}/products/${id}`);
   }
 
   async loadProduct(id: number) {

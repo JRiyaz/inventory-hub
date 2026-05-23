@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -306,7 +306,7 @@ import { OrdersService } from './orders.service';
                       <td class="px-6 py-3">
                         <div class="flex flex-col">
                           <p
-                            class="text-xs font-bold text-slate-900 dark:text-white"
+                            class="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[220px]"
                           >
                             {{ order.customerName }}
                           </p>
@@ -446,6 +446,7 @@ export class OrdersComponent implements OnInit {
   public service = inject(OrdersService);
   public router = inject(Router);
   private searchService = inject(SearchService);
+  private destroyRef = inject(DestroyRef);
 
   breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Orders' }];
 
@@ -466,7 +467,18 @@ export class OrdersComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.service.loadOrders();
+    this.service.isLoading.set(true);
+    const sub = this.service.getOrdersData().subscribe({
+      next: (orders) => {
+        this.service.setOrders(orders);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading orders:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
     this.registerSearchProvider();
   }
 

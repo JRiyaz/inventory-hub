@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, ElementRef, HostListener, inject, type OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, HostListener, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { type Breadcrumb, DetailLayoutComponent, LoaderComponent } from 'ui-shared';
@@ -628,6 +628,7 @@ export class WarehouseDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private eRef = inject(ElementRef);
+  private destroyRef = inject(DestroyRef);
 
   activeTab = signal(0);
   sortField = signal<string>('date');
@@ -695,7 +696,18 @@ export class WarehouseDetailComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.service.loadWarehouse(this.warehouseId());
+    this.service.isLoading.set(true);
+    const sub = this.service.getWarehouseData(this.warehouseId()).subscribe({
+      next: (data) => {
+        this.service.setWarehouse(data);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading warehouse details:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   goToEdit() {

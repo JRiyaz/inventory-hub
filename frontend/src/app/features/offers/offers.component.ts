@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   CustomDropdownComponent,
@@ -348,6 +348,7 @@ export class OffersComponent implements OnInit {
   private dataService = inject(InventoryDataService);
   private notify = inject(NotificationService);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
 
   products = this.dataService.products;
 
@@ -382,7 +383,18 @@ export class OffersComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.service.loadOffers();
+    this.service.isLoading.set(true);
+    const sub = this.service.getOffersData().subscribe({
+      next: (offers) => {
+        this.service.setOffers(offers);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading offers:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   editOffer(offer: Offer) {

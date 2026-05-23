@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -446,6 +446,7 @@ export class PaymentsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private searchService = inject(SearchService);
   private notificationService = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   sortField = signal<string>('id');
   sortOrder = signal<'asc' | 'desc'>('desc');
@@ -481,7 +482,18 @@ export class PaymentsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.service.loadPayments();
+    this.service.isLoading.set(true);
+    const sub = this.service.getPaymentsData().subscribe({
+      next: (payments) => {
+        this.service.setPayments(payments);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading payments:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
     this.registerSearchProvider();
   }
 

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable } from 'rxjs';
 import { InventoryDataService, type Payment } from 'ui-shared';
 
 @Injectable({
@@ -75,28 +75,20 @@ export class PaymentsService {
   ]);
 
   // Actions
-  async loadPayments() {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Payment[]>(`${this.dataService.baseUrl}/payments`));
-      this.dataService.setPayments(data);
-    } catch (error) {
-      console.error('Error loading payments:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getPaymentsData(): Observable<Payment[]> {
+    return this.http.get<Payment[]>(`${this.dataService.baseUrl}/payments`);
   }
 
-  async loadPayment(id: string) {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Payment>(`${this.dataService.baseUrl}/payments/${id}`));
-      this.dataService.updatePaymentInState(data);
-    } catch (error) {
-      console.error('Error loading payment:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getPaymentData(id: string): Observable<Payment> {
+    return this.http.get<Payment>(`${this.dataService.baseUrl}/payments/${id}`);
+  }
+
+  setPayments(data: Payment[]): void {
+    this.dataService.setPayments(data);
+  }
+
+  setPayment(data: Payment): void {
+    this.dataService.updatePaymentInState(data);
   }
 
   setPage(page: number) {

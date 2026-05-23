@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -300,6 +300,7 @@ export class CustomersComponent implements OnInit {
   public service = inject(CustomersService);
   private searchService = inject(SearchService);
   public router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Customers' }];
 
@@ -311,7 +312,18 @@ export class CustomersComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.service.loadCustomers();
+    this.service.isLoading.set(true);
+    const sub = this.service.getCustomersData().subscribe({
+      next: (data) => {
+        this.service.setCustomers(data);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading customers:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
     this.registerSearchProvider();
   }
 

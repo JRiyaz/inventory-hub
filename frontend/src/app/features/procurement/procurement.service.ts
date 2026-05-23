@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { firstValueFrom, from, tap } from 'rxjs';
+import { firstValueFrom, from, tap, Observable } from 'rxjs';
 import { InventoryDataService, type PurchaseOrder } from 'ui-shared';
 
 @Injectable({
@@ -80,16 +80,12 @@ export class ProcurementService {
   ]);
 
   // Helpers
-  async loadOrders() {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<PurchaseOrder[]>(`${this.dataService.baseUrl}/purchaseOrders`));
-      this.dataService.setPurchaseOrders(data);
-    } catch (error) {
-      console.error('Error loading purchase orders:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getPurchaseOrdersData(): Observable<PurchaseOrder[]> {
+    return this.http.get<PurchaseOrder[]>(`${this.dataService.baseUrl}/purchaseOrders`);
+  }
+
+  setPurchaseOrders(data: PurchaseOrder[]): void {
+    this.dataService.setPurchaseOrders(data);
   }
 
   setPage(page: number) {

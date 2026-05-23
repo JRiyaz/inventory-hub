@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent } from 'ui-shared';
+import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent, DisplayImageService } from 'ui-shared';
 import { ProductsService } from '../products.service';
 
 @Component({
@@ -155,25 +155,27 @@ import { ProductsService } from '../products.service';
           </div>
         </div>
       </div>
-      <div header-icon>
-        <div
-          class="w-full h-full bg-primary/10 rounded-2xl flex items-center justify-center text-primary"
-        >
-          <svg
-            class="w-10 h-10"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      @if (displayImageService.displayImage()) {
+        <div header-icon>
+          <div
+            class="w-full h-full bg-primary/10 rounded-2xl flex items-center justify-center text-primary"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.5"
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-            ></path>
-          </svg>
+            <svg
+              class="w-10 h-10"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              ></path>
+            </svg>
+          </div>
         </div>
-      </div>
+      }
 
       <div sidebar-info class="space-y-6">
         <div class="space-y-1">
@@ -550,6 +552,8 @@ export class ProductDetailComponent implements OnInit {
   public service = inject(ProductsService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  public displayImageService = inject(DisplayImageService);
+  private destroyRef = inject(DestroyRef);
 
   activeTab = signal(0);
 
@@ -586,7 +590,18 @@ export class ProductDetailComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.service.loadProduct(this.productId());
+    this.service.isLoading.set(true);
+    const sub = this.service.getProductData(this.productId()).subscribe({
+      next: (product) => {
+        this.service.updateProductInState(product);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading product detail:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   goToEdit() {

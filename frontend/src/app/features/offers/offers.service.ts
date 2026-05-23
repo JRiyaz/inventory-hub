@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable } from 'rxjs';
 import { InventoryDataService, type Offer } from 'ui-shared';
 
 @Injectable({
@@ -16,16 +16,12 @@ export class OffersService {
   offers = this.dataService.offers;
 
   // Actions
-  async loadOffers() {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Offer[]>(`${this.dataService.baseUrl}/offers`));
-      this.dataService.setOffers(data);
-    } catch (error) {
-      console.error('Error loading offers:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getOffersData(): Observable<Offer[]> {
+    return this.http.get<Offer[]>(`${this.dataService.baseUrl}/offers`);
+  }
+
+  setOffers(data: Offer[]): void {
+    this.dataService.setOffers(data);
   }
 
   addOffer(offer: Offer) {

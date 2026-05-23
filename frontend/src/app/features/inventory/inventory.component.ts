@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { LoaderComponent, PageHeaderComponent, TypewriterComponent, UiChartComponent } from 'ui-shared';
@@ -175,6 +175,7 @@ import { InventoryService } from './inventory.service';
 export class InventoryComponent implements OnInit {
   public service = inject(InventoryService);
   private sanitizer = inject(DomSanitizer);
+  private destroyRef = inject(DestroyRef);
 
   sanitize(html: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(html);
@@ -281,7 +282,18 @@ export class InventoryComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.service.loadOverview();
+    this.service.isLoading.set(true);
+    const sub = this.service.getOverviewData().subscribe({
+      next: ([products, orders, customers, suppliers, warehouses, payments, offers]) => {
+        this.service.setOverviewData(products, orders, customers, suppliers, warehouses, payments, offers);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading inventory overview data:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   handleOptimize() {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { DetailLayoutComponent, EmptyStateComponent, SkeletonComponent } from 'ui-shared';
 import { OrdersService } from '../orders.service';
@@ -607,6 +607,7 @@ export class OrderDetailComponent implements OnInit {
   public service = inject(OrdersService);
   public router = inject(Router);
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   orderId = signal<string | null>(null);
   order = computed(() => {
@@ -631,13 +632,25 @@ export class OrderDetailComponent implements OnInit {
   ]);
 
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
+    const subRoute = this.route.params.subscribe((params) => {
       const id = params['id'];
       if (id) {
         this.orderId.set(id);
-        this.service.loadOrder(id); // Only load this specific order
+        this.service.isLoading.set(true);
+        const subLoad = this.service.getOrderData(id).subscribe({
+          next: (data) => {
+            this.service.setOrder(data);
+            this.service.isLoading.set(false);
+          },
+          error: (err) => {
+            console.error('Error loading order:', err);
+            this.service.isLoading.set(false);
+          }
+        });
+        this.destroyRef.onDestroy(() => subLoad.unsubscribe());
       }
     });
+    this.destroyRef.onDestroy(() => subRoute.unsubscribe());
   }
 
   getStatusColor(status?: string): 'primary' | 'warning' | 'success' | 'danger' {

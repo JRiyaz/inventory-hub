@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable } from 'rxjs';
 import { type Customer, InventoryDataService } from 'ui-shared';
 
 @Injectable({
@@ -65,28 +65,20 @@ export class CustomersService {
   ]);
 
   // Actions
-  async loadCustomers() {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Customer[]>(`${this.dataService.baseUrl}/customers`));
-      this.dataService.setCustomers(data);
-    } catch (error) {
-      console.error('Error loading customers:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getCustomersData(): Observable<Customer[]> {
+    return this.http.get<Customer[]>(`${this.dataService.baseUrl}/customers`);
   }
 
-  async loadCustomer(id: string) {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Customer>(`${this.dataService.baseUrl}/customers/${id}`));
-      this.dataService.updateCustomerInState(data);
-    } catch (error) {
-      console.error('Error loading customer:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getCustomerData(id: string): Observable<Customer> {
+    return this.http.get<Customer>(`${this.dataService.baseUrl}/customers/${id}`);
+  }
+
+  setCustomers(data: Customer[]): void {
+    this.dataService.setCustomers(data);
+  }
+
+  setCustomer(data: Customer): void {
+    this.dataService.updateCustomerInState(data);
   }
 
   setPage(page: number) {

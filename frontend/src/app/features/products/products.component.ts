@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
 import {
   CustomDropdownComponent,
+  DisplayImageService,
   type DropdownOption,
   EmptyStateComponent,
   LoaderComponent,
@@ -155,11 +156,13 @@ import { ProductsService } from './products.service';
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
             <div class="card-premium p-6 space-y-4">
-              <lib-skeleton
-                width="100%"
-                height="180px"
-                shape="rounded"
-              ></lib-skeleton>
+              @if (displayImageService.displayImage()) {
+                <lib-skeleton
+                  width="100%"
+                  height="180px"
+                  shape="rounded"
+                ></lib-skeleton>
+              }
               <lib-skeleton width="80%" height="1.5rem"></lib-skeleton>
               <lib-skeleton width="40%" height="1rem"></lib-skeleton>
             </div>
@@ -180,37 +183,48 @@ import { ProductsService } from './products.service';
                     [routerLink]="[product.id]"
                     class="card-premium p-4 hover:border-primary/50 transition-all group cursor-pointer flex flex-col relative overflow-hidden"
                   >
-                    <div
-                      class="w-full aspect-video bg-slate-50 dark:bg-white/5 rounded-xl mb-3 flex items-center justify-center text-slate-200 dark:text-white/5 relative overflow-hidden transition-colors border border-slate-100 dark:border-white/10"
-                    >
-                      <svg
-                        class="w-10 h-10 transition-transform duration-700 group-hover:scale-110"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    @if (displayImageService.displayImage()) {
+                      <div
+                        class="w-full aspect-video bg-slate-50 dark:bg-white/5 rounded-xl mb-3 flex items-center justify-center text-slate-200 dark:text-white/5 relative overflow-hidden transition-colors border border-slate-100 dark:border-white/10"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="1"
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        ></path>
-                      </svg>
-                      <div class="absolute top-2 left-2">
-                        <span
-                          class="px-1.5 py-0.5 bg-white/90 dark:bg-black/40 backdrop-blur-md rounded text-[8px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/10 shadow-sm"
+                        <svg
+                          class="w-10 h-10 transition-transform duration-700 group-hover:scale-110"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
                         >
-                          {{ product.category }}
-                        </span>
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          ></path>
+                        </svg>
+                        <div class="absolute top-2 left-2">
+                          <span
+                            class="px-1.5 py-0.5 bg-white/90 dark:bg-black/40 backdrop-blur-md rounded text-[8px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-white/10 shadow-sm"
+                          >
+                            {{ product.category }}
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    }
 
                     <div class="flex-1">
-                      <h3
-                        class="text-xs font-black text-slate-900 dark:text-white mb-1 group-hover:text-primary transition-colors truncate"
-                      >
-                        {{ product.name }}
-                      </h3>
+                      <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3
+                          class="text-xs font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors truncate"
+                        >
+                          {{ product.name }}
+                        </h3>
+                        @if (!displayImageService.displayImage()) {
+                          <span
+                            class="px-1 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-[7px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400"
+                          >
+                            {{ product.category }}
+                          </span>
+                        }
+                      </div>
                       <div class="flex items-center gap-2 mb-4">
                         <span
                           class="text-[9px] font-black text-slate-400 uppercase tracking-widest"
@@ -268,23 +282,25 @@ import { ProductsService } from './products.service';
                     class="card-premium p-3 flex items-center gap-4 hover:border-primary/50 transition-all group cursor-pointer"
                     [routerLink]="[product.id]"
                   >
-                    <div
-                      class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-lg flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5 group-hover:bg-primary/10 transition-all border border-slate-100 dark:border-white/10"
-                    >
-                      <svg
-                        class="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    @if (displayImageService.displayImage()) {
+                      <div
+                        class="w-12 h-12 bg-slate-50 dark:bg-white/5 rounded-lg flex-shrink-0 flex items-center justify-center text-slate-200 dark:text-white/5 group-hover:bg-primary/10 transition-all border border-slate-100 dark:border-white/10"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="1"
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        ></path>
-                      </svg>
-                    </div>
+                        <svg
+                          class="w-6 h-6"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          ></path>
+                        </svg>
+                      </div>
+                    }
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-0.5">
                         <h3
@@ -440,7 +456,9 @@ import { ProductsService } from './products.service';
 export class ProductsComponent implements OnInit {
   public service = inject(ProductsService);
   private searchService = inject(SearchService);
+  public displayImageService = inject(DisplayImageService);
   public router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Products' }];
 
@@ -458,7 +476,18 @@ export class ProductsComponent implements OnInit {
   }));
 
   ngOnInit(): void {
-    this.service.loadProducts();
+    this.service.isLoading.set(true);
+    const sub = this.service.getProductsData().subscribe({
+      next: (products) => {
+        this.service.setProducts(products);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading products:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
     this.registerSearchProvider();
   }
 

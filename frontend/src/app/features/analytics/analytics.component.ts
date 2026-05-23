@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, type OnInit, Renderer2, signal, ViewEncapsulation } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, type OnInit, Renderer2, signal, ViewEncapsulation } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CustomDatePickerComponent, PageHeaderComponent, SkeletonComponent } from 'ui-shared';
@@ -598,6 +598,7 @@ export class AnalyticsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private renderer = inject(Renderer2);
   private sanitizer = inject(DomSanitizer);
+  private destroyRef = inject(DestroyRef);
 
   sanitize(html: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(html);
@@ -655,6 +656,17 @@ export class AnalyticsComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.service.loadAnalytics();
+    this.service.isLoading.set(true);
+    const sub = this.service.getAnalyticsData().subscribe({
+      next: ([products, orders, customers, suppliers]) => {
+        this.service.setAnalyticsData(products, orders, customers, suppliers);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading analytics:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 }

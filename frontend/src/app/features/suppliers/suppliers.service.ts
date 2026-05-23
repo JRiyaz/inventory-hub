@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable } from 'rxjs';
 import { InventoryDataService, type Supplier } from 'ui-shared';
 
 @Injectable({
@@ -66,28 +66,20 @@ export class SuppliersService {
   ]);
 
   // Actions
-  async loadSuppliers() {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Supplier[]>(`${this.dataService.baseUrl}/suppliers`));
-      this.dataService.setSuppliers(data);
-    } catch (error) {
-      console.error('Error loading suppliers:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getSuppliersData(): Observable<Supplier[]> {
+    return this.http.get<Supplier[]>(`${this.dataService.baseUrl}/suppliers`);
   }
 
-  async loadSupplier(id: string) {
-    this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Supplier>(`${this.dataService.baseUrl}/suppliers/${id}`));
-      this.dataService.updateSupplierInState(data);
-    } catch (error) {
-      console.error('Error loading supplier:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  getSupplierData(id: string): Observable<Supplier> {
+    return this.http.get<Supplier>(`${this.dataService.baseUrl}/suppliers/${id}`);
+  }
+
+  setSuppliers(data: Supplier[]): void {
+    this.dataService.setSuppliers(data);
+  }
+
+  setSupplier(data: Supplier): void {
+    this.dataService.updateSupplierInState(data);
   }
 
   setPage(page: number) {

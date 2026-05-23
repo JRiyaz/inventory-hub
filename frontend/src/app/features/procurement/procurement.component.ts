@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import {
@@ -427,6 +427,7 @@ import { ProcurementService } from './procurement.service';
 export class ProcurementComponent implements OnInit {
   public service = inject(ProcurementService);
   public router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Procurement' }];
 
@@ -439,6 +440,17 @@ export class ProcurementComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.service.loadOrders();
+    this.service.isLoading.set(true);
+    const sub = this.service.getPurchaseOrdersData().subscribe({
+      next: (orders) => {
+        this.service.setPurchaseOrders(orders);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading purchase orders:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 }

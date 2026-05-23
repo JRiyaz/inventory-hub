@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin, Observable } from 'rxjs';
 import { type Customer, InventoryDataService, type Order, type Product, type Supplier } from 'ui-shared';
 
 @Injectable({
@@ -170,25 +170,25 @@ export class AnalyticsService {
   });
 
   // Actions
-  async loadAnalytics() {
-    this.isLoading.set(true);
-    try {
-      const baseUrl = this.dataService.baseUrl;
-      const [products, orders, customers, suppliers] = await Promise.all([
-        firstValueFrom(this.http.get<Product[]>(`${baseUrl}/products`)),
-        firstValueFrom(this.http.get<Order[]>(`${baseUrl}/orders`)),
-        firstValueFrom(this.http.get<Customer[]>(`${baseUrl}/customers`)),
-        firstValueFrom(this.http.get<Supplier[]>(`${baseUrl}/suppliers`)),
-      ]);
+  getAnalyticsData(): Observable<[Product[], Order[], Customer[], Supplier[]]> {
+    const baseUrl = this.dataService.baseUrl;
+    return forkJoin([
+      this.http.get<Product[]>(`${baseUrl}/products`),
+      this.http.get<Order[]>(`${baseUrl}/orders`),
+      this.http.get<Customer[]>(`${baseUrl}/customers`),
+      this.http.get<Supplier[]>(`${baseUrl}/suppliers`),
+    ]);
+  }
 
-      this.dataService.setProducts(products);
-      this.dataService.setOrders(orders);
-      this.dataService.setCustomers(customers);
-      this.dataService.setSuppliers(suppliers);
-    } catch (error) {
-      console.error('Error loading analytics data:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+  setAnalyticsData(
+    products: Product[],
+    orders: Order[],
+    customers: Customer[],
+    suppliers: Supplier[]
+  ): void {
+    this.dataService.setProducts(products);
+    this.dataService.setOrders(orders);
+    this.dataService.setCustomers(customers);
+    this.dataService.setSuppliers(suppliers);
   }
 }

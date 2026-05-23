@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { type Breadcrumb, DetailLayoutComponent } from 'ui-shared';
 import { SuppliersService } from '../suppliers.service';
@@ -328,6 +328,7 @@ export class SupplierDetailComponent implements OnInit {
   public service = inject(SuppliersService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   activeTab = signal(0);
 
@@ -343,7 +344,18 @@ export class SupplierDetailComponent implements OnInit {
   products = computed(() => this.service.getProductsBySupplierId(this.supplierId()));
 
   ngOnInit() {
-    this.service.loadSupplier(this.supplierId());
+    this.service.isLoading.set(true);
+    const sub = this.service.getSupplierData(this.supplierId()).subscribe({
+      next: (data) => {
+        this.service.setSupplier(data);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading supplier details:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   goToEdit() {

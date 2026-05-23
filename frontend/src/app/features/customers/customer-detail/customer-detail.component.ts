@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, type OnInit, signal } from '@angular/core';
+import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent } from 'ui-shared';
@@ -376,6 +376,7 @@ export class CustomerDetailComponent implements OnInit {
   public service = inject(CustomersService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   activeTab = signal(0);
 
@@ -398,7 +399,18 @@ export class CustomerDetailComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.service.loadCustomer(this.customerId());
+    this.service.isLoading.set(true);
+    const sub = this.service.getCustomerData(this.customerId()).subscribe({
+      next: (data) => {
+        this.service.setCustomer(data);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading customer details:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   goToEdit() {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -117,7 +117,7 @@ import { WarehousesService } from './warehouses.service';
 
               <div class="relative z-10">
                 <h3
-                  class="text-base font-black text-slate-900 dark:text-white mb-0.5 group-hover:translate-x-1 transition-transform"
+                  class="text-base font-black text-slate-900 dark:text-white mb-0.5 group-hover:translate-x-1 transition-transform truncate"
                 >
                   {{ wh.name }}
                 </h3>
@@ -213,11 +213,23 @@ export class WarehousesComponent implements OnInit {
   public service = inject(WarehousesService);
   private searchService = inject(SearchService);
   public router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   breadcrumbs = [{ label: 'Inventory', link: '/inventory' }, { label: 'Warehouses' }];
 
   ngOnInit(): void {
-    this.service.loadWarehouses();
+    this.service.isLoading.set(true);
+    const sub = this.service.getWarehousesData().subscribe({
+      next: (warehouses) => {
+        this.service.setWarehouses(warehouses);
+        this.service.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading warehouses:', err);
+        this.service.isLoading.set(false);
+      }
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
     this.registerSearchProvider();
   }
 
