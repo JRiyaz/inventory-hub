@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from, Observable } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable, tap } from 'rxjs';
 import { type Customer, InventoryDataService } from 'ui-shared';
 
 @Injectable({
@@ -16,33 +16,27 @@ export class CustomersService {
   searchQuery = signal('');
   currentPage = signal(1);
   pageSize = signal(10);
+  totalCount = signal(0);
 
   // Derived Data
   customers = this.dataService.customers;
 
   allFilteredCustomers = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    return this.customers().filter(
-      (c) =>
-        c.name.toLowerCase().includes(query) ||
-        c.email.toLowerCase().includes(query) ||
-        c.company.toLowerCase().includes(query),
-    );
+    return Array(this.totalCount());
   });
 
   paginatedCustomers = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredCustomers().slice(start, start + this.pageSize());
+    return this.customers();
   });
 
-  totalPages = computed(() => Math.ceil(this.allFilteredCustomers().length / this.pageSize()));
+  totalPages = computed(() => Math.ceil(this.totalCount() / this.pageSize()));
 
   pages = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
   headerStats = computed(() => [
     {
       label: 'Total Customers',
-      value: this.customers().length.toLocaleString(),
+      value: this.totalCount().toLocaleString(),
       color: 'primary' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>',
     },
@@ -67,6 +61,25 @@ export class CustomersService {
   // Actions
   getCustomersData(): Observable<Customer[]> {
     return this.http.get<Customer[]>(`${this.dataService.baseUrl}/customers`);
+  }
+
+  loadCustomers(): Observable<any> {
+    this.isLoading.set(true);
+    let params = `_page=${this.currentPage()}&_limit=${this.pageSize()}`;
+    
+    const query = this.searchQuery().trim();
+    if (query) {
+      params += `&q=${encodeURIComponent(query)}`;
+    }
+
+    return this.http.get<Customer[]>(`${this.dataService.baseUrl}/customers?${params}`, { observe: 'response' }).pipe(
+      tap((res) => {
+        const total = Number(res.headers.get('X-Total-Count') || '0');
+        this.totalCount.set(total);
+        this.dataService.setCustomers(res.body || []);
+      }),
+      finalize(() => this.isLoading.set(false))
+    );
   }
 
   getCustomerData(id: string): Observable<Customer> {

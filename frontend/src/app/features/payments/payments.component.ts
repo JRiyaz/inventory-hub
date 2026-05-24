@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
+import { Component, computed, inject, type OnInit, signal, DestroyRef, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -448,8 +448,8 @@ export class PaymentsComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
 
-  sortField = signal<string>('id');
-  sortOrder = signal<'asc' | 'desc'>('desc');
+  sortField = this.service.sortField;
+  sortOrder = this.service.sortOrder;
 
   headerInfo = computed(() => {
     const type = this.route.snapshot.data['type'] || 'global';
@@ -481,19 +481,24 @@ export class PaymentsComponent implements OnInit {
     { value: 100, label: '100 Per Page' },
   ];
 
-  ngOnInit(): void {
-    this.service.isLoading.set(true);
-    const sub = this.service.getPaymentsData().subscribe({
-      next: (payments) => {
-        this.service.setPayments(payments);
-        this.service.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error loading payments:', err);
-        this.service.isLoading.set(false);
-      }
+  constructor() {
+    effect(() => {
+      // track parameters reactively
+      this.service.currentPage();
+      this.service.pageSize();
+      this.service.searchQuery();
+      this.service.statusFilter();
+      this.service.sortField();
+      this.service.sortOrder();
+
+      untracked(() => {
+        const sub = this.service.loadPayments().subscribe();
+        this.destroyRef.onDestroy(() => sub.unsubscribe());
+      });
     });
-    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  ngOnInit(): void {
     this.registerSearchProvider();
   }
 
@@ -519,13 +524,7 @@ export class PaymentsComponent implements OnInit {
   }
 
   toggleSort(field: string) {
-    if (this.sortField() === field) {
-      this.sortOrder.set(this.sortOrder() === 'asc' ? 'desc' : 'asc');
-    } else {
-      this.sortField.set(field);
-      this.sortOrder.set('asc');
-    }
-    this.service.currentPage.set(1);
+    this.service.toggleSort(field);
   }
 
   initiateRefund(): void {

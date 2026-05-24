@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -311,19 +311,21 @@ export class CustomersComponent implements OnInit {
     { value: 100, label: '100 Per Page' },
   ];
 
-  ngOnInit(): void {
-    this.service.isLoading.set(true);
-    const sub = this.service.getCustomersData().subscribe({
-      next: (data) => {
-        this.service.setCustomers(data);
-        this.service.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error loading customers:', err);
-        this.service.isLoading.set(false);
-      }
+  constructor() {
+    effect(() => {
+      // track parameters reactively
+      this.service.currentPage();
+      this.service.pageSize();
+      this.service.searchQuery();
+
+      untracked(() => {
+        const sub = this.service.loadCustomers().subscribe();
+        this.destroyRef.onDestroy(() => sub.unsubscribe());
+      });
     });
-    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  ngOnInit(): void {
     this.registerSearchProvider();
   }
 

@@ -19,40 +19,21 @@ export class ProcurementService {
   pageSize = signal(10);
   sortField = signal<string>('date');
   sortOrder = signal<'asc' | 'desc'>('desc');
+  totalCount = signal(0);
 
   // Purchase Orders State
   purchaseOrders = signal<PurchaseOrder[]>([]);
 
   // Derived Data
   allFilteredOrders = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const status = this.statusFilter();
-    const all = [...this.dataService.purchaseOrders(), ...this.purchaseOrders()];
-
-    const filtered = all.filter((o) => {
-      const matchesSearch = o.id.toLowerCase().includes(query) || o.supplierName.toLowerCase().includes(query);
-      const matchesStatus = status === 'All Statuses' || o.status === status;
-      return matchesSearch && matchesStatus;
-    });
-
-    const field = this.sortField();
-    const order = this.sortOrder();
-
-    return filtered.sort((a: any, b: any) => {
-      const valA = a[field];
-      const valB = b[field];
-      if (valA < valB) return order === 'asc' ? -1 : 1;
-      if (valA > valB) return order === 'asc' ? 1 : -1;
-      return 0;
-    });
+    return Array(this.totalCount());
   });
 
   paginatedOrders = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredOrders().slice(start, start + this.pageSize());
+    return [...this.dataService.purchaseOrders(), ...this.purchaseOrders()];
   });
 
-  totalPages = computed(() => Math.ceil(this.allFilteredOrders().length / this.pageSize()));
+  totalPages = computed(() => Math.ceil(this.totalCount() / this.pageSize()));
 
   headerStats = computed(() => [
     {
@@ -82,6 +63,37 @@ export class ProcurementService {
   // Helpers
   getPurchaseOrdersData(): Observable<PurchaseOrder[]> {
     return this.http.get<PurchaseOrder[]>(`${this.dataService.baseUrl}/purchaseOrders`);
+  }
+
+  loadPurchaseOrders(): Observable<any> {
+    this.isLoading.set(true);
+    let params = `_page=${this.currentPage()}&_limit=${this.pageSize()}`;
+    
+    const query = this.searchQuery().trim();
+    if (query) {
+      params += `&q=${encodeURIComponent(query)}`;
+    }
+    
+    const status = this.statusFilter();
+    if (status && status !== 'All Statuses') {
+      params += `&status=${encodeURIComponent(status)}`;
+    }
+    
+    const field = this.sortField();
+    const order = this.sortOrder();
+    if (field) {
+      params += `&_sort=${field}&_order=${order}`;
+    }
+
+    return this.http.get<PurchaseOrder[]>(`${this.dataService.baseUrl}/purchaseOrders?${params}`, { observe: 'response' }).pipe(
+      tap((res) => {
+        const total = Number(res.headers.get('X-Total-Count') || '0');
+        this.totalCount.set(total);
+        this.dataService.setPurchaseOrders(res.body || []);
+        this.purchaseOrders.set(res.body || []);
+      }),
+      tap(() => this.isLoading.set(false))
+    );
   }
 
   setPurchaseOrders(data: PurchaseOrder[]): void {
@@ -122,6 +134,19 @@ export class ProcurementService {
       this.http.post<PurchaseOrder>(`${this.dataService.baseUrl}/purchaseOrders`, order),
     ).then((data) => {
       this.dataService.setPurchaseOrders([...this.dataService.purchaseOrders(), data]);
+    });
+    return from(promise).pipe(tap(() => this.isActionLoading.set(false)));
+  }
+
+  updatePurchaseOrder(order: PurchaseOrder): Observable<any> {
+    this.isActionLoading.set(true);
+    const promise = firstValueFrom(
+      this.http.put<PurchaseOrder>(`${this.dataService.baseUrl}/purchaseOrders/${order.id}`, order),
+    ).then((data) => {
+      const updatedList = this.dataService.purchaseOrders().map(o => o.id === data.id ? data : o);
+      this.dataService.setPurchaseOrders(updatedList);
+      const updatedSubList = this.purchaseOrders().map(o => o.id === data.id ? data : o);
+      this.purchaseOrders.set(updatedSubList);
     });
     return from(promise).pipe(tap(() => this.isActionLoading.set(false)));
   }

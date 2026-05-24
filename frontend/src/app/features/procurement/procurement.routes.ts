@@ -16,4 +16,9 @@ export const PROCUREMENT_ROUTES: Routes = [
     loadComponent: () => import('./stock-order-create.component').then((m) => m.StockOrderCreateComponent),
     data: { title: 'Create Stock Order' },
   },
+  {
+    path: 'stock-order/edit/:id',
+    loadComponent: () => import('./stock-order-create.component').then((m) => m.StockOrderCreateComponent),
+    data: { title: 'Edit Stock Order' },
+  },
 ];

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from, Observable } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable, tap } from 'rxjs';
 import { InventoryDataService, type Payment } from 'ui-shared';
 
 @Injectable({
@@ -17,30 +17,22 @@ export class PaymentsService {
   statusFilter = signal('All Status');
   currentPage = signal(1);
   pageSize = signal(10);
+  totalCount = signal(0);
+  sortField = signal<string>('id');
+  sortOrder = signal<'asc' | 'desc'>('desc');
 
   // Derived Data
   payments = this.dataService.payments;
 
   allFilteredPayments = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const status = this.statusFilter();
-
-    return this.payments().filter((p) => {
-      const matchesSearch =
-        p.reference.toLowerCase().includes(query) ||
-        p.recipient.toLowerCase().includes(query) ||
-        p.method.toLowerCase().includes(query);
-      const matchesStatus = status === 'All Status' || p.status === status;
-      return matchesSearch && matchesStatus;
-    });
+    return Array(this.totalCount());
   });
 
   paginatedPayments = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredPayments().slice(start, start + this.pageSize());
+    return this.payments();
   });
 
-  totalPages = computed(() => Math.ceil(this.allFilteredPayments().length / this.pageSize()));
+  totalPages = computed(() => Math.ceil(this.totalCount() / this.pageSize()));
 
   pages = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
@@ -77,6 +69,46 @@ export class PaymentsService {
   // Actions
   getPaymentsData(): Observable<Payment[]> {
     return this.http.get<Payment[]>(`${this.dataService.baseUrl}/payments`);
+  }
+
+  loadPayments(): Observable<any> {
+    this.isLoading.set(true);
+    let params = `_page=${this.currentPage()}&_limit=${this.pageSize()}`;
+    
+    const query = this.searchQuery().trim();
+    if (query) {
+      params += `&q=${encodeURIComponent(query)}`;
+    }
+
+    const status = this.statusFilter();
+    if (status && status !== 'All Status') {
+      params += `&status=${encodeURIComponent(status)}`;
+    }
+
+    const field = this.sortField();
+    const order = this.sortOrder();
+    if (field) {
+      params += `&_sort=${field}&_order=${order}`;
+    }
+
+    return this.http.get<Payment[]>(`${this.dataService.baseUrl}/payments?${params}`, { observe: 'response' }).pipe(
+      tap((res) => {
+        const total = Number(res.headers.get('X-Total-Count') || '0');
+        this.totalCount.set(total);
+        this.dataService.setPayments(res.body || []);
+      }),
+      finalize(() => this.isLoading.set(false))
+    );
+  }
+
+  toggleSort(field: string) {
+    if (this.sortField() === field) {
+      this.sortOrder.set(this.sortOrder() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortField.set(field);
+      this.sortOrder.set('asc');
+    }
+    this.currentPage.set(1);
   }
 
   getPaymentData(id: string): Observable<Payment> {

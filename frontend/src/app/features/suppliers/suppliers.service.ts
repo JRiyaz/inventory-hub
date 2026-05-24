@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from, Observable } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable, tap } from 'rxjs';
 import { InventoryDataService, type Supplier } from 'ui-shared';
 
 @Injectable({
@@ -17,37 +17,27 @@ export class SuppliersService {
   statusFilter = signal('All Statuses');
   currentPage = signal(1);
   pageSize = signal(8);
+  totalCount = signal(0);
 
   // Derived Data
   suppliers = this.dataService.suppliers;
 
   allFilteredSuppliers = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const status = this.statusFilter();
-
-    return this.suppliers().filter((s) => {
-      const matchesSearch =
-        s.name.toLowerCase().includes(query) ||
-        (s.category || '').toLowerCase().includes(query) ||
-        (s.location || '').toLowerCase().includes(query);
-      const matchesStatus = status === 'All Statuses' || s.status === status;
-      return matchesSearch && matchesStatus;
-    });
+    return Array(this.totalCount());
   });
 
   paginatedSuppliers = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredSuppliers().slice(start, start + this.pageSize());
+    return this.suppliers();
   });
 
-  totalPages = computed(() => Math.ceil(this.allFilteredSuppliers().length / this.pageSize()));
+  totalPages = computed(() => Math.ceil(this.totalCount() / this.pageSize()));
 
   pages = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
   headerStats = computed(() => [
     {
       label: 'Total Vendors',
-      value: this.suppliers().length,
+      value: this.totalCount(),
       color: 'primary' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>',
     },
@@ -68,6 +58,30 @@ export class SuppliersService {
   // Actions
   getSuppliersData(): Observable<Supplier[]> {
     return this.http.get<Supplier[]>(`${this.dataService.baseUrl}/suppliers`);
+  }
+
+  loadSuppliers(): Observable<any> {
+    this.isLoading.set(true);
+    let params = `_page=${this.currentPage()}&_limit=${this.pageSize()}`;
+    
+    const query = this.searchQuery().trim();
+    if (query) {
+      params += `&q=${encodeURIComponent(query)}`;
+    }
+
+    const status = this.statusFilter();
+    if (status && status !== 'All Statuses') {
+      params += `&status=${encodeURIComponent(status)}`;
+    }
+
+    return this.http.get<Supplier[]>(`${this.dataService.baseUrl}/suppliers?${params}`, { observe: 'response' }).pipe(
+      tap((res) => {
+        const total = Number(res.headers.get('X-Total-Count') || '0');
+        this.totalCount.set(total);
+        this.dataService.setSuppliers(res.body || []);
+      }),
+      finalize(() => this.isLoading.set(false))
+    );
   }
 
   getSupplierData(id: string): Observable<Supplier> {

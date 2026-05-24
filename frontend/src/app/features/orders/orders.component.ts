@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -466,19 +466,24 @@ export class OrdersComponent implements OnInit {
     { value: 'Cancelled', label: 'Cancelled' },
   ];
 
-  ngOnInit(): void {
-    this.service.isLoading.set(true);
-    const sub = this.service.getOrdersData().subscribe({
-      next: (orders) => {
-        this.service.setOrders(orders);
-        this.service.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error loading orders:', err);
-        this.service.isLoading.set(false);
-      }
+  constructor() {
+    effect(() => {
+      // track parameters reactively
+      this.service.currentPage();
+      this.service.pageSize();
+      this.service.searchQuery();
+      this.service.statusFilter();
+      this.service.sortField();
+      this.service.sortOrder();
+
+      untracked(() => {
+        const sub = this.service.loadOrders().subscribe();
+        this.destroyRef.onDestroy(() => sub.unsubscribe());
+      });
     });
-    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  ngOnInit(): void {
     this.registerSearchProvider();
   }
 

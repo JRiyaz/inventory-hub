@@ -11,7 +11,9 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import {
   CustomDatePickerComponent,
   CustomDropdownComponent,
@@ -490,12 +492,19 @@ import { OrdersService } from '../orders.service';
                     >
                       -
                     </button>
-                    <span
-                      class="w-6 text-center text-xs font-black text-slate-900 dark:text-white"
-                      >{{ item.qty }}</span
-                    >
+                    <input
+                      type="number"
+                      [ngModel]="item.qty"
+                      (ngModelChange)="setQty(item, $event)"
+                      class="w-12 text-center text-xs font-black text-slate-900 dark:text-white bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded focus:border-primary outline-none py-0.5"
+                      [max]="getProductStock(item.productId)"
+                      min="1"
+                    />
                     <button
                       (click)="updateQty(item, 1)"
+                      [disabled]="item.qty >= getProductStock(item.productId)"
+                      [class.opacity-30]="item.qty >= getProductStock(item.productId)"
+                      [class.cursor-not-allowed]="item.qty >= getProductStock(item.productId)"
                       class="w-5 h-5 rounded bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 hover:text-primary active:scale-90 transition-all text-xs"
                     >
                       +
@@ -725,6 +734,7 @@ export class OrderCreateComponent implements OnInit {
   activeProductIndex = signal(0);
 
   private eRef = inject(ElementRef);
+  private http = inject(HttpClient);
 
   customerSearchInput = viewChild<ElementRef<HTMLInputElement>>('customerSearchInput');
   productSearchInput = viewChild<ElementRef<HTMLInputElement>>('productSearchInput');
@@ -788,12 +798,21 @@ export class OrderCreateComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
-      if (params['id']) {
-        this.isEditMode.set(true);
-        this.orderId = params['id'];
-        this.loadOrder();
-      }
+    // Load full lists of customers and products for selection dropdowns
+    forkJoin([
+      this.http.get<Customer[]>(`${this.dataService.baseUrl}/customers`),
+      this.http.get<Product[]>(`${this.dataService.baseUrl}/products`)
+    ]).subscribe(([customers, products]) => {
+      this.dataService.setCustomers(customers);
+      this.dataService.setProducts(products);
+      
+      this.route.params.subscribe((params) => {
+        if (params['id']) {
+          this.isEditMode.set(true);
+          this.orderId = params['id'];
+          this.loadOrder();
+        }
+      });
     });
   }
 
@@ -957,11 +976,32 @@ export class OrderCreateComponent implements OnInit {
     this.showProductResults.set(false);
   }
 
-  updateQty(item: OrderItem, delta: number) {
+  getProductStock(productId: number): number {
+    const p = this.dataService.products().find((prod) => prod.id === productId);
+    return p ? p.stock : 99999;
+  }
+
+  setQty(item: OrderItem, value: any) {
+    const qty = parseInt(value, 10);
+    if (isNaN(qty) || qty < 1) return;
+    const maxStock = this.getProductStock(item.productId);
+    const targetQty = Math.min(maxStock, qty);
     this.orderItems.update((items) => {
       return items.map((i) => {
         if (i.productId === item.productId) {
-          const newQty = Math.max(1, i.qty + delta);
+          return { ...i, qty: targetQty };
+        }
+        return i;
+      });
+    });
+  }
+
+  updateQty(item: OrderItem, delta: number) {
+    const maxStock = this.getProductStock(item.productId);
+    this.orderItems.update((items) => {
+      return items.map((i) => {
+        if (i.productId === item.productId) {
+          const newQty = Math.min(maxStock, Math.max(1, i.qty + delta));
           return { ...i, qty: newQty };
         }
         return i;
@@ -986,6 +1026,7 @@ export class OrderCreateComponent implements OnInit {
       items: this.orderItems(),
       totalAmount: this.subtotal(),
       amount: this.subtotal(),
+      createdBy: this.isEditMode() ? (this.service.getOrder(this.orderId || '')?.createdBy || 'Admin') : 'Admin',
     };
 
     const action = this.isEditMode() ? this.service.updateOrder(order) : this.service.addOrder(order);

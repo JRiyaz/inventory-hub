@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable, tap } from 'rxjs';
 import { InventoryDataService, type Product } from 'ui-shared';
 
 @Injectable({
@@ -18,32 +18,25 @@ export class ProductsService {
   currentPage = signal(1);
   pageSize = signal(8);
   viewType = signal<'grid' | 'list'>('grid');
+  totalCount = signal(0);
 
   // Derived Data
   products = this.dataService.products;
 
   allFilteredProducts = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const cat = this.selectedCategory();
-
-    return this.products().filter((p) => {
-      const matchesSearch = p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query);
-      const matchesCat = cat === 'All' || p.category === cat;
-      return matchesSearch && matchesCat;
-    });
+    return Array(this.totalCount());
   });
 
   paginatedProducts = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredProducts().slice(start, start + this.pageSize());
+    return this.products();
   });
 
-  totalPages = computed(() => Math.ceil(this.allFilteredProducts().length / this.pageSize()));
+  totalPages = computed(() => Math.ceil(this.totalCount() / this.pageSize()));
 
   headerStats = computed(() => [
     {
       label: 'Live Inventory',
-      value: this.products().length,
+      value: this.totalCount(),
       color: 'primary' as const,
       icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>',
     },
@@ -74,16 +67,28 @@ export class ProductsService {
   }
 
   // Actions
-  async loadProducts() {
+  loadProducts(): Observable<any> {
     this.isLoading.set(true);
-    try {
-      const data = await firstValueFrom(this.http.get<Product[]>(`${this.dataService.baseUrl}/products`));
-      this.dataService.setProducts(data);
-    } catch (error) {
-      console.error('Error loading products:', error);
-    } finally {
-      this.isLoading.set(false);
+    let params = `_page=${this.currentPage()}&_limit=${this.pageSize()}`;
+    
+    const query = this.searchQuery().trim();
+    if (query) {
+      params += `&q=${encodeURIComponent(query)}`;
     }
+    
+    const cat = this.selectedCategory();
+    if (cat && cat !== 'All') {
+      params += `&category=${encodeURIComponent(cat)}`;
+    }
+
+    return this.http.get<Product[]>(`${this.dataService.baseUrl}/products?${params}`, { observe: 'response' }).pipe(
+      tap((res) => {
+        const total = Number(res.headers.get('X-Total-Count') || '0');
+        this.totalCount.set(total);
+        this.dataService.setProducts(res.body || []);
+      }),
+      finalize(() => this.isLoading.set(false))
+    );
   }
 
   getProductData(id: number) {

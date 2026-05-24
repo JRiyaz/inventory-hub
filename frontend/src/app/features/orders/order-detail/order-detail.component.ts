@@ -535,6 +535,34 @@ import { OrdersService } from '../orders.service';
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      ></path>
+                    </svg>
+                    <span class="text-[10px] font-bold text-slate-400"
+                      >Created By</span
+                    >
+                  </div>
+                  <span
+                    class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-primary/10 text-primary"
+                  >
+                    {{ order()?.createdBy || 'Admin' }}
+                  </span>
+                </div>
+
+                <div
+                  class="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5"
+                >
+                  <div class="flex items-center gap-2">
+                    <svg
+                      class="w-4 h-4 text-slate-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
                         d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                       ></path>
                     </svg>
@@ -577,9 +605,13 @@ import { OrdersService } from '../orders.service';
                   Print Invoice
                 </button>
                 <button
+                  (click)="cancelOrder()"
+                  [disabled]="order()?.status === 'Cancelled'"
+                  [class.opacity-50]="order()?.status === 'Cancelled'"
+                  [class.cursor-not-allowed]="order()?.status === 'Cancelled'"
                   class="w-full py-2.5 bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-500 rounded-xl border border-rose-500/20 hover:bg-rose-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  Cancel Order
+                  {{ order()?.status === 'Cancelled' ? 'Order Cancelled' : 'Cancel Order' }}
                 </button>
               </div>
             </div>
@@ -675,6 +707,19 @@ export class OrderDetailComponent implements OnInit {
   isPaid(): boolean {
     const totalPaid = this.payments().reduce((acc, p) => acc + p.amount, 0);
     return totalPaid >= (this.order()?.amount || 0);
+  }
+
+  cancelOrder(): void {
+    const o = this.order();
+    if (o) {
+      const updatedOrder = { ...o, status: 'Cancelled' as const };
+      this.service.updateOrder(updatedOrder).subscribe({
+        next: () => {
+          console.log('Order cancelled successfully');
+        },
+        error: (err) => console.error('Error cancelling order:', err)
+      });
+    }
   }
 
   editOrder(): void {

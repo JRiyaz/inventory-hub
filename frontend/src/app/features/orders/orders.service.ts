@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, Injectable, inject, signal } from '@angular/core';
-import { finalize, firstValueFrom, from, Observable } from 'rxjs';
+import { finalize, firstValueFrom, from, Observable, tap } from 'rxjs';
 import { InventoryDataService, type Order } from 'ui-shared';
 
 @Injectable({
@@ -19,6 +19,7 @@ export class OrdersService {
   sortOrder = signal<'asc' | 'desc'>('desc');
   currentPage = signal(1);
   pageSize = signal(10);
+  totalCount = signal(0);
 
   // Derived Data
   orders = this.dataService.orders;
@@ -34,32 +35,14 @@ export class OrdersService {
   productOptions = this.dataService.products;
 
   allFilteredOrders = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const status = this.statusFilter();
-    const field = this.sortField();
-    const order = this.sortOrder();
-
-    const result = this.orders().filter((o) => {
-      const matchesSearch = o.id.toLowerCase().includes(query) || (o.customerName || '').toLowerCase().includes(query);
-      const matchesStatus = status === 'All Statuses' || o.status === status;
-      return matchesSearch && matchesStatus;
-    });
-
-    return result.sort((a: any, b: any) => {
-      const valA = a[field];
-      const valB = b[field];
-      if (valA < valB) return order === 'asc' ? -1 : 1;
-      if (valA > valB) return order === 'asc' ? 1 : -1;
-      return 0;
-    });
+    return Array(this.totalCount());
   });
 
   paginatedOrders = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.allFilteredOrders().slice(start, start + this.pageSize());
+    return this.orders();
   });
 
-  totalPages = computed(() => Math.ceil(this.allFilteredOrders().length / this.pageSize()));
+  totalPages = computed(() => Math.ceil(this.totalCount() / this.pageSize()));
 
   headerStats = computed(() => [
     {
@@ -89,6 +72,36 @@ export class OrdersService {
   // Actions
   getOrdersData(): Observable<Order[]> {
     return this.http.get<Order[]>(`${this.dataService.baseUrl}/orders`);
+  }
+
+  loadOrders(): Observable<any> {
+    this.isLoading.set(true);
+    let params = `_page=${this.currentPage()}&_limit=${this.pageSize()}`;
+    
+    const query = this.searchQuery().trim();
+    if (query) {
+      params += `&q=${encodeURIComponent(query)}`;
+    }
+    
+    const status = this.statusFilter();
+    if (status && status !== 'All Statuses') {
+      params += `&status=${encodeURIComponent(status)}`;
+    }
+    
+    const field = this.sortField();
+    const order = this.sortOrder();
+    if (field) {
+      params += `&_sort=${field}&_order=${order}`;
+    }
+
+    return this.http.get<Order[]>(`${this.dataService.baseUrl}/orders?${params}`, { observe: 'response' }).pipe(
+      tap((res) => {
+        const total = Number(res.headers.get('X-Total-Count') || '0');
+        this.totalCount.set(total);
+        this.dataService.setOrders(res.body || []);
+      }),
+      finalize(() => this.isLoading.set(false))
+    );
   }
 
   getOrderData(id: string): Observable<Order> {

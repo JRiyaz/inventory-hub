@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, type OnInit, DestroyRef, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import {
@@ -111,22 +111,36 @@ import { ProcurementService } from './procurement.service';
       </div>
 
       @if (service.isLoading()) {
-        <div class="card-premium p-6 space-y-4">
-          @for (i of [1, 2, 3, 4, 5]; track i) {
-            <div
-              class="flex justify-between items-center py-4 border-b border-slate-50 dark:border-white/5 last:border-0"
-            >
-              <div class="flex gap-10">
-                <lib-skeleton width="100px" height="20px"></lib-skeleton>
-                <lib-skeleton width="200px" height="20px"></lib-skeleton>
-              </div>
-              <lib-skeleton
-                width="120px"
-                height="30px"
-                shape="rounded"
-              ></lib-skeleton>
-            </div>
-          }
+        <div class="card-premium overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none animate-pulse">
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse min-w-[900px]">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/[0.06]">
+                  <th class="px-6 py-4"><lib-skeleton width="50px" height="10px"></lib-skeleton></th>
+                  <th class="px-6 py-4"><lib-skeleton width="120px" height="10px"></lib-skeleton></th>
+                  <th class="px-6 py-4"><lib-skeleton width="80px" height="10px"></lib-skeleton></th>
+                  <th class="px-6 py-4"><lib-skeleton width="80px" height="10px"></lib-skeleton></th>
+                  <th class="px-6 py-4 text-right"><div class="flex justify-end"><lib-skeleton width="85px" height="10px"></lib-skeleton></div></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04]">
+                @for (x of [1, 2, 3, 4, 5]; track x) {
+                  <tr>
+                    <td class="px-6 py-4"><lib-skeleton width="70px" height="14px"></lib-skeleton></td>
+                    <td class="px-6 py-4">
+                      <div class="space-y-1">
+                        <lib-skeleton width="160px" height="14px"></lib-skeleton>
+                        <lib-skeleton width="90px" height="10px"></lib-skeleton>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4"><lib-skeleton width="60px" height="24px" shape="rounded"></lib-skeleton></td>
+                    <td class="px-6 py-4"><lib-skeleton width="100px" height="14px"></lib-skeleton></td>
+                    <td class="px-6 py-4 text-right"><div class="flex justify-end"><lib-skeleton width="70px" height="14px"></lib-skeleton></div></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
       } @else {
         <div
@@ -439,18 +453,23 @@ export class ProcurementComponent implements OnInit {
     { value: 'Cancelled', label: 'Cancelled' },
   ];
 
-  ngOnInit(): void {
-    this.service.isLoading.set(true);
-    const sub = this.service.getPurchaseOrdersData().subscribe({
-      next: (orders) => {
-        this.service.setPurchaseOrders(orders);
-        this.service.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error loading purchase orders:', err);
-        this.service.isLoading.set(false);
-      }
+  constructor() {
+    effect(() => {
+      // track parameters reactively
+      this.service.currentPage();
+      this.service.pageSize();
+      this.service.searchQuery();
+      this.service.statusFilter();
+      this.service.sortField();
+      this.service.sortOrder();
+
+      untracked(() => {
+        const sub = this.service.loadPurchaseOrders().subscribe();
+        this.destroyRef.onDestroy(() => sub.unsubscribe());
+      });
     });
-    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  ngOnInit(): void {
   }
 }

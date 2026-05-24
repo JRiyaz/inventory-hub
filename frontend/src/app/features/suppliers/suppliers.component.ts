@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, type OnInit, signal, DestroyRef } from '@angular/core';
+import { Component, inject, type OnInit, signal, DestroyRef, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
@@ -469,19 +469,22 @@ export class SuppliersComponent implements OnInit {
     { value: 'Inactive', label: 'Inactive' },
   ];
 
-  ngOnInit(): void {
-    this.service.isLoading.set(true);
-    const sub = this.service.getSuppliersData().subscribe({
-      next: (suppliers) => {
-        this.service.setSuppliers(suppliers);
-        this.service.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error loading suppliers:', err);
-        this.service.isLoading.set(false);
-      }
+  constructor() {
+    effect(() => {
+      // track parameters reactively
+      this.service.currentPage();
+      this.service.pageSize();
+      this.service.searchQuery();
+      this.service.statusFilter();
+
+      untracked(() => {
+        const sub = this.service.loadSuppliers().subscribe();
+        this.destroyRef.onDestroy(() => sub.unsubscribe());
+      });
     });
-    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  ngOnInit(): void {
     this.registerSearchProvider();
   }
 

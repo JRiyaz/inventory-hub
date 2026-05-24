@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, HostListener, inject, type OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { LoaderComponent, type Product, type PurchaseOrder, type PurchaseOrderItem, type Supplier } from 'ui-shared';
+import { forkJoin } from 'rxjs';
+import { InventoryDataService, LoaderComponent, type Product, type PurchaseOrder, type PurchaseOrderItem, type Supplier } from 'ui-shared';
 import { ProcurementService } from './procurement.service';
 
 @Component({
@@ -200,7 +202,7 @@ import { ProcurementService } from './procurement.service';
               >
                 <lib-loader
                   [loading]="service.isActionLoading()"
-                  label="Place Order"
+                  [label]="isEditMode() ? 'Save Changes' : 'Place Order'"
                 ></lib-loader>
               </button>
             </div>
@@ -463,6 +465,12 @@ export class StockOrderCreateComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private eRef = inject(ElementRef);
+  private http = inject(HttpClient);
+  private dataService = inject(InventoryDataService);
+
+  isEditMode = signal(false);
+  editOrderId = signal<string | null>(null);
+  existingPO = signal<PurchaseOrder | null>(null);
 
   showSupplierSearch = signal(false);
   showProductSearch = signal(false);
@@ -499,7 +507,7 @@ export class StockOrderCreateComponent implements OnInit {
       crumbs.push({ label: 'Procurement', link: '/inventory/procurement' });
     }
 
-    crumbs.push({ label: 'New Stock Order', link: '' });
+    crumbs.push({ label: this.isEditMode() ? 'Edit Stock Order' : 'New Stock Order', link: '' });
     return crumbs;
   });
 
@@ -530,6 +538,31 @@ export class StockOrderCreateComponent implements OnInit {
   }
 
   ngOnInit() {
+    forkJoin([
+      this.http.get<Product[]>(`${this.dataService.baseUrl}/products`),
+      this.http.get<Supplier[]>(`${this.dataService.baseUrl}/suppliers`)
+    ]).subscribe(([products, suppliers]) => {
+      this.dataService.setProducts(products);
+      this.dataService.setSuppliers(suppliers);
+      this.initializeFromParams();
+    });
+  }
+
+  initializeFromParams() {
+    // Read route parameters to check for Edit Mode
+    const poId = this.route.snapshot.params['id'];
+    if (poId) {
+      this.isEditMode.set(true);
+      this.editOrderId.set(poId);
+      // Fetch PO details and pre-populate
+      this.http.get<PurchaseOrder>(`${this.dataService.baseUrl}/purchaseOrders/${poId}`).subscribe((po) => {
+        this.existingPO.set(po);
+        this.selectedSupplierId.set(po.supplierId);
+        this.selectedSupplierName.set(po.supplierName);
+        this.orderItems.set(po.items);
+      });
+    }
+
     this.route.queryParams.subscribe((params) => {
       const pId = params['productId'];
       const sId = params['supplierId'];
@@ -628,18 +661,36 @@ export class StockOrderCreateComponent implements OnInit {
 
     if (!supplierId || !supplierName) return;
 
-    const order: PurchaseOrder = {
-      id: `PO-${Math.floor(10000 + Math.random() * 90000)}`,
-      supplierId,
-      supplierName,
-      status: 'Ordered',
-      amount: this.orderTotal(),
-      date: new Date().toISOString(),
-      items: this.orderItems(),
-    };
+    if (this.isEditMode()) {
+      const editId = this.editOrderId();
+      const existing = this.existingPO();
+      if (!editId || !existing) return;
 
-    this.service.addPurchaseOrder(order).subscribe(() => {
-      this.router.navigate(['/inventory/procurement', order.id]);
-    });
+      const updatedOrder: PurchaseOrder = {
+        ...existing,
+        supplierId,
+        supplierName,
+        amount: this.orderTotal(),
+        items: this.orderItems(),
+      };
+
+      this.service.updatePurchaseOrder(updatedOrder).subscribe(() => {
+        this.router.navigate(['/inventory/procurement', editId]);
+      });
+    } else {
+      const order: PurchaseOrder = {
+        id: `PO-${Math.floor(10000 + Math.random() * 90000)}`,
+        supplierId,
+        supplierName,
+        status: 'Ordered',
+        amount: this.orderTotal(),
+        date: new Date().toISOString(),
+        items: this.orderItems(),
+      };
+
+      this.service.addPurchaseOrder(order).subscribe(() => {
+        this.router.navigate(['/inventory/procurement', order.id]);
+      });
+    }
   }
 }

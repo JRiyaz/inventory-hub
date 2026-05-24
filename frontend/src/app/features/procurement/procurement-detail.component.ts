@@ -11,23 +11,116 @@ import { ProcurementService } from './procurement.service';
   template: `
     <div class="p-3 sm:p-6  min-h-screen animate-fade-in">
       @if (service.isLoading()) {
-        <div class="space-y-6">
+        <div class="space-y-8 animate-pulse">
+          <!-- Header Skeleton -->
           <div class="flex items-center gap-4 mb-8">
             <lib-skeleton
-              width="40px"
-              height="40px"
-              shape="circle"
+              width="48px"
+              height="48px"
+              shape="rounded"
             ></lib-skeleton>
             <div class="space-y-2">
-              <lib-skeleton width="200px" height="1.5rem"></lib-skeleton>
-              <lib-skeleton width="120px" height="0.75rem"></lib-skeleton>
+              <lib-skeleton width="240px" height="2rem"></lib-skeleton>
+              <lib-skeleton width="140px" height="0.875rem"></lib-skeleton>
             </div>
           </div>
+
+          <!-- Top Stats Skeleton -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <lib-skeleton
+              width="100%"
+              height="80px"
+              shape="rounded"
+            ></lib-skeleton>
+            <lib-skeleton
+              width="100%"
+              height="80px"
+              shape="rounded"
+            ></lib-skeleton>
+            <lib-skeleton
+              width="100%"
+              height="80px"
+              shape="rounded"
+            ></lib-skeleton>
+          </div>
+
+          <!-- Main Layout Skeleton -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
             <div class="lg:col-span-2 space-y-6">
-              <lib-skeleton width="100%" height="400px"></lib-skeleton>
+              <div class="card-premium p-6">
+                <lib-skeleton
+                  width="150px"
+                  height="1rem"
+                  class="mb-6"
+                ></lib-skeleton>
+                <div class="space-y-4">
+                  @for (i of [1, 2, 3]; track i) {
+                    <div
+                      class="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5"
+                    >
+                      <div class="flex items-center gap-3">
+                        <lib-skeleton
+                          width="32px"
+                          height="32px"
+                          shape="rounded"
+                        ></lib-skeleton>
+                        <div class="space-y-1">
+                          <lib-skeleton
+                            width="180px"
+                            height="0.75rem"
+                          ></lib-skeleton>
+                          <lib-skeleton
+                            width="100px"
+                            height="0.5rem"
+                          ></lib-skeleton>
+                        </div>
+                      </div>
+                      <lib-skeleton
+                        width="60px"
+                        height="0.75rem"
+                      ></lib-skeleton>
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
-            <lib-skeleton width="100%" height="400px"></lib-skeleton>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+              <div class="card-premium p-6">
+                <lib-skeleton
+                  width="100px"
+                  height="0.75rem"
+                  class="mb-4"
+                ></lib-skeleton>
+                <div class="flex items-center gap-3 mb-6">
+                  <lib-skeleton
+                    width="40px"
+                    height="40px"
+                    shape="circle"
+                  ></lib-skeleton>
+                  <div class="space-y-1">
+                    <lib-skeleton width="120px" height="0.75rem"></lib-skeleton>
+                    <lib-skeleton width="80px" height="0.5rem"></lib-skeleton>
+                  </div>
+                </div>
+                <lib-skeleton
+                  width="100%"
+                  height="1px"
+                  class="mb-4"
+                ></lib-skeleton>
+                <div class="space-y-3">
+                  <lib-skeleton width="100%" height="0.5rem"></lib-skeleton>
+                  <lib-skeleton width="80%" height="0.5rem"></lib-skeleton>
+                </div>
+              </div>
+              <lib-skeleton
+                width="100%"
+                height="120px"
+                shape="rounded"
+              ></lib-skeleton>
+            </div>
           </div>
         </div>
       } @else if (order()) {
@@ -41,6 +134,7 @@ import { ProcurementService } from './procurement.service';
           [isLoading]="service.isLoading()"
           [isActionLoading]="service.isActionLoading()"
           actionLabel="Edit PO"
+          (action)="editPO()"
         >
           <!-- Top Stats Header Slots -->
           <div top-content class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -300,6 +394,21 @@ import { ProcurementService } from './procurement.service';
                 </div>
               </div>
             </div>
+
+            <!-- Cancel Button Card -->
+            <div class="card-premium p-6 mt-4">
+              <div class="space-y-3">
+                <button
+                  (click)="cancelPO()"
+                  [disabled]="order()?.status === 'Cancelled'"
+                  [class.opacity-50]="order()?.status === 'Cancelled'"
+                  [class.cursor-not-allowed]="order()?.status === 'Cancelled'"
+                  class="w-full py-2.5 bg-rose-500/10 text-[10px] font-black uppercase tracking-widest text-rose-500 rounded-xl border border-rose-500/20 hover:bg-rose-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {{ order()?.status === 'Cancelled' ? 'PO Cancelled' : 'Cancel Purchase Order' }}
+                </button>
+              </div>
+            </div>
           </div>
         </lib-detail-layout>
       } @else {
@@ -377,6 +486,26 @@ export class ProcurementDetailComponent implements OnInit {
         return 'danger';
       default:
         return 'primary';
+    }
+  }
+
+  editPO(): void {
+    const o = this.order();
+    if (o) {
+      this.router.navigate(['/inventory/procurement/stock-order/edit', o.id]);
+    }
+  }
+
+  cancelPO(): void {
+    const o = this.order();
+    if (o) {
+      const updatedPO = { ...o, status: 'Cancelled' as const };
+      this.service.updatePurchaseOrder(updatedPO).subscribe({
+        next: () => {
+          console.log('Purchase order cancelled successfully');
+        },
+        error: (err) => console.error('Error cancelling purchase order:', err)
+      });
     }
   }
 }
