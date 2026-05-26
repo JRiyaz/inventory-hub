@@ -136,3 +136,17 @@ async def delete_product(
         
     await db.delete(product)
     await db.commit()
+
+@router.get("/check-sku/exists")
+async def check_sku_exists(
+    sku: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Checks if a Product SKU already exists in the catalog.
+    Supports real-time async form validations in the Angular catalog MFE.
+    """
+    result = await db.execute(select(Product).where(Product.sku == sku))
+    product = result.scalar_one_or_none()
+    return {"exists": product is not None}
+

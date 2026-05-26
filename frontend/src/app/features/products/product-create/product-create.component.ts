@@ -10,6 +10,7 @@ import {
   NotificationService,
   type Product,
   ValidationErrorPipe,
+  SkuValidatorDirective,
 } from 'ui-shared';
 import { ProductsService } from '../products.service';
 
@@ -24,6 +25,7 @@ import { ProductsService } from '../products.service';
     LoaderComponent,
     FormValidationDirective,
     ValidationErrorPipe,
+    SkuValidatorDirective,
   ],
   template: `
     <div class="p-3 sm:p-6 max-w-4xl mx-auto animate-fade-in">
@@ -130,6 +132,32 @@ import { ProductsService } from '../products.service';
           libFormValidation
         >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+            <!-- SKU (Async Backend Validated) -->
+            <div class="floating-input-group md:col-span-2">
+              <input
+                type="text"
+                id="sku"
+                name="sku"
+                [(ngModel)]="formData.sku"
+                placeholder=" "
+                class="floating-input"
+                required
+                libSkuValidator
+                #sku="ngModel"
+                [disabled]="isEditMode()"
+              />
+              <label for="sku" class="floating-label">Product SKU (Unique)</label>
+              @if (sku.invalid && sku.touched) {
+                <p class="text-[9px] text-rose-500 font-black uppercase mt-1">
+                  @if (sku.errors?.['required']) {
+                    SKU is required
+                  } @else if (sku.errors?.['skuTaken']) {
+                    SKU already exists in catalog
+                  }
+                </p>
+              }
+            </div>
+
             <!-- Name -->
             <div class="floating-input-group md:col-span-2">
               <input
@@ -311,6 +339,7 @@ export class ProductCreateComponent implements OnInit {
   productId: number | null = null;
 
   formData = {
+    sku: '',
     name: '',
     price: 0,
     stock: 0,
@@ -343,6 +372,7 @@ export class ProductCreateComponent implements OnInit {
     const product = this.service.getProduct(this.productId);
     if (product) {
       this.formData = {
+        sku: product.sku || '',
         name: product.name,
         price: product.price,
         stock: product.stock,

@@ -10,6 +10,7 @@ class Product(SQLModel, table=True):
     category: str = Field(nullable=False)
     status: str = Field(default="Active", nullable=False)  # Active, Inactive, Discontinued
     image_url: str | None = Field(default=None)
+    supplier_id: int | None = Field(default=None, foreign_key="supplier.id")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), nullable=False)
 
 class Warehouse(SQLModel, table=True):

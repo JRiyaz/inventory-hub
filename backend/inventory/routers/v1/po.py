@@ -210,3 +210,100 @@ async def update_purchase_order_status(
     response = PurchaseOrderResponse.model_validate(po)
     response.items = [PurchaseOrderItemResponse.model_validate(i) for i in items]
     return response
+
+@router.post("/auto-draft", response_model=list[PurchaseOrderResponse])
+async def auto_draft_replenishment_orders(
+    current_user: AuthenticatedUser = Depends(RoleChecker(["Admin", "Agent"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Predictive Logistics: Automatically scans for low-stock items (quantity < min_stock),
+    groups them by primary supplier, and generates Draft Purchase Orders to replenish inventory.
+    """
+    # 1. Fetch all low-stock levels
+    levels_res = await db.execute(select(StockLevel).where(StockLevel.quantity < StockLevel.min_stock))
+    low_stocks = levels_res.scalars().all()
+    
+    if not low_stocks:
+        return []
+
+    # Fetch default fallback supplier if any product lacks a supplier relation
+    default_sup_res = await db.execute(select(Supplier).limit(1))
+    default_supplier = default_sup_res.scalar_one_or_none()
+    
+    if not default_supplier:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No suppliers registered. Cannot auto-draft replenishment POs."
+        )
+
+    # 2. Group products by supplier_id
+    supplier_groups: dict[int, list[tuple[Product, StockLevel]]] = {}
+    
+    for stock in low_stocks:
+        prod_res = await db.execute(select(Product).where(Product.id == stock.product_id))
+        product = prod_res.scalar_one_or_none()
+        
+        if not product:
+            continue
+            
+        sup_id = product.supplier_id or default_supplier.id
+        if sup_id not in supplier_groups:
+            supplier_groups[sup_id] = []
+        supplier_groups[sup_id].append((product, stock))
+
+    # 3. Create POs atomically for each supplier group
+    drafted_pos = []
+    
+    for sup_id, items in supplier_groups.items():
+        # Replenishment PO generation
+        random_id = random.randint(1000, 99999)
+        po_number = f"PO-REPL-{random_id}"
+        
+        po = PurchaseOrder(
+            po_number=po_number,
+            supplier_id=sup_id,
+            status="Draft",
+            total_cost=0.0
+        )
+        db.add(po)
+        await db.commit()
+        await db.refresh(po)
+
+        total_cost = 0.0
+        po_items = []
+        
+        for product, stock in items:
+            # Replenish stock to 3x the minimum stock level
+            replenish_quantity = (stock.min_stock * 3) - stock.quantity
+            unit_cost = round(product.price * 0.7, 2)  # Wholesale cost is 70% of retail price
+            
+            po_item = PurchaseOrderItem(
+                po_id=po.id,
+                product_id=product.id,
+                quantity_ordered=replenish_quantity,
+                quantity_received=0,
+                unit_cost=unit_cost
+            )
+            db.add(po_item)
+            po_items.append(po_item)
+            total_cost += replenish_quantity * unit_cost
+
+        # Update PO cost header
+        po.total_cost = round(total_cost, 2)
+        db.add(po)
+        await db.commit()
+        await db.refresh(po)
+
+        # Refresh all created item lines
+        po_item_responses = []
+        for pi in po_items:
+            await db.refresh(pi)
+            po_item_responses.append(PurchaseOrderItemResponse.model_validate(pi))
+
+        po_response = PurchaseOrderResponse.model_validate(po)
+        po_response.items = po_item_responses
+        drafted_pos.append(po_response)
+
+    return drafted_pos
+
