@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, type OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent, DisplayImageService } from 'ui-shared';
+import { type Breadcrumb, DetailLayoutComponent, StatusBadgeComponent, DisplayImageService, AuthStateService } from 'ui-shared';
 import { ProductsService } from '../products.service';
 
 @Component({
@@ -17,8 +17,8 @@ import { ProductsService } from '../products.service';
       [breadcrumbs]="breadcrumbs()"
       backLink="/inventory/products"
       backLabel="Products"
-      actionLabel="Order More Stock"
-      editLabel="Edit Product"
+      [actionLabel]="auth.permissions().can_write ? 'Order More Stock' : ''"
+      [editLabel]="auth.permissions().can_write ? 'Edit Product' : ''"
       [tabs]="['Overview', 'Supplier & Logistics', 'Relational Activity']"
       [loading]="service.isActionLoading()"
       (tabChanged)="activeTab.set($event)"
@@ -553,6 +553,7 @@ export class ProductDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   public displayImageService = inject(DisplayImageService);
+  public auth = inject(AuthStateService);
   private destroyRef = inject(DestroyRef);
 
   activeTab = signal(0);

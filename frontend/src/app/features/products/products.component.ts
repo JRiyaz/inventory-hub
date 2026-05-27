@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { of } from 'rxjs';
 import {
+  AuthStateService,
   CustomDropdownComponent,
   DisplayImageService,
   type DropdownOption,
@@ -38,7 +39,7 @@ import { ProductsService } from './products.service';
         [count]="service.allFilteredProducts().length"
         [loading]="service.isLoading()"
         [isActionLoading]="service.isActionLoading()"
-        actionLabel="Add New Product"
+        [actionLabel]="auth.permissions().can_write ? 'Add New Product' : ''"
         backLink="/inventory"
         (action)="router.navigate(['/inventory/products/create'])"
       ></lib-page-header>
@@ -457,6 +458,7 @@ export class ProductsComponent implements OnInit {
   public service = inject(ProductsService);
   private searchService = inject(SearchService);
   public displayImageService = inject(DisplayImageService);
+  public auth = inject(AuthStateService);
   public router = inject(Router);
   private destroyRef = inject(DestroyRef);
 
